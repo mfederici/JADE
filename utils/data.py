@@ -73,4 +73,3 @@ class PixelCorruption(object):
             im[mask] = self.min
 
         return im
-

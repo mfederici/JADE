@@ -13,15 +13,16 @@ class Encoder(nn.Module):
 
         # Vanilla MLP
         self.net = nn.Sequential(
-            nn.Linear(28 * 28, 1024),
+            nn.Linear(14 * 14 * 2, 512),
             nn.ReLU(True),
-            nn.Linear(1024, 1024),
+            nn.Linear(512, 512),
             nn.ReLU(True),
-            nn.Linear(1024, z_dim * 2),
+            nn.Linear(512, z_dim * 2),
         )
 
     def forward(self, x):
         x = x.view(x.size(0), -1)  # Flatten the input
+
         params = self.net(x)
 
         mu, sigma = params[:, :self.z_dim], params[:, self.z_dim:]

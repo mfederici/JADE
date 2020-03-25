@@ -2,19 +2,23 @@ import os
 import yaml
 import argparse
 from tqdm import tqdm
+from torch.utils.data import DataLoader, ConcatDataset
 from torchvision.datasets import MNIST
 from torchvision.transforms import Compose, RandomAffine, ToTensor
-from torch.utils.data import DataLoader
+from torch.utils.data import random_split
 
+from data import *
 from utils.data import PixelCorruption, AugmentedDataset
 from utils.evaluation import evaluate, split
 import training as training_module
+import data as data_module
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("experiment_dir", type=str,
                     help="Full path to the experiment directory. Logs and checkpoints will be stored in this location")
-parser.add_argument("--config-file", type=str, default=None, help="Path to the .yaml training configuration file.")
+parser.add_argument("data_file", type=str, default=None, help="Path to the .yml data description file.")
+parser.add_argument("--config-file", type=str, default=None, help="Path to the .yml training configuration file.")
 parser.add_argument("--data-dir", type=str, default='.', help="Root path for the datasets.")
 parser.add_argument("--no-logging", action="store_true", help="Disable tensorboard logging")
 parser.add_argument("--overwrite", action="store_true",
@@ -39,6 +43,7 @@ logging = not args.no_logging
 experiment_dir = args.experiment_dir
 data_dir = args.data_dir
 config_file = args.config_file
+data_file = args.data_file
 overwrite = args.overwrite
 device = args.device
 num_workers = args.num_workers
@@ -61,7 +66,6 @@ if pretrained and not (config_file is None) and not overwrite:
 
 resume_training = pretrained and not overwrite
 
-
 if resume_training:
     load_model_file = os.path.join(experiment_dir, 'model.pt')
     config_file = os.path.join(experiment_dir, 'config.yml')
@@ -81,9 +85,31 @@ with open(config_file, 'r') as file:
 with open(os.path.join(experiment_dir, 'config.yml'), 'w') as file:
     yaml.dump(config, file)
 
+
+###########
+# Dataset #
+###########
+
+# Load the data_description file
+with open(data_file, 'r') as file:
+    data_config = yaml.safe_load(file)
+
+# Copy it to the experiment folder
+with open(os.path.join(experiment_dir, 'data.yml'), 'w') as file:
+    yaml.dump(config, file)
+
+# Instantiate the different datasets used for training and evaluation
+datasets = {}
+for dataset_description in data_config:
+    DatasetClass = getattr(data_module, dataset_description['class'])
+    datasets[dataset_description['name']] = DatasetClass(**dataset_description['params'])
+
+if not ('train_set' in datasets):
+    raise Exception('The data description file %s must contain a train_set' % data_file)
+
 # Instantiating the trainer according to the specified configuration
 TrainerClass = getattr(training_module, config['trainer'])
-trainer = TrainerClass(writer=writer, **config['params'])
+trainer = TrainerClass(dataset=datasets['train_set'], writer=writer, **config['params'])
 
 # Resume the training if specified
 if load_model_file:
@@ -92,51 +118,22 @@ if load_model_file:
 # Moving the models to the specified device
 trainer.to(device)
 
-###########
-# Dataset #
-###########
-# Loading the MNIST dataset
-mnist_dir = os.path.join(data_dir, 'MNIST')
-train_set = MNIST(mnist_dir, download=True, train=True, transform=ToTensor())
-test_set = MNIST(mnist_dir, download=True, train=False, transform=ToTensor())
-
-# Defining the augmentations
-t = Compose([
-    RandomAffine(degrees=15,
-                 translate=[0.1, 0.1],
-                 scale=[0.9, 1.1],
-                 shear=15),  # Small affine transformations
-    ToTensor(),              # Conversion to torch tensor
-    PixelCorruption(0.8)     # PixelCorruption with keep probability 80%
-])
-
-# Creating the multi-view dataset using the augmentation class defined by t
-mv_train_set = AugmentedDataset(MNIST(mnist_dir, download=True), t)
-
-# Initialization of the data loader
-train_loader = DataLoader(mv_train_set, batch_size=batch_size, shuffle=True, num_workers=num_workers)
-
-# Select a subset 100 samples (10 for each per label)
-train_subset = split(train_set, 100, 'Balanced')
-
-##########
-
 checkpoint_count = 1
 
 for epoch in tqdm(range(epochs)):
-    for data in tqdm(train_loader):
-        trainer.train_step(data)
+    trainer.train_epoch()
 
     if epoch % evaluate_every == 0:
-        # Compute train and test_accuracy of a logistic regression
-        train_accuracy, test_accuracy = evaluate(encoder=trainer.encoder, train_on=train_subset, test_on=test_set,
-                                                 device=device)
-        if not (writer is None):
-            writer.add_scalar(tag='evaluation/train_accuracy', scalar_value=train_accuracy, global_step=trainer.iterations)
-            writer.add_scalar(tag='evaluation/test_accuracy', scalar_value=test_accuracy, global_step=trainer.iterations)
-
-        tqdm.write('Train Accuracy: %f' % train_accuracy)
-        tqdm.write('Test Accuracy: %f' % test_accuracy)
+        # # Compute train and test_accuracy of a logistic regression
+        # train_accuracy, test_accuracy = evaluate(encoder=trainer.encoder, train_on=train_subset, test_on=data_items['test_set'],
+        #                                          device=device)
+        # if not (writer is None):
+        #     writer.add_scalar(tag='evaluation/train_accuracy', scalar_value=train_accuracy, global_step=trainer.iterations)
+        #     writer.add_scalar(tag='evaluation/test_accuracy', scalar_value=test_accuracy, global_step=trainer.iterations)
+        #
+        # tqdm.write('Train Accuracy: %f' % train_accuracy)
+        # tqdm.write('Test Accuracy: %f' % test_accuracy)
+        pass
 
     if epoch % checkpoint_every == 0:
         tqdm.write('Storing model checkpoint')

@@ -17,7 +17,7 @@ class MIBTrainer(MVInfoMaxTrainer):
 
     def _compute_loss(self, data):
         # Read the two views v1 and v2 and ignore the label y
-        v1, v2, _ = data
+        v1, v2 = data[0]
 
         # Encode a batch of data
         p_z1_given_v1 = self.encoder_v1(v1)

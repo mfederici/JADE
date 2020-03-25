@@ -1,8 +1,9 @@
-import os
+from tqdm import tqdm
 import torch
 import torch.nn as nn
 import numpy as np
 from torch.optim import Optimizer
+from torch.utils.data import DataLoader
 
 from utils.modules import Encoder
 
@@ -19,11 +20,22 @@ def init_optimizer(optimizer_name, params):
 ##########################
 # Generic training class #
 ##########################
+def move(data, device):
+    for i, _ in enumerate(data):
+        if isinstance(data, list) or isinstance(data, tuple):
+            data[i] = move(data[i], device)
+        else:
+            data[i] = data[i].to(device)
+    return data
+
+
 class Trainer(nn.Module):
-    def __init__(self, log_loss_every=10, writer=None):
+    def __init__(self, dataset, batch_size, log_loss_every=10, writer=None):
         super(Trainer, self).__init__()
         self.iterations = 0
 
+        self.dataset = dataset
+        self.train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
         self.writer = writer
         self.log_loss_every = log_loss_every
 
@@ -31,6 +43,10 @@ class Trainer(nn.Module):
 
     def get_device(self):
         return list(self.parameters())[0].device
+
+    def train_epoch(self):
+        for data in tqdm(self.train_loader):
+            self.train_step(data)
 
     def train_step(self, data):
         # Set all the models in training mode
@@ -43,9 +59,7 @@ class Trainer(nn.Module):
 
         # Move the data to the appropriate device
         device = self.get_device()
-
-        for i, item in enumerate(data):
-            data[i] = item.to(device)
+        data = move(data, device)
 
         # Perform the training step and update the iteration count
         self._train_step(data)
