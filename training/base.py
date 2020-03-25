@@ -20,14 +20,6 @@ def init_optimizer(optimizer_name, params):
 ##########################
 # Generic training class #
 ##########################
-def move(data, device):
-    for i, _ in enumerate(data):
-        if isinstance(data, list) or isinstance(data, tuple):
-            data[i] = move(data[i], device)
-        else:
-            data[i] = data[i].to(device)
-    return data
-
 
 class Trainer(nn.Module):
     def __init__(self, dataset, batch_size, log_loss_every=10, writer=None):
@@ -59,7 +51,8 @@ class Trainer(nn.Module):
 
         # Move the data to the appropriate device
         device = self.get_device()
-        data = move(data, device)
+        for name, value in data.items():
+            data[name] = value.to(device)
 
         # Perform the training step and update the iteration count
         self._train_step(data)

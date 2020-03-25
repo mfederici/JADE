@@ -12,14 +12,15 @@ from utils.data import PixelCorruption, AugmentedDataset
 from utils.evaluation import evaluate, split
 import training as training_module
 import data as data_module
+import eval as eval_module
 
 
 parser = argparse.ArgumentParser()
 parser.add_argument("experiment_dir", type=str,
                     help="Full path to the experiment directory. Logs and checkpoints will be stored in this location")
-parser.add_argument("data_file", type=str, default=None, help="Path to the .yml data description file.")
-parser.add_argument("--config-file", type=str, default=None, help="Path to the .yml training configuration file.")
-parser.add_argument("--data-dir", type=str, default='.', help="Root path for the datasets.")
+parser.add_argument("--data-config", type=str, default=None, help="Path to the .yml data description file.")
+parser.add_argument("--trainer-config", type=str, default=None, help="Path to the .yml training configuration file.")
+parser.add_argument("--eval-config", type=str, default=None, help="Path to the .yml evaluation configuration file.")
 parser.add_argument("--no-logging", action="store_true", help="Disable tensorboard logging")
 parser.add_argument("--overwrite", action="store_true",
                     help="Force the over-writing of the previous experiment in the specified directory.")
@@ -41,9 +42,9 @@ args = parser.parse_args()
 
 logging = not args.no_logging
 experiment_dir = args.experiment_dir
-data_dir = args.data_dir
-config_file = args.config_file
-data_file = args.data_file
+trainer_config_file = args.trainer_config
+data_config_file = args.data_config
+eval_config_file = args.eval_config
 overwrite = args.overwrite
 device = args.device
 num_workers = args.num_workers
@@ -59,7 +60,7 @@ pretrained = os.path.isfile(os.path.join(experiment_dir, 'model.pt')) \
              and os.path.isfile(os.path.join(experiment_dir, 'config.yml'))
 
 
-if pretrained and not (config_file is None) and not overwrite:
+if pretrained and not (trainer_config_file is None) and not overwrite:
     raise Exception("The experiment directory %s already contains a trained model, please specify a different "
                     "experiment directory or remove the --config-file option to resume training or use the --overwrite"
                     "flag to force overwriting")
@@ -68,7 +69,9 @@ resume_training = pretrained and not overwrite
 
 if resume_training:
     load_model_file = os.path.join(experiment_dir, 'model.pt')
-    config_file = os.path.join(experiment_dir, 'config.yml')
+    trainer_config_file = os.path.join(experiment_dir, 'trainer_config.yml')
+    data_config_file = os.path.join(experiment_dir, 'data_config.yml')
+    eval_config_file = os.path.join(experiment_dir, 'eval_config.yml')
 
 if logging:
     from torch.utils.tensorboard import SummaryWriter
@@ -78,11 +81,11 @@ else:
     writer = None
 
 # Load the configuration file
-with open(config_file, 'r') as file:
+with open(trainer_config_file, 'r') as file:
     config = yaml.safe_load(file)
 
 # Copy it to the experiment folder
-with open(os.path.join(experiment_dir, 'config.yml'), 'w') as file:
+with open(os.path.join(experiment_dir, 'trainer_config.yml'), 'w') as file:
     yaml.dump(config, file)
 
 
@@ -91,12 +94,12 @@ with open(os.path.join(experiment_dir, 'config.yml'), 'w') as file:
 ###########
 
 # Load the data_description file
-with open(data_file, 'r') as file:
+with open(data_config_file, 'r') as file:
     data_config = yaml.safe_load(file)
 
 # Copy it to the experiment folder
-with open(os.path.join(experiment_dir, 'data.yml'), 'w') as file:
-    yaml.dump(config, file)
+with open(os.path.join(experiment_dir, 'data_config.yml'), 'w') as file:
+    yaml.dump(data_config, file)
 
 # Instantiate the different datasets used for training and evaluation
 datasets = {}
@@ -105,7 +108,7 @@ for dataset_description in data_config:
     datasets[dataset_description['name']] = DatasetClass(**dataset_description['params'])
 
 if not ('train_set' in datasets):
-    raise Exception('The data description file %s must contain a train_set' % data_file)
+    raise Exception('The data description file %s must contain a train_set' % data_config_file)
 
 # Instantiating the trainer according to the specified configuration
 TrainerClass = getattr(training_module, config['trainer'])
@@ -118,22 +121,33 @@ if load_model_file:
 # Moving the models to the specified device
 trainer.to(device)
 
+##############
+# Evaluation #
+##############
+
+# Load the evaluation file
+with open(eval_config_file, 'r') as file:
+    eval_config = yaml.safe_load(file)
+
+# Copy it to the experiment folder
+with open(os.path.join(experiment_dir, 'eval_config.yml'), 'w') as file:
+    yaml.dump(eval_config, file)
+
+evaluators = {}
+for entry in eval_config:
+    EvalClass = getattr(eval_module, entry['class'])
+    evaluators[entry['name']] = EvalClass(datasets=datasets, model=getattr(trainer, entry['model']),
+                                          device=trainer.get_device(), **entry['params'])
+
 checkpoint_count = 1
 
 for epoch in tqdm(range(epochs)):
-    trainer.train_epoch()
+    for name, evaluator in evaluators.items():
+        if epoch % evaluator.evaluate_every == 0:
+            entry = evaluator.evaluate()
 
-    if epoch % evaluate_every == 0:
-        # # Compute train and test_accuracy of a logistic regression
-        # train_accuracy, test_accuracy = evaluate(encoder=trainer.encoder, train_on=train_subset, test_on=data_items['test_set'],
-        #                                          device=device)
-        # if not (writer is None):
-        #     writer.add_scalar(tag='evaluation/train_accuracy', scalar_value=train_accuracy, global_step=trainer.iterations)
-        #     writer.add_scalar(tag='evaluation/test_accuracy', scalar_value=test_accuracy, global_step=trainer.iterations)
-        #
-        # tqdm.write('Train Accuracy: %f' % train_accuracy)
-        # tqdm.write('Test Accuracy: %f' % test_accuracy)
-        pass
+            logging_function = getattr(writer, 'add_%s' % entry['type'])
+            logging_function(tag=name, global_step=trainer.iterations, **entry['params'])
 
     if epoch % checkpoint_every == 0:
         tqdm.write('Storing model checkpoint')
@@ -146,3 +160,5 @@ for epoch in tqdm(range(epochs)):
     if epoch % backup_every == 0:
         tqdm.write('Updating the model backup')
         trainer.save(os.path.join(experiment_dir, 'model.pt'))
+
+    trainer.train_epoch()

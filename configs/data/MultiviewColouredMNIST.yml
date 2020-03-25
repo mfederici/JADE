@@ -12,6 +12,20 @@
         flip_label: 0.25
         flip_color: 0.1
 
+- name: representation_train_set
+  class: MultiEnvColouredMNIST
+  params:
+    root: /data/MNIST
+    split: train
+    multiview: false
+    environments:
+      - size: 25000
+        flip_label: 0.25
+        flip_color: 0.2
+      - size: 25000
+        flip_label: 0.25
+        flip_color: 0.1
+
 - name: test_set_0.1
   class: MultiEnvColouredMNIST
   params:

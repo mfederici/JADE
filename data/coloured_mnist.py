@@ -9,6 +9,7 @@ from data.utils import CacheMemoryDataset
 
 MNIST_TRAIN_EXAMPLES = 50000
 
+
 class ColouredMNISTDataset(Dataset):
     def __init__(self, base_mnist_dataset, color_flip, label_flip=0.25):
         self.base_mnist_dataset = base_mnist_dataset
@@ -28,7 +29,7 @@ class ColouredMNISTDataset(Dataset):
         if color == 1:
             im = torch.roll(im, 1, 0)
 
-        return im, label
+        return {'x': im, 'y': label}
 
     def __len__(self):
         return len(self.base_mnist_dataset)
@@ -69,16 +70,16 @@ class MultiEnvColouredMNIST(Dataset):
 
 class MultiViewColouredMNISTDataset(Dataset):
     def __init__(self, coloured_mnist_dataset):
-        self.labels = np.array([d[1].item() for d in coloured_mnist_dataset])
+        self.labels = np.array([d['y'].item() for d in coloured_mnist_dataset])
         self.dataset = coloured_mnist_dataset
         self.ids = np.arange(len(self.dataset))
 
     def __getitem__(self, index):
-        v1, label = self.dataset[index]
-        v2_index = np.random.choice(self.ids[self.labels == label.item()])
-        v2 = self.dataset[v2_index][0]
+        entry = self.dataset[index]
+        v2_index = np.random.choice(self.ids[self.labels == entry['y'].item()])
+        v2 = self.dataset[v2_index]['x']
 
-        return (v1, v2), label
+        return {'v1': entry['x'], 'v2': v2, 'y': entry['y']}
 
     def __len__(self):
         return len(self.dataset)

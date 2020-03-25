@@ -23,9 +23,9 @@ class EmbeddedDataset:
         ys = []
         reps = []
         with torch.no_grad():
-            for x, y in data_loader:
-                x = x.to(device)
-                y = y.to(device)
+            for batch in data_loader:
+                x = batch['x'].to(device)
+                y = batch['y'].to(device)
 
                 p_z_given_x = encoder(x)
 
@@ -115,6 +115,6 @@ def train_and_evaluate_linear_model(train_set, test_set, solver='saga', multi_cl
     model.fit(x_train, y_train)
 
     test_accuracy = model.score(x_test, y_test)
-    train_accuracy = model.score(x_train, y_train)
+    #train_accuracy = model.score(x_train, y_train)
 
-    return train_accuracy, test_accuracy
+    return test_accuracy
