@@ -70,7 +70,7 @@ class Trainer(nn.Module):
     def _log_loss(self):
         # Log the expected value of the items in loss_items
         for key, values in self.loss_items.items():
-            self.writer.add_scalar(tag=key, scalar_value=np.mean(values), global_step=self.iterations)
+            self.writer.log(name=key, value=np.mean(values), entry_type='scalar', iteration=self.iterations)
             self.loss_items[key] = []
 
     def save(self, model_path):
@@ -146,4 +146,4 @@ class RepresentationTrainer(Trainer):
         self.opt.step()
 
     def _compute_loss(self, data):
-        raise NotImplemented
+        raise NotImplemented()

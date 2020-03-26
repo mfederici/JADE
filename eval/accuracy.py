@@ -11,8 +11,5 @@ class LinearAccuracyEvaluation(Evaluation):
     def evaluate(self):
         return {
             'type': 'scalar',
-            'params': {
-                'scalar_value': evaluate(self.model, self.train_set, self.test_set, self.device)
-            }
+            'value': evaluate(self.model, self.train_set, self.test_set, self.device)
         }
-

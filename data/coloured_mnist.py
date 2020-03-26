@@ -36,7 +36,7 @@ class ColouredMNISTDataset(Dataset):
 
 
 class MultiEnvColouredMNIST(Dataset):
-    def __init__(self, root, environments, split, cached=True, device='cpu', multiview=False):
+    def __init__(self, root, environments, split, cached=True, device='cpu', multiview=False, augmented=False):
         dataset = MNIST(root, download=True, train=split in ['train', 'valid'], transform=ToTensor())
         if split == 'train':
             dataset = Subset(dataset, range(MNIST_TRAIN_EXAMPLES))
@@ -59,7 +59,7 @@ class MultiEnvColouredMNIST(Dataset):
             self.dataset = CacheMemoryDataset(self.dataset, device=device)
 
         if multiview:
-            self.dataset = MultiViewColouredMNISTDataset(self.dataset)
+            self.dataset = MultiViewColouredMNISTDataset(self.dataset, augmented=augmented)
 
     def __getitem__(self, index):
         return self.dataset[index]
@@ -69,17 +69,30 @@ class MultiEnvColouredMNIST(Dataset):
 
 
 class MultiViewColouredMNISTDataset(Dataset):
-    def __init__(self, coloured_mnist_dataset):
+    def __init__(self, coloured_mnist_dataset, augmented=False):
         self.labels = np.array([d['y'].item() for d in coloured_mnist_dataset])
         self.dataset = coloured_mnist_dataset
         self.ids = np.arange(len(self.dataset))
+        self.augmented = augmented
+        self.flip_dist = torch.distributions.Bernoulli(probs=0.5)
 
     def __getitem__(self, index):
         entry = self.dataset[index]
-        v2_index = np.random.choice(self.ids[self.labels == entry['y'].item()])
+        v1 = entry['x']
+        y = entry['y']
+        v2_index = np.random.choice(self.ids[self.labels == y.item()])
         v2 = self.dataset[v2_index]['x']
 
-        return {'v1': entry['x'], 'v2': v2, 'y': entry['y']}
+        if self.augmented:
+            flip_v1 = self.flip_dist.sample()
+            flip_v2 = self.flip_dist.sample()
+
+            if flip_v1 > 0:
+                v1 = torch.roll(v1, 1, 0)
+            if flip_v2 > 0:
+                v2 = torch.roll(v2, 1, 0)
+
+        return {'v1': v1, 'v2': v2, 'y': y}
 
     def __len__(self):
         return len(self.dataset)

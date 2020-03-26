@@ -1,0 +1,58 @@
+- name: train_set
+  class: MultiEnvColouredMNIST
+  params:
+    root: /data/MNIST
+    split: train
+    multiview: true
+    augmented: true
+    environments:
+      - size: 25000
+        flip_label: 0.25
+        flip_color: 0.2
+      - size: 25000
+        flip_label: 0.25
+        flip_color: 0.1
+
+- name: representation_train_set
+  class: MultiEnvColouredMNIST
+  params:
+    root: /data/MNIST
+    split: train
+    multiview: false
+    environments:
+      - size: 25000
+        flip_label: 0.25
+        flip_color: 0.2
+      - size: 25000
+        flip_label: 0.25
+        flip_color: 0.1
+
+- name: test_set_0.1
+  class: MultiEnvColouredMNIST
+  params:
+    root: /data/MNIST
+    split: valid
+    environments:
+      - size: 10000
+        flip_label: 0.25
+        flip_color: 0.1
+
+- name: test_set_0.2
+  class: MultiEnvColouredMNIST
+  params:
+    root: /data/MNIST
+    split: valid
+    environments:
+      - size: 10000
+        flip_label: 0.25
+        flip_color: 0.2
+
+- name: test_set_0.9
+  class: MultiEnvColouredMNIST
+  params:
+    root: /data/MNIST
+    split: valid
+    environments:
+      - size: 10000
+        flip_label: 0.25
+        flip_color: 0.9

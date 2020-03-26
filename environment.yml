@@ -27,3 +27,4 @@ dependencies:
     - sklearn==0.0
     - tensorboard==2.1.0
     - tqdm==4.42.1
+    - wandb==0.8.30

@@ -8,6 +8,7 @@ from torchvision.transforms import Compose, RandomAffine, ToTensor
 from torch.utils.data import random_split
 
 from data import *
+from log.tensorboard import TensorboardLogWriter
 from utils.data import PixelCorruption, AugmentedDataset
 from utils.evaluation import evaluate, split
 import training as training_module
@@ -54,11 +55,17 @@ checkpoint_every = args.checkpoint_every
 backup_every = args.backup_every
 evaluate_every = args.evaluate_every
 epochs = args.epochs
+log_writer_type = 'wandb'
+
 
 # Check if the experiment directory already contains a model
-pretrained = os.path.isfile(os.path.join(experiment_dir, 'model.pt')) \
-             and os.path.isfile(os.path.join(experiment_dir, 'config.yml'))
+pretrained = os.path.isfile(
+    os.path.join(experiment_dir, 'model.pt')) \
+    and os.path.isfile(os.path.join(experiment_dir, 'trainer_config.yml')) \
+    and os.path.isfile(os.path.join(experiment_dir, 'data_config.yml'))
 
+# Create a folder for the new experiment
+os.makedirs(experiment_dir)
 
 if pretrained and not (trainer_config_file is None) and not overwrite:
     raise Exception("The experiment directory %s already contains a trained model, please specify a different "
@@ -73,21 +80,18 @@ if resume_training:
     data_config_file = os.path.join(experiment_dir, 'data_config.yml')
     eval_config_file = os.path.join(experiment_dir, 'eval_config.yml')
 
-if logging:
-    from torch.utils.tensorboard import SummaryWriter
-    writer = SummaryWriter(log_dir=experiment_dir)
-else:
-    os.makedirs(experiment_dir, exist_ok=True)
-    writer = None
 
-# Load the configuration file
+###########
+# Trainer #
+###########
+
+# Load the trainer configuration file
 with open(trainer_config_file, 'r') as file:
-    config = yaml.safe_load(file)
+    trainer_config = yaml.safe_load(file)
 
 # Copy it to the experiment folder
 with open(os.path.join(experiment_dir, 'trainer_config.yml'), 'w') as file:
-    yaml.dump(config, file)
-
+    yaml.dump(trainer_config, file)
 
 ###########
 # Dataset #
@@ -101,26 +105,6 @@ with open(data_config_file, 'r') as file:
 with open(os.path.join(experiment_dir, 'data_config.yml'), 'w') as file:
     yaml.dump(data_config, file)
 
-# Instantiate the different datasets used for training and evaluation
-datasets = {}
-for dataset_description in data_config:
-    DatasetClass = getattr(data_module, dataset_description['class'])
-    datasets[dataset_description['name']] = DatasetClass(**dataset_description['params'])
-
-if not ('train_set' in datasets):
-    raise Exception('The data description file %s must contain a train_set' % data_config_file)
-
-# Instantiating the trainer according to the specified configuration
-TrainerClass = getattr(training_module, config['trainer'])
-trainer = TrainerClass(dataset=datasets['train_set'], writer=writer, **config['params'])
-
-# Resume the training if specified
-if load_model_file:
-    trainer.load(load_model_file)
-
-# Moving the models to the specified device
-trainer.to(device)
-
 ##############
 # Evaluation #
 ##############
@@ -133,6 +117,45 @@ with open(eval_config_file, 'r') as file:
 with open(os.path.join(experiment_dir, 'eval_config.yml'), 'w') as file:
     yaml.dump(eval_config, file)
 
+###############
+# Log Writers #
+###############
+
+if logging:
+    if log_writer_type == 'tensorboard':
+        from log.tensorboard import TensorboardLogWriter
+        writer = TensorboardLogWriter(experiment_dir)
+    elif log_writer_type == 'wandb':
+        from log.wandb import WandBLogWriter
+        writer = WandBLogWriter(experiment_dir, data_config, trainer_config, eval_config)
+    else:
+        raise Exception('Log Writer %s is not supported, please select "tensorboard" or "wandb"' % log_writer_type)
+else:
+    os.makedirs(experiment_dir, exist_ok=True)
+    writer = None
+
+
+# Instantiate the different datasets used for training and evaluation
+datasets = {}
+for dataset_description in data_config:
+    DatasetClass = getattr(data_module, dataset_description['class'])
+    datasets[dataset_description['name']] = DatasetClass(**dataset_description['params'])
+
+if not ('train_set' in datasets):
+    raise Exception('The data description file %s must contain a train_set' % data_config_file)
+
+# Instantiating the trainer according to the specified configuration
+TrainerClass = getattr(training_module, trainer_config['trainer'])
+trainer = TrainerClass(dataset=datasets['train_set'], writer=writer, **trainer_config['params'])
+
+# Resume the training if specified
+if load_model_file:
+    trainer.load(load_model_file)
+
+# Moving the models to the specified device
+trainer.to(device)
+
+# Instantiate the specified evaluators
 evaluators = {}
 for entry in eval_config:
     EvalClass = getattr(eval_module, entry['class'])
@@ -145,9 +168,7 @@ for epoch in tqdm(range(epochs)):
     for name, evaluator in evaluators.items():
         if epoch % evaluator.evaluate_every == 0:
             entry = evaluator.evaluate()
-
-            logging_function = getattr(writer, 'add_%s' % entry['type'])
-            logging_function(tag=name, global_step=trainer.iterations, **entry['params'])
+            writer.log(name=name, value=entry['value'], entry_type=entry['type'], iteration=trainer.iterations)
 
     if epoch % checkpoint_every == 0:
         tqdm.write('Storing model checkpoint')
