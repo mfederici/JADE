@@ -1,4 +1,3 @@
-from data.coloured_mnist import MultiEnvColouredMNIST
-
+from data.coloured_mnist import ColouredMNIST
 
 

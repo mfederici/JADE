@@ -1,0 +1,21 @@
+- name: IDA
+  class: IDATrainer
+  params:
+    # size of the training batch
+    batch_size: 64
+
+    # Number of latent dimensions
+    z_dim: 2
+
+    # Optimization parameters
+    optimizer_name: 'Adam'
+    encoder_lr: 0.0001
+    n_adv_steps: 2
+    dist: normal
+
+    # Parameters for the beta-scheduler
+    beta_start_value: 0.000001
+    beta_end_value: 0.0001
+    beta_n_iterations: 100000
+    beta_start_iteration: 10000
+

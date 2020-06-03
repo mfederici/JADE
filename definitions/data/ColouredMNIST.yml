@@ -1,0 +1,82 @@
+- name: coloured_MNIST_train
+  class: ColouredMNIST
+  params:
+    root: datasets/MNIST
+    split: train
+    environments:
+      - size: 25000
+        flip_label: 0.25
+        flip_color: 0.2
+      - size: 25000
+        flip_label: 0.25
+        flip_color: 0.1
+  transforms:
+    - class: MoveToCache
+
+- name: label_paired_coloured_MNIST_train
+  extend:
+    base: coloured_MNIST_train
+  transforms:
+    - class: PairByValue
+      params:
+        pair: 'x'
+        by: 'y'
+        out_names: ['v1', 'v2']
+
+- name: paired_color_augmented_coloured_MNIST_train
+  extend:
+    base: coloured_MNIST_train
+  transforms:
+    - class: Copy
+      params:
+        copy: 'x'
+        to: ['v1', 'v2']
+    - class: Augment
+      params:
+        aug_class: ColorAugmentation
+        apply_to: ['v1', 'v2']
+
+- name: label_paired_color_augmented_coloured_MNIST_train
+  extend:
+    base: label_paired_coloured_MNIST_train
+  transforms:
+    - class: Augment
+      params:
+       aug_class: ColorAugmentation
+       apply_to: ['v1', 'v2']
+
+- name: coloured_MNIST_valid_env_0.1
+  class: ColouredMNIST
+  params:
+    root: datasets/MNIST
+    split: valid
+    environments:
+      - size: 10000
+        flip_label: 0.25
+        flip_color: 0.1
+  transforms:
+    - class: MoveToCache
+
+- name: coloured_MNIST_valid_env_0.2
+  class: ColouredMNIST
+  params:
+    root: datasets/MNIST
+    split: valid
+    environments:
+      - size: 10000
+        flip_label: 0.25
+        flip_color: 0.2
+  transforms:
+    - class: MoveToCache
+
+- name: coloured_MNIST_valid_env_0.9
+  class: ColouredMNIST
+  params:
+    root: datasets/MNIST
+    split: valid
+    environments:
+      - size: 10000
+        flip_label: 0.25
+        flip_color: 0.9
+  transforms:
+    - class: MoveToCache

@@ -1,15 +1,24 @@
 import torch
 import torch.nn as nn
-from torch.distributions import Normal, Independent
+from torch.distributions import Normal, Independent, Beta
+from pyro.distributions import Delta
 from torch.nn.functional import softplus
 
 
 # Encoder architecture
 class Encoder(nn.Module):
-    def __init__(self, z_dim):
+    def __init__(self, z_dim, dist):
         super(Encoder, self).__init__()
 
         self.z_dim = z_dim
+        self.dist = dist
+
+        if dist == 'normal' or dist == 'beta':
+            self.n_params = 2
+        elif dist == 'delta':
+            self.n_params = 1
+        else:
+            raise NotImplementedError('"%s"' % dist)
 
         # Vanilla MLP
         self.net = nn.Sequential(
@@ -17,18 +26,30 @@ class Encoder(nn.Module):
             nn.ReLU(True),
             nn.Linear(512, 512),
             nn.ReLU(True),
-            nn.Linear(512, z_dim * 2),
+            nn.Linear(512, z_dim * self.n_params),
         )
 
     def forward(self, x):
         x = x.view(x.size(0), -1)  # Flatten the input
 
-        params = self.net(x)
+        params = torch.split(self.net(x), [self.z_dim]*self.n_params, 1)
 
-        mu, sigma = params[:, :self.z_dim], params[:, self.z_dim:]
-        sigma = softplus(sigma) + 1e-7  # Make sigma always positive
+        if self.dist == 'normal':
+            mu, sigma = params[0], softplus(params[1]) + 1e-7
+            dist = Normal(loc=mu, scale=sigma)
+            dist = Independent(dist, 1) # Factorized Normal distribution
+        elif self.dist == 'beta':
+            c1, c0 = softplus(params[0]) + 1e-7, softplus(params[1]) + 1e-7
+            dist = Beta(c1, c0)
+            dist = Independent(dist, 1)  # Factorized Beta distribution
+        elif self.dist == 'delta':
+            m = params[0]
+            dist = Delta(m)
+            dist = Independent(dist, 1)  # Factorized Delta distribution
+        else:
+            dist = None
 
-        return Independent(Normal(loc=mu, scale=sigma), 1)  # Return a factorized Normal distribution
+        return dist
 
 
 class Decoder(nn.Module):

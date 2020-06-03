@@ -1,9 +1,8 @@
 class Evaluation:
-    def __init__(self, model, datasets, device, evaluate_every=1):
-        self.model = model
+    def __init__(self, trainer, datasets, evaluate_every=1):
+        self.trainer = trainer
         self.datasets = datasets
         self.evaluate_every = evaluate_every
-        self.device = device
 
     def evaluate(self):
         raise NotImplemented()
