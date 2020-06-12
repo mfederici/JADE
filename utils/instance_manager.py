@@ -56,10 +56,7 @@ class InstanceManager:
         return {k: self.descriptions[k] for k in self.loaded}
 
 
-class ExtendTransformInstanceManager(InstanceManager):
-    def __init__(self, **params):
-        super(ExtendTransformInstanceManager, self).__init__(**params)
-
+class DatasetManager(InstanceManager):
     def _transform(self, instance, transforms):
         for transform in transforms:
             class_name = transform['class']

@@ -1,1 +1,1 @@
-from eval.accuracy import LinearAccuracyEvaluation
+from eval.accuracy import LinearAccuracyEvaluation, AccuracyEvaluation

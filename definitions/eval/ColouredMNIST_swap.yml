@@ -1,0 +1,14 @@
+- name: test_accuracy_swap/0.1
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: coloured_MNIST_valid_env_0.1_swap
+
+- name: test_accuracy_swap/0.2
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: coloured_MNIST_valid_env_0.2_swap
+
+- name: test_accuracy_swap/0.9
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: coloured_MNIST_valid_env_0.9_swap

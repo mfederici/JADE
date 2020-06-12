@@ -1,51 +1,50 @@
-train:
+- name: coloured_MNIST_train_swap
   class: ColouredMNIST
   params:
     root: datasets/MNIST
     split: train
     environments:
       - size: 25000
-        flip_label: 0.25
-        flip_color: 0.2
+        flip_label: 0.2
+        flip_color: 0.25
       - size: 25000
-        flip_label: 0.25
-        flip_color: 0.1
+        flip_label: 0.1
+        flip_color: 0.25
   transforms:
     - class: MoveToCache
 
-
-valid_env_0.1:
+- name: coloured_MNIST_valid_env_0.1_swap
   class: ColouredMNIST
   params:
     root: datasets/MNIST
     split: valid
     environments:
       - size: 10000
-        flip_label: 0.25
-        flip_color: 0.1
+        flip_label: 0.1
+        flip_color: 0.25
   transforms:
     - class: MoveToCache
 
-valid_env_0.2:
+- name: coloured_MNIST_valid_env_0.2_swap
   class: ColouredMNIST
   params:
     root: datasets/MNIST
     split: valid
     environments:
       - size: 10000
-        flip_label: 0.25
-        flip_color: 0.2
+        flip_label: 0.2
+        flip_color: 0.25
   transforms:
     - class: MoveToCache
 
-valid_env_0.9:
+- name: coloured_MNIST_valid_env_0.9_swap
   class: ColouredMNIST
   params:
     root: datasets/MNIST
     split: valid
     environments:
       - size: 10000
-        flip_label: 0.25
-        flip_color: 0.9
+        flip_label: 0.9
+        flip_color: 0.25
   transforms:
     - class: MoveToCache

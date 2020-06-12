@@ -1,18 +1,18 @@
-- name: test_accuracy/0.1
+- name: linear_test_accuracy/0.1
   class: LinearAccuracyEvaluation
   params:
     train_on: coloured_MNIST_train
     test_on: coloured_MNIST_valid_env_0.1
     model: encoder
 
-- name: test_accuracy/0.2
+- name: linear_test_accuracy/0.2
   class: LinearAccuracyEvaluation
   params:
     train_on: coloured_MNIST_train
     test_on: coloured_MNIST_valid_env_0.2
     model: encoder
 
-- name: test_accuracy/0.9
+- name: linear_test_accuracy/0.9
   class: LinearAccuracyEvaluation
   params:
     train_on: coloured_MNIST_train

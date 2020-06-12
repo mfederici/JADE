@@ -4,6 +4,7 @@ import numpy as np
 import torchvision.transforms as transform_module
 import data.transforms.augmentations as augmentation_module
 from torch.utils.data import Dataset
+from torch.distributions import Distribution
 
 
 class DatasetTransform(Dataset):
@@ -122,3 +123,54 @@ class Copy(Apply):
             return {k: data[copy] for k in to}
 
         super(Copy, self).__init__(f=f, f_in=f_in, f_out=f_out, **params)
+
+
+class EmbeddedDataset(DatasetTransform):
+    BLOCK_SIZE = 256
+
+    def __init__(self, dataset, encoder, f=None, f_in='x', f_out='z', device='cpu', **params):
+        super(EmbeddedDataset, self).__init__(instance=dataset, **params)
+        encoder = encoder.to(device)
+
+        self.f_in = f_in
+        self.f_out = f_out
+
+        if f is None:
+            def f(data):
+                if isinstance(data, Distribution):
+                    return {f_out: data.mean}
+                else:
+                    return {f_out: data}
+
+        embedded_data = self._embed(encoder, f)
+        self.embedded_data = {k: v.to(device) for k, v in embedded_data.items()}
+
+    def _embed(self, encoder, f):
+        encoder.eval()
+        device = list(encoder.parameters())[0].device
+
+        data_loader = torch.utils.data.DataLoader(
+            self.dataset,
+            batch_size=self.BLOCK_SIZE,
+            shuffle=False)
+
+        embedded_data = None
+        with torch.no_grad():
+            for batch in data_loader:
+                for k in self.f_in:
+                    batch[k] = batch[k].to(device)
+                z = f(encoder(batch[self.f_in]))
+                if embedded_data is None:
+                    embedded_data = {k: [] for k in z}
+                for k, v in z.items():
+                    embedded_data[k].append(v)
+
+        return {k: torch.cat(v, 0) for k, v in embedded_data.items()}
+
+    def __getitem__(self, index):
+        data = {k: self.embedded_data[k][index] for k in self.embedded_data}
+        data.update(self.dataset[index])
+        return data
+
+    def __len__(self):
+        return len(self.dataset)

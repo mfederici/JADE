@@ -1,0 +1,20 @@
+- name: test_linear_accuracy_swap/0.1
+  class: LinearAccuracyEvaluation
+  params:
+    train_on: coloured_MNIST_train_swap
+    test_on: coloured_MNIST_valid_env_0.1_swap
+    model: encoder
+
+- name: test_linear_accuracy_swap/0.2
+  class: LinearAccuracyEvaluation
+  params:
+    train_on: coloured_MNIST_train_swap
+    test_on: coloured_MNIST_valid_env_0.2_swap
+    model: encoder
+
+- name: test_linear_accuracy_swap/0.9
+  class: LinearAccuracyEvaluation
+  params:
+    train_on: coloured_MNIST_train_swap
+    test_on: coloured_MNIST_valid_env_0.9_swap
+    model: encoder

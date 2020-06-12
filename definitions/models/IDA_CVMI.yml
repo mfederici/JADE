@@ -1,22 +1,23 @@
-- name: IDA_v4
-  class: IDAV4Trainer
+- name: IDA_CVMI
+  class: IDACVMITrainer
   params:
     # size of the training batch
     batch_size: 64
 
     # Number of latent dimensions
+    x_dim: 392
     z_dim: 64
+    f_dim: 64
     n_classes: 2
     n_env: 2
-    f_dim: 64
 
     # Optimization parameters
     optimizer_name: 'Adam'
-    encoder_lr: 0.001
+    encoder_lr: 0.0001
 
     # Parameters for the beta-scheduler
-    beta_start_value: 0.0001
-    beta_end_value: 1
-    beta_n_iterations: 100000
+    beta_start_value: 0.00001
+    beta_end_value: 0.99999
+    beta_n_iterations: 10000
     beta_start_iteration: 10000
 

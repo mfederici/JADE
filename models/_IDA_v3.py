@@ -8,26 +8,9 @@ from pyro.distributions import MixtureOfDiagNormals
 from pyro.nn import AutoRegressiveNN
 from pyro.distributions.transforms import AffineAutoregressive
 from torch.distributions import TransformedDistribution
+from utils.modules import MIEstimator
 
-# Auxiliary network for mutual information estimation
-class MIEstimator(nn.Module):
-    def __init__(self, size1, size2):
-        super(MIEstimator, self).__init__()
 
-        # Vanilla MLP
-        self.net = nn.Sequential(
-            nn.Linear(size1 + size2, 1024),
-            nn.ReLU(True),
-            nn.Linear(1024, 1024),
-            nn.ReLU(True),
-            nn.Linear(1024, 1),
-        )
-
-    # Gradient for JSD mutual information estimation and EB-based estimation
-    def forward(self, x1, x2):
-        pos = self.net(torch.cat([x1, x2], 1))  # Positive Samples
-        neg = self.net(torch.cat([torch.roll(x1, 1, 0), x2], 1))
-        return -softplus(-pos).mean() - softplus(neg).mean(), pos.mean() - neg.exp().mean() + 1
 
 class MixturePrior(nn.Module):
     def __init__(self, z_dim, k=10):
@@ -55,9 +38,9 @@ class TransformedPrior(nn.Module):
         factor_dist = Independent(Normal(self.mu, sigma), 1)
         return TransformedDistribution(factor_dist, self.transform)
 
-##################
-# IDA_32 Trainer #
-##################
+###################
+# IDA_VMI Trainer #
+###################
 class IDAV3Trainer(RepresentationTrainer):
     def __init__(self, z_dim, optimizer_name='Adam', encoder_lr=1e-4,
                  n_classes=2, n_env=2, f_dim=64, beta_start_value=1e-3, beta_end_value=1,
@@ -83,8 +66,7 @@ class IDAV3Trainer(RepresentationTrainer):
         self.mi_estimator = MIEstimator(f_dim, z_dim+n_classes+n_env)
 
         # Defining the prior distribution as a factorized normal distribution
-        self.prior = TransformedPrior(z_dim=z_dim)
-
+        self.prior = MixturePrior(z_dim=z_dim, k=1)
 
         # Definition of the scheduler to update the value of the regularization coefficient beta over time
         self.beta_scheduler = ExponentialScheduler(start_value=beta_start_value, end_value=beta_end_value,

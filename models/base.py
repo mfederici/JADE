@@ -4,17 +4,9 @@ import torch.nn as nn
 import numpy as np
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-
-from utils.modules import Encoder
-
-import torch.optim as optimizer_module
-
-
-# utility function to initialize an optimizer from its name
-def init_optimizer(optimizer_name, params):
-    assert hasattr(optimizer_module, optimizer_name)
-    OptimizerClass = getattr(optimizer_module, optimizer_name)
-    return OptimizerClass(params)
+import architectures as arch_module
+import torch.optim as optim_module
+from utils.modules import StochasticLinear, Flatten
 
 
 ##########################
@@ -32,6 +24,18 @@ class Trainer(nn.Module):
         self.log_loss_every = log_loss_every
 
         self.loss_items = {}
+
+    @staticmethod
+    def instantiate_architecture(arch_desc, **arch_params):
+        if 'params' in arch_desc:
+            arch_params.update(arch_desc['params'])
+        return getattr(arch_module, arch_desc['class'])(**arch_params)
+
+    @staticmethod
+    def instantiate_optimizer(opt_desc, **opt_params):
+        if 'params' in opt_desc:
+            opt_params.update(opt_desc['params'])
+        return getattr(optim_module, opt_desc['class'])(**opt_params)
 
     def get_device(self):
         return list(self.parameters())[0].device
@@ -119,25 +123,26 @@ class Trainer(nn.Module):
 ##########################
 
 # Generic class to train an model with a (stochastic) neural network encoder
-
 class RepresentationTrainer(Trainer):
-    def __init__(self, z_dim, optimizer_name='Adam', encoder_lr=1e-4, dist='normal', **params):
+    def __init__(self, z_dim, encoder, optim, **params):
         super(RepresentationTrainer, self).__init__(**params)
 
         self.z_dim = z_dim
 
-        # Intialization of the encoder
-        self.encoder = Encoder(z_dim, dist=dist)
+        # Instantiating the encoder
+        self.encoder = self.instantiate_architecture(encoder, z_dim=z_dim)
 
-        self.opt = init_optimizer(optimizer_name, [
-            {'params': self.encoder.parameters(), 'lr': encoder_lr},
-        ])
+        # Instantiating the optimizer
+        self.opt = self.instantiate_optimizer(optim, params=self.encoder.parameters())
 
     def _get_items_to_store(self):
         items_to_store = super(RepresentationTrainer, self)._get_items_to_store()
 
         # store the encoder and optimizer parameters
-        items_to_store = items_to_store.union({'encoder', 'opt'})
+        items_to_store = items_to_store.union({
+            'encoder',
+            'opt'}
+        )
 
         return items_to_store
 

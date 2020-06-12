@@ -59,7 +59,7 @@ class ColouredMNIST(Dataset):
 
         self.environments = environments
         self.dataset = ConcatDataset(dataset_splits)
-        self.envs = torch.cat(envs, 0)
+        self.envs = torch.cat(envs, 0).long()
         self.label_flip_mask = torch.cat(label_flip_masks, 0)
         self.color_flip_mask = torch.cat(color_flip_masks, 0)
 
@@ -70,13 +70,12 @@ class ColouredMNIST(Dataset):
         digit = int(label > 4)
         y = (digit * (1 - self.label_flip_mask[index]) +
                  (1 - digit) * (self.label_flip_mask[index]))
-        color = (label * (1 - self.color_flip_mask[index]) +
-                 (1 - label) * (self.color_flip_mask[index]))
+        color = (y * (1 - self.color_flip_mask[index]) +
+                 (1 - y) * (self.color_flip_mask[index]))
 
         if color == 1:
             im = torch.roll(im, 1, 0)
-        return {'x': im, 'y': y, 'e': self.envs[index],
-                'c': color, 'd': float(digit)}
+        return {'x': im, 'y': y.long(), 'e': self.envs[index], 'c': color, 'd': torch.LongTensor([digit]).squeeze()}
 
     def __len__(self):
         return len(self.dataset)
