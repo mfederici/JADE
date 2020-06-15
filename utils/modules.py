@@ -34,7 +34,7 @@ class OneHot(nn.Module):
         self.eye = nn.Parameter(torch.eye(n_values), requires_grad=False)
 
     def forward(self, input):
-        assert isinstance(input, torch.LongTensor)
+        assert isinstance(input, torch.LongTensor) or isinstance(input, torch.cuda.LongTensor)
         return self.eye[input]
 
 
