@@ -1,0 +1,14 @@
+test_accuracy_01:
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: valid_env_01
+
+test_accuracy_02:
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: valid_env_02
+
+test_accuracy_09:
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: valid_env_09

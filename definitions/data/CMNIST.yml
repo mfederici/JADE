@@ -14,7 +14,7 @@ train:
     - class: MoveToCache
 
 
-valid_env_0.1:
+valid_env_01:
   class: ColouredMNIST
   params:
     root: datasets/MNIST
@@ -26,7 +26,7 @@ valid_env_0.1:
   transforms:
     - class: MoveToCache
 
-valid_env_0.2:
+valid_env_02:
   class: ColouredMNIST
   params:
     root: datasets/MNIST
@@ -38,7 +38,7 @@ valid_env_0.2:
   transforms:
     - class: MoveToCache
 
-valid_env_0.9:
+valid_env_09:
   class: ColouredMNIST
   params:
     root: datasets/MNIST

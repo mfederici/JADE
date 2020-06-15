@@ -1,0 +1,71 @@
+command:
+- ${env}
+- ${interpreter}
+- ${program}
+- --data_file=definitions/data/CMNIST.yml
+- --model_file=definitions/models/IDA_ACE.yml
+- --eval_file=definitions/eval/CMNIST_valid.yml
+method: random
+metric:
+  goal: maximize
+  name: test_accuracy_09
+parameters:
+  model.params.adv_optim.class:
+    values:
+    - Adam
+    - RMSprop
+  model.params.adv_optim.params.lr:
+    values:
+    - 0.00002
+    - 0.0001
+    - 0.0005
+  model.params.batch_size:
+    values:
+    - 64
+    - 128
+    - 256
+    - 512
+  model.params.beta_scheduler.class:
+    values:
+    - LinearScheduler
+    - ExponentialScheduler
+  model.params.beta_scheduler.params.end_value:
+    values:
+    - 0.999
+    - 0.99999
+    - 0.9999999
+  model.params.beta_scheduler.params.n_iterations:
+    values:
+    - 10000
+    - 20000
+    - 40000
+  model.params.beta_scheduler.params.start_iteration:
+    values:
+    - 10000
+    - 20000
+    - 40000
+  model.params.encoder.params.dist:
+    values:
+    - Delta
+    - Normal
+  model.params.n_adv_steps:
+    values:
+    - 5
+    - 20
+    - 50
+    - 100
+  model.params.optim.class:
+    values:
+    - Adam
+    - RMSprop
+  model.params.optim.params.lr:
+    values:
+    - 0.00002
+    - 0.0001
+    - 0.0005
+  model.params.z_dim:
+    values:
+    - 2
+    - 64
+    - 256
+program: train.py

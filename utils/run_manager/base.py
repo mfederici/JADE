@@ -17,31 +17,23 @@ def load_desc_file(desc_filename):
 
 
 class RunManager:
-    def __init__(self, run_id, run_name, experiments_dir, desc=None, verbose=False):
+    def __init__(self, run_id, run_name, config, run_dir, resume, verbose=False):
 
         self.verbose = verbose
         self.run_name = run_name
-
-        if not self.run_exists(run_id):
-            self.model_desc = load_desc_file(desc['model_file'])
-            self.data_desc = load_desc_file(desc['data_file'])
-            self.eval_desc = load_desc_file(desc['eval_file'])
-
-            self.config = {
-                'model': self.model_desc,
-                'data': self.data_desc,
-                'eval': self.eval_desc
-            }
-            self.resume = False
-
-        else:
-            self.resume = True
-            self.config = self.resume_run(run_id)
-
-        self.experiment_dir = os.path.join(experiments_dir, run_id)
-        os.makedirs(self.experiment_dir, exist_ok=True)
-
         self.run_id = run_id
+        self.config = config
+        self.run_dir = run_dir
+        self.resume = resume
+        # os.makedirs(self.run_dir, exist_ok=True)
+
+    @ staticmethod
+    def load_config(desc):
+        return {
+            'model': load_desc_file(desc['model_file']),
+            'data': load_desc_file(desc['data_file']),
+            'eval': load_desc_file(desc['eval_file'])
+        }
 
     def resume_run(self, run_id):
         raise NotImplementedError()
@@ -74,16 +66,16 @@ class RunManager:
         raise NotImplemented()
 
     def make_instances(self):
-        dataset_manager = DatasetManager(descriptions=self.data_desc,
+        dataset_manager = DatasetManager(descriptions=self.config['data'],
                                          modules=[torchvision_dataset_module,
                                                   dataset_module,
                                                   dataset_transform_module])
         train_set = dataset_manager['train']
-        trainer = self._make_instance(class_name=self.model_desc['class'],
+        trainer = self._make_instance(class_name=self.config['model']['class'],
                                       modules=[model_module],
                                       writer=self,
                                       dataset=train_set,
-                                      **self.model_desc['params'])
+                                      **self.config['model']['params'])
 
         # Load the evaluators
         evaluators = {name:
@@ -93,7 +85,7 @@ class RunManager:
                 datasets=dataset_manager,
                 trainer=trainer,
                 **desc['params'])
-            for name, desc in self.eval_desc.items()}
+            for name, desc in self.config['eval'].items()}
 
         # Resume the training if specified
         if self.resume:

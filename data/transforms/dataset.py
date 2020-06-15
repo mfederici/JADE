@@ -1,6 +1,8 @@
 import torch
 import numpy as np
 
+import threading
+
 import torchvision.transforms as transform_module
 import data.transforms.augmentations as augmentation_module
 from torch.utils.data import Dataset
@@ -78,15 +80,28 @@ class MoveToCache(DatasetTransform):
         for name in self.cache:
             self.cache[name] = self.cache[name].to(device)
 
+        self.lock = threading.Lock()
+        self.all_cached = False
+
     def __getitem__(self, index):
+        # Tread safety for peace of mind
         if self.is_cached[index]:
-            return {name: element[index] for name, element in self.cache.items()}
+            if not self.all_cached:
+                self.lock.acquire()
+                values = {name: element[index] for name, element in self.cache.items()}
+                self.lock.release()
+            else:  # Once everything is in the cache there is no problem with thread safety
+                values = {name: element[index] for name, element in self.cache.items()}
         else:
             values = self.dataset[index]
+            self.lock.acquire()
             for name, value in values.items():
                 self.cache[name][index] = value.to(self.device)
             self.is_cached[index] = True
-            return values
+            if self.is_cached.long().sum() == len(self.is_cached):
+                self.all_cached = True
+            self.lock.release()
+        return values
 
 
 class PairByValue(Apply):

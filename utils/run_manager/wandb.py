@@ -2,9 +2,39 @@ import wandb
 import os
 from utils.run_manager.base import RunManager
 
+SPLIT_TOKEN = '.'
+
+
+def _flatten_config(config, prefix, flat_config):
+    for key, value in config.items():
+        flat_key = SPLIT_TOKEN.join([prefix, key] if prefix else [key])
+        if isinstance(value, dict):
+            _flatten_config(value, flat_key, flat_config)
+        else:
+            flat_config[flat_key] = value
+
+
+def flatten_config(config):
+    flat_config = {}
+    _flatten_config(config, None, flat_config)
+    return flat_config
+
+
+def inflate_config(flat_config):
+    config = {}
+    for key, value in flat_config.items():
+        sub_config = config
+        keys = key.split(SPLIT_TOKEN)
+        for sub_key in keys[:-1]:
+            if not (sub_key in sub_config):
+                sub_config[sub_key] = dict()
+            sub_config = sub_config[sub_key]
+        sub_config[keys[-1]] = value
+    return config
+
 
 class WANDBRunManager(RunManager):
-    def __init__(self, upload_checkpoints=False, **params):
+    def __init__(self, desc, experiments_root, run_name=None, run_id=None, verbose=False, upload_checkpoints=True, **params):
         if 'WANDB_PROJECT' in os.environ:
             self.PROJECT = os.environ['WANDB_PROJECT']
         else:
@@ -18,15 +48,26 @@ class WANDBRunManager(RunManager):
 
         self.api = wandb.Api()
         self.upload_checkpoints = upload_checkpoints
-        run_id = wandb.util.generate_id()
 
-        super(WANDBRunManager, self).__init__(run_id=run_id, **params)
+        resume = self.run_exists(run_id)
+        if resume:
+            config = self.resume_run(run_id)
+        else:
+            config = self.load_config(desc)
 
-        wandb.init(project=self.PROJECT, name=self.run_name, config=self.config, dir=self.experiment_dir,
-                   id=self.run_id, resume=not (self.resume is None))
+        flat_config = flatten_config(config) # wandb can't process nested dictionaries
 
-        self.config = wandb.config
-        self.run_dir = wandb.run.dir
+        wandb.init(name=run_name, project=self.PROJECT, config=flat_config, dir=experiments_root,
+                   resume=resume, id=(run_id if resume else None))
+
+        flat_config = dict(wandb.config)
+        config = inflate_config(flat_config)
+
+        run_id = wandb.run.id
+        run_dir = wandb.run.dir
+
+        super(WANDBRunManager, self).__init__(run_name=run_name, run_id=run_id, run_dir=run_dir,
+                                              config=config, resume=resume, verbose=verbose, **params)
 
     def run_exists(self, run_id):
         return run_id in [run.id for run in self.api.runs('%s/%s' % (self.USER, self.PROJECT))]
