@@ -50,7 +50,7 @@ class AccuracyEvaluation(Evaluation):
                 if isinstance(y, Distribution):
                     y = y.logits
 
-                correct += (torch.argmax(y, 1) == batch['y'].long()).sum().item()
+                correct += (torch.argmax(y, 1) == batch['y'].to(device).long()).sum().item()
 
 
         return {
