@@ -65,6 +65,8 @@ np.random.seed(seed)
 upload_checkpoints = True
 verbose = True
 
+torch.multiprocessing.set_start_method('spawn')
+
 run_manager = WANDBRunManager(run_name=run_name, desc={'data_file': data_file,
                                                        'model_file': model_file,
                                                        'eval_file': eval_file},
