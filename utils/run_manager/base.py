@@ -17,7 +17,7 @@ def load_desc_file(desc_filename):
 
 
 class RunManager:
-    def __init__(self, run_id, run_name, config, run_dir, resume, verbose=False):
+    def __init__(self, run_id, run_name, config, run_dir, resume, num_workers=0, verbose=False):
 
         self.verbose = verbose
         self.run_name = run_name
@@ -25,6 +25,7 @@ class RunManager:
         self.config = config
         self.run_dir = run_dir
         self.resume = resume
+        self.num_workers = num_workers
         # os.makedirs(self.run_dir, exist_ok=True)
 
     @ staticmethod
@@ -75,6 +76,7 @@ class RunManager:
                                       modules=[model_module],
                                       writer=self,
                                       dataset=train_set,
+                                      num_workers=self.num_workers,
                                       **self.config['model']['params'])
 
         # Load the evaluators
@@ -91,7 +93,7 @@ class RunManager:
         if self.resume:
             trainer = self.load_last_model()
 
-        return train_set, trainer, evaluators
+        return trainer, evaluators
 
     def log(self, name, value, entry_type, iteration):
         raise NotImplementedError()

@@ -94,9 +94,9 @@ class WANDBRunManager(RunManager):
         return trainer
 
     def make_instances(self):
-        train_set, trainer, evaluators = super(WANDBRunManager, self).make_instances()
+        trainer, evaluators = super(WANDBRunManager, self).make_instances()
         # wandb.watch(trainer)
-        return train_set, trainer, evaluators
+        return trainer, evaluators
 
     def log(self, name, value, entry_type, iteration):
         if entry_type == 'scalar':

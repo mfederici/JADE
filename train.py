@@ -68,10 +68,11 @@ verbose = True
 run_manager = WANDBRunManager(run_name=run_name, desc={'data_file': data_file,
                                                        'model_file': model_file,
                                                        'eval_file': eval_file},
+                              num_workers=num_workers,
                               experiments_root=experiments_root, verbose=verbose, upload_checkpoints=upload_checkpoints)
 experiment_dir = run_manager.run_dir
 
-train_set, trainer, evaluators = run_manager.make_instances()
+trainer, evaluators = run_manager.make_instances()
 # Moving the models to the specified device
 trainer.to(device)
 

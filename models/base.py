@@ -14,12 +14,11 @@ from utils.modules import StochasticLinear, Flatten
 ##########################
 
 class Trainer(nn.Module):
-    def __init__(self, dataset, batch_size, log_loss_every=10, writer=None):
+    def __init__(self, dataset, batch_size, log_loss_every=10, num_workers=0, writer=None):
         super(Trainer, self).__init__()
         self.iterations = 0
 
-        self.dataset = dataset
-        self.train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        self.train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
         self.writer = writer
         self.log_loss_every = log_loss_every
 
