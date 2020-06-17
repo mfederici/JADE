@@ -25,8 +25,8 @@ parser.add_argument("--device", type=str, default="cuda",
 parser.add_argument("--num-workers", type=int, default=1,
                     help="Number of CPU threads used during the data loading procedure.")
 # Change checkpoint frequency
-parser.add_argument("--checkpoint-every", type=int, default=100, help="Frequency of model checkpointing (in epochs).")
-parser.add_argument("--backup-every", type=int, default=10, help="Frequency of model backups (in epochs).")
+parser.add_argument("--checkpoint-every", type=int, default=500, help="Frequency of model checkpointing (in epochs).")
+parser.add_argument("--backup-every", type=int, default=100, help="Frequency of model backups (in epochs).")
 parser.add_argument("--epochs", type=int, default=1000, help="Total number of training epochs")
 parser.add_argument("--seed", type=int, default=42, help="Random seed for the experiment")
 
@@ -93,3 +93,6 @@ for epoch in tqdm(range(epochs)):
 
     # Epoch train
     trainer.train_epoch()
+
+# Save the model at the end of the run
+run_manager.make_backup(trainer)
