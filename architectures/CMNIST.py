@@ -1,6 +1,5 @@
 import torch
 import torch.nn as nn
-import numpy as np
 from utils.modules import Flatten, StochasticLinear, StochasticLinear2D, Reshape, OneHot
 
 CMNIST_SIZE = 14**2*2
@@ -40,6 +39,15 @@ class SimpleClassifier(nn.Module):
     def forward(self, z):
         return self.net(z)
 
+
+# Constant Model for q(y|z)
+class ConstantClassifier(nn.Module):
+    def __init__(self, z_dim):
+        super(ConstantClassifier, self).__init__()
+        self.z_dim = z_dim
+
+    def forward(self, z):
+        return torch.distributions.Categorical(logits=z[:, :CMNIST_N_CLASSES])
 
 # Model for q(e|z)
 class SimpleEnvClassifier(nn.Module):
