@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torch.nn.utils import spectral_norm
 from utils.modules import Flatten, StochasticLinear, StochasticLinear2D, Reshape, OneHot
 
 CMNIST_SIZE = 14**2*2
@@ -47,7 +48,8 @@ class ConstantClassifier(nn.Module):
         self.z_dim = z_dim
 
     def forward(self, z):
-        return torch.distributions.Categorical(logits=z[:, :CMNIST_N_CLASSES])
+        params = z[:, :CMNIST_N_CLASSES]
+        return torch.distributions.Categorical(logits=params)
 
 # Model for q(e|z)
 class SimpleEnvClassifier(nn.Module):
@@ -67,21 +69,31 @@ class SimpleEnvClassifier(nn.Module):
 
 # Model for q(e|zy)
 class SimpleConditionalEnvClassifier(nn.Module):
-    def __init__(self, z_dim):
+    def __init__(self, z_dim, spectral_norm=False):
         super(SimpleConditionalEnvClassifier, self).__init__()
-        self.net = nn.Sequential(
-            nn.Linear(z_dim+CMNIST_N_CLASSES, 1024),
-            nn.ReLU(True),
-            nn.Linear(1024, 1024),
-            nn.ReLU(True),
-            StochasticLinear(1024, CMNIST_N_ENVS, 'Categorical')
-        )
+
+        if not spectral_norm:
+            self.net = nn.Sequential(
+                nn.Linear(z_dim+CMNIST_N_CLASSES, 1024),
+                nn.ReLU(True),
+                nn.Linear(1024, 1024),
+                nn.ReLU(True),
+                StochasticLinear(1024, CMNIST_N_ENVS, 'Categorical')
+            )
+        else:
+            self.net = nn.Sequential(
+                spectral_norm(nn.Linear(z_dim + CMNIST_N_CLASSES, 1024)),
+                nn.ReLU(True),
+                spectral_norm(nn.Linear(1024, 1024)),
+                nn.ReLU(True),
+                spectral_norm(nn.Linear(1024, CMNIST_N_ENVS))
+            )
+
         self.long2onehot = OneHot(CMNIST_N_CLASSES)
 
     def forward(self, z, y):
         zy = torch.cat([z, self.long2onehot(y)], 1)
         return self.net(zy)
-
 
 # Model for q(x|z)
 class SimpleDecoder(nn.Module):

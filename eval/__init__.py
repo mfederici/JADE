@@ -1,1 +1,2 @@
 from eval.accuracy import LinearAccuracyEvaluation, AccuracyEvaluation
+from eval.representation import RepresentationDensityVisualization
