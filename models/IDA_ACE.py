@@ -109,7 +109,7 @@ class IDAACETrainer(RepresentationTrainer):
         else:
             w_e_given_zy = self.env_classifier(z=ScaleGrad.apply(z, -beta), y=y)
             one_hot_e = self.env_classifier.long2onehot(y)
-            e_rec_loss = one_hot_e*w_e_given_zy - (1-one_hot_e)*w_e_given_zy
+            e_rec_loss = (one_hot_e*w_e_given_zy - (1-one_hot_e)*w_e_given_zy).sum(1).mean()
 
             self._add_loss_item('loss/W_e_yz', e_rec_loss.item())
 
@@ -142,7 +142,7 @@ class IDAACETrainer(RepresentationTrainer):
         else:
             w_e_given_zy = self.env_classifier(z=z.detach(), y=y)
             one_hot_e = self.env_classifier.long2onehot(y)
-            e_rec_loss = one_hot_e*w_e_given_zy - (1-one_hot_e)*w_e_given_zy
+            e_rec_loss = (one_hot_e*w_e_given_zy - (1-one_hot_e)*w_e_given_zy).sum(1).mean()
 
         #self._add_loss_item('loss/CE_y_z', y_rec_loss.item())
 

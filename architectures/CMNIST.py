@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from torch.nn.utils import spectral_norm
+from torch.nn.utils import spectral_norm as sn
 from utils.modules import Flatten, StochasticLinear, StochasticLinear2D, Reshape, OneHot
 
 CMNIST_SIZE = 14**2*2
@@ -82,11 +82,11 @@ class SimpleConditionalEnvClassifier(nn.Module):
             )
         else:
             self.net = nn.Sequential(
-                spectral_norm(nn.Linear(z_dim + CMNIST_N_CLASSES, 1024)),
+                sn(nn.Linear(z_dim + CMNIST_N_CLASSES, 1024)),
                 nn.ReLU(True),
-                spectral_norm(nn.Linear(1024, 1024)),
+                sn(nn.Linear(1024, 1024)),
                 nn.ReLU(True),
-                spectral_norm(nn.Linear(1024, CMNIST_N_ENVS))
+                sn(nn.Linear(1024, CMNIST_N_ENVS))
             )
 
         self.long2onehot = OneHot(CMNIST_N_CLASSES)
