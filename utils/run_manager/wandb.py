@@ -1,6 +1,7 @@
 import wandb
 import os
 from utils.run_manager.base import RunManager
+import matplotlib.pyplot as plt
 
 SPLIT_TOKEN = '.'
 
@@ -103,6 +104,7 @@ class WANDBRunManager(RunManager):
             wandb.log({name: value}, step=iteration)
         elif entry_type == 'figure':
             wandb.log({name: wandb.Image(value)}, step=iteration)
+            plt.close(value)
         else:
             raise Exception('Type %s is not recognized by WandBLogWriter' % entry_type)
 
