@@ -19,3 +19,4 @@ train_representation:
   params:
     dataset: train
     downsample: 50000
+    evaluate_every: 10
