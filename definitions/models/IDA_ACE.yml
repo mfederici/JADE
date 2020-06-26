@@ -15,7 +15,7 @@ params:
 
   # Label classifier
   classifier:
-    class: 'ConstantClassifier'
+    class: 'SimpleClassifier'
 
   # Environment Classifier
   env_classifier:
@@ -38,10 +38,10 @@ params:
       lr: 0.0005
 
   # Number of adversarial steps for each optimizer step
-  n_adv_steps: 20
+  n_adv_steps: 50
 
   # Size of the training batch
-  batch_size: 64
+  batch_size: 256
 
   # Parameters for the beta-scheduler
   beta_scheduler:
