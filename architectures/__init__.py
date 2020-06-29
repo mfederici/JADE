@@ -1,2 +1,2 @@
 from architectures.CMNIST import SimpleEncoder, SimpleClassifier, SimpleDecoder, SimpleConditionalEnvClassifier, \
-    SimpleEnvClassifier, ConstantClassifier
+    SimpleEnvClassifier, ConstantClassifier, SimpleMIEstimator, SimpleFeatureExtractor

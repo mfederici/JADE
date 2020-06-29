@@ -53,7 +53,7 @@ class RunManager:
 
         if not class_found:
             raise Exception('No description for %s has been found in %s' % (
-                class_name, str([module.__name__ for module in self.modules])))
+                class_name, str([module.__name__ for module in modules])))
 
         if self.verbose:
             print('Instantiating class %s from %s' %

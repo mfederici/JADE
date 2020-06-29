@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 from torch.nn.utils import spectral_norm as sn
+from torch.nn.functional import softplus
 from utils.modules import Flatten, StochasticLinear, StochasticLinear2D, Reshape, OneHot
 
 CMNIST_SIZE = 14**2*2
@@ -28,6 +29,23 @@ class SimpleEncoder(nn.Module):
     def forward(self, x):
         return self.net(x)
 
+
+# Model for f(x)
+class SimpleFeatureExtractor(nn.Module):
+    def __init__(self, f_dim):
+        super(SimpleFeatureExtractor, self).__init__()
+
+        self.net = nn.Sequential(
+            Flatten(),
+            nn.Linear(CMNIST_SIZE, 1024),
+            nn.ReLU(True),
+            nn.Linear(1024, 1024),
+            nn.ReLU(True),
+            nn.Linear(1024, f_dim)
+        )
+
+    def forward(self, x):
+        return self.net(x)
 
 # Model for q(y|z)
 class SimpleClassifier(nn.Module):
@@ -115,3 +133,24 @@ class SimpleDecoder(nn.Module):
 
     def forward(self, input):
         return self.net(input)
+
+
+# Auxiliary network for mutual information estimation
+class SimpleMIEstimator(nn.Module):
+    def __init__(self, size1, size2):
+        super(SimpleMIEstimator, self).__init__()
+
+        # Vanilla MLP
+        self.net = nn.Sequential(
+            nn.Linear(size1 + size2, 1024),
+            nn.ReLU(True),
+            nn.Linear(1024, 1024),
+            nn.ReLU(True),
+            nn.Linear(1024, 1),
+        )
+
+    # Gradient for JSD mutual information estimation and EB-based estimation
+    def forward(self, x1, x2):
+        pos = self.net(torch.cat([x1, x2], 1))  # Positive Samples
+        neg = self.net(torch.cat([torch.roll(x1, 1, 0), x2], 1))
+        return -softplus(-pos).mean() - softplus(neg).mean(), pos.mean() - neg.exp().mean() + 1

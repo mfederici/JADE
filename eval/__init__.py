@@ -1,2 +1,2 @@
-from eval.accuracy import LinearAccuracyEvaluation, AccuracyEvaluation
+from eval.accuracy import LinearAccuracyEvaluation, AccuracyEvaluation, CrossEntropyEvaluation
 from eval.representation import RepresentationDensityVisualization

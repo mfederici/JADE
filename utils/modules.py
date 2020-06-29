@@ -98,23 +98,3 @@ class StochasticLinear2D(StochasticLinear):
         return dist
 
 
-# Auxiliary network for mutual information estimation
-# TODO update to receive the network as an input
-# class MIEstimator(nn.Module):
-#     def __init__(self, size1, size2):
-#         super(MIEstimator, self).__init__()
-#
-#         # Vanilla MLP
-#         self.net = nn.Sequential(
-#             nn.Linear(size1 + size2, 1024),
-#             nn.ReLU(True),
-#             nn.Linear(1024, 1024),
-#             nn.ReLU(True),
-#             nn.Linear(1024, 1),
-#         )
-#
-#     # Gradient for JSD mutual information estimation and EB-based estimation
-#     def forward(self, x1, x2):
-#         pos = self.net(torch.cat([x1, x2], 1))  # Positive Samples
-#         neg = self.net(torch.cat([torch.roll(x1, 1, 0), x2], 1))
-#         return -softplus(-pos).mean() - softplus(neg).mean(), pos.mean() - neg.exp().mean() + 1
