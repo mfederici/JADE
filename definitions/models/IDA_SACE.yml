@@ -44,9 +44,9 @@ params:
 
   # Parameters for the beta-scheduler
   beta_scheduler:
-    class: ExponentialScheduler
+    class: LinearScheduler
     params:
-      start_value: 0.00001
-      end_value: 0.9999999
+      start_value: 0.9999
+      end_value: 0.9999
       n_iterations: 20000
       start_iteration: 10000
