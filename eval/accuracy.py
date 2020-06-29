@@ -1,6 +1,7 @@
 from eval.base import Evaluation
 from eval.utils import evaluate
 import torch
+import numpy as np
 from torch.distributions import Distribution
 
 
@@ -59,3 +60,40 @@ class AccuracyEvaluation(Evaluation):
         }
 
 
+class CrossEntropyEvaluation(Evaluation):
+    def __init__(self, evaluate_on, encoder='encoder', classifier='classifier', batch_size=256, sample=True, **params):
+        super(CrossEntropyEvaluation, self).__init__(**params)
+        self.dataset = self.datasets[evaluate_on]
+        self.encoder = getattr(self.trainer, encoder)
+        self.classifier = getattr(self.trainer, classifier)
+        self.batch_size = batch_size
+        self.sample = sample
+
+    def evaluate(self):
+        data_loader = torch.utils.data.DataLoader(
+            self.dataset,
+            batch_size=self.batch_size,
+            shuffle=False)
+        device = list(self.encoder.parameters())[0].device
+        ce = []
+        self.encoder.eval()
+        self.classifier.eval()
+        with torch.no_grad():
+            for batch in data_loader:
+                y = batch['y'].to(device)
+                z = self.encoder(batch['x'].to(device))
+
+                if isinstance(z, Distribution):
+                    if self.sample:
+                        z = z.sample()
+                    else:
+                        z = z.mean
+
+                y_pred = self.classifier(z)
+
+                ce.append(-y_pred.log_prob(y).mean().item())
+
+        return {
+            'type': 'scalar',
+            'value': np.mean(ce)
+        }

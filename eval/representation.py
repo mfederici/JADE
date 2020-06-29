@@ -61,23 +61,23 @@ class RepresentationDensityVisualization(Evaluation):
         for name in splits:
             splits[name] = splits[name].to('cpu').numpy()
 
-        fig, ax = plt.subplots(2, 2, figsize=(6, 6))
+        fig, ax = plt.subplots(2, 2, figsize=(6, 6), sharex=True, sharey=True)
 
         sns.kdeplot(splits['00'][:, 0], splits['00'][:, 1], ax=ax[0, 0], cmap="Reds", shade=True, shade_lowest=False)
         sns.kdeplot(splits['01'][:, 0], splits['01'][:, 1], ax=ax[0, 1], cmap="Reds", shade=True, shade_lowest=False)
         sns.kdeplot(splits['10'][:, 0], splits['10'][:, 1], ax=ax[1, 0], cmap="Blues", shade=True, shade_lowest=False)
         sns.kdeplot(splits['11'][:, 0], splits['11'][:, 1], ax=ax[1, 1], cmap="Blues", shade=True, shade_lowest=False)
 
-        for j in range(2):
-            x_min = min(ax[j, 0].get_xlim()[0], ax[j, 1].get_xlim()[0])
-            x_max = max(ax[j, 0].get_xlim()[1], ax[j, 1].get_xlim()[1])
-            y_min = min(ax[j, 0].get_ylim()[0], ax[j, 1].get_ylim()[0])
-            y_max = max(ax[j, 0].get_ylim()[1], ax[j, 1].get_ylim()[1])
-
-            ax[j, 0].set_xlim(x_min, x_max)
-            ax[j, 1].set_xlim(x_min, x_max)
-            ax[j, 0].set_ylim(y_min, y_max)
-            ax[j, 1].set_ylim(y_min, y_max)
+        # for j in range(2):
+        #     x_min = min(ax[j, 0].get_xlim()[0], ax[j, 1].get_xlim()[0])
+        #     x_max = max(ax[j, 0].get_xlim()[1], ax[j, 1].get_xlim()[1])
+        #     y_min = min(ax[j, 0].get_ylim()[0], ax[j, 1].get_ylim()[0])
+        #     y_max = max(ax[j, 0].get_ylim()[1], ax[j, 1].get_ylim()[1])
+        #
+        #     ax[j, 0].set_xlim(x_min, x_max)
+        #     ax[j, 1].set_xlim(x_min, x_max)
+        #     ax[j, 0].set_ylim(y_min, y_max)
+        #     ax[j, 1].set_ylim(y_min, y_max)
 
         ax[0, 0].set_title('p(z|e=0,y=0)')
         ax[0, 1].set_title('p(z|e=1,y=0)')

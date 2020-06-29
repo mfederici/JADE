@@ -13,6 +13,21 @@ test_accuracy_09:
   params:
     evaluate_on: valid_env_09
 
+test_ce_01:
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: valid_env_01
+
+test_ce_02:
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: valid_env_02
+
+test_ce_09:
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: valid_env_09
+
 
 train_representation:
   class: RepresentationDensityVisualization
