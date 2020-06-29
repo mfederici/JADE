@@ -30,14 +30,11 @@ params:
   optim:
     class: 'RMSprop'
     params:
-      lr: 0.0005
+      lr: 0.0001
 
   # Non alternating procedure, both encoder and distriminator are trained at the same time using a
   # gradient reversal layer
   adv_train_type: simultaneous
-
-  # Number of adversarial steps for each optimizer step
-  n_adv_steps: 50
 
   # Size of the training batch
   batch_size: 256
