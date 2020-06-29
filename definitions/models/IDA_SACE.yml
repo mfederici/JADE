@@ -33,7 +33,7 @@ params:
 
   # Non alternating procedure, both encoder and distriminator are trained at the same time using a
   # gradient reversal layer
-  adv_train_type: symultaneous
+  adv_train_type: simultaneous
 
   # Number of adversarial steps for each optimizer step
   n_adv_steps: 50
