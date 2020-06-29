@@ -8,22 +8,26 @@ CMNIST_SHAPE = [2,14,14]
 CMNIST_N_CLASSES = 2
 CMNIST_N_ENVS = 2
 
+
 # Model for p(z|x)
 class SimpleEncoder(nn.Module):
-    def __init__(self, z_dim, dist):
+    def __init__(self, z_dim, dist, dropout=0):
         super(SimpleEncoder, self).__init__()
 
         self.net = nn.Sequential(
             Flatten(),
             nn.Linear(CMNIST_SIZE, 1024),
+            nn.Dropout(dropout),
             nn.ReLU(True),
             nn.Linear(1024, 1024),
+            nn.Dropout(dropout),
             nn.ReLU(True),
             StochasticLinear(1024, z_dim, dist)
         )
 
     def forward(self, x):
         return self.net(x)
+
 
 # Model for q(y|z)
 class SimpleClassifier(nn.Module):

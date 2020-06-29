@@ -12,6 +12,7 @@ params:
     class: 'SimpleEncoder'
     params:
       dist: 'Delta'
+      dropout: 0.5
 
   # Label classifier
   classifier:
