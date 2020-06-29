@@ -32,7 +32,7 @@ params:
     params:
       lr: 0.0001
 
-  # Non alternating procedure, both encoder and distriminator are trained at the same time using a
+  # Non alternating procedure, both encoder and discriminator are trained at the same time using a
   # gradient reversal layer
   adv_train_type: simultaneous
 
