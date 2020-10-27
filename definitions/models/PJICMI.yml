@@ -1,0 +1,75 @@
+class: PJICMITrainer
+params:
+  # Number of latent dimensions
+  z_dim: 64
+  f_dim: 128
+
+  #################
+  # Architectures #
+  #################
+
+  method: 'ce'
+
+  feature_extractor:
+    class: 'SimpleFeatureExtractor'
+    params:
+      f_dim: 128
+
+  feature_mi_estimator:
+    class: 'SimpleMIEstimator'
+
+  # Encoder
+  encoder:
+    class: 'SimpleEncoder'
+    params:
+      dist: 'Normal'
+      dropout: 0
+      x_dim: 128
+
+  # Label classifier
+  env_classifier:
+    class: 'SimpleConditionalEnvClassifier'
+
+  env_mi_estimator:
+    class: 'SimpleMIEstimator'
+
+  classifier:
+    class: 'SimpleClassifier'
+
+  mi_estimator:
+    class: 'SimpleMIEstimator'
+
+  ###########################
+  # Optimization parameters #
+  ###########################
+
+  # Optimizer used for the encoder and the label classifier
+  optim:
+    class: 'RMSprop'
+    params:
+      lr: 0.0001
+
+  adv_optim:
+    class: 'RMSprop'
+    params:
+      lr: 0.0001
+
+  f_optim:
+    class: 'RMSprop'
+    params:
+      lr: 0.0001
+
+
+  # Size of the training batch
+  batch_size: 512
+
+  n_adv_steps: 50
+
+  # Parameters for the beta-scheduler
+  beta_scheduler:
+    class: LinearScheduler
+    params:
+      start_value: 1
+      end_value: 1
+      n_iterations: 10000
+      start_iteration: 5000

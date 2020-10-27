@@ -12,12 +12,15 @@ CMNIST_N_ENVS = 2
 
 # Model for p(z|x)
 class SimpleEncoder(nn.Module):
-    def __init__(self, z_dim, dist, dropout=0):
+    def __init__(self, z_dim, dist, dropout=0, x_dim=None):
         super(SimpleEncoder, self).__init__()
+
+        if x_dim is None:
+            x_dim = CMNIST_SIZE
 
         self.net = nn.Sequential(
             Flatten(),
-            nn.Linear(CMNIST_SIZE, 1024),
+            nn.Linear(x_dim, 1024),
             nn.Dropout(dropout),
             nn.ReLU(True),
             nn.Linear(1024, 1024),
@@ -62,6 +65,20 @@ class SimpleClassifier(nn.Module):
     def forward(self, z):
         return self.net(z)
 
+# Model for q(ye|z)
+class SimpleJointClassifier(nn.Module):
+    def __init__(self, z_dim):
+        super(SimpleJointClassifier, self).__init__()
+        self.net = nn.Sequential(
+            nn.Linear(z_dim, 1024),
+            nn.ReLU(True),
+            nn.Linear(1024, 1024),
+            nn.ReLU(True),
+            nn.Linear(1024, CMNIST_N_CLASSES * CMNIST_N_ENVS)
+        )
+
+    def compute_logits(self, z):
+        return self.net(z).view(z.shape[0], CMNIST_N_CLASSES, CMNIST_N_ENVS)
 
 # Constant Model for q(y|z)
 class ConstantClassifier(nn.Module):

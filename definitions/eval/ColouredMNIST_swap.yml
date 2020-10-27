@@ -1,14 +1,37 @@
-- name: test_accuracy_swap/0.1
+test_accuracy_01:
   class: AccuracyEvaluation
   params:
-    evaluate_on: coloured_MNIST_valid_env_0.1_swap
+    evaluate_on: valid_env_01
 
-- name: test_accuracy_swap/0.2
+test_accuracy_02:
   class: AccuracyEvaluation
   params:
-    evaluate_on: coloured_MNIST_valid_env_0.2_swap
+    evaluate_on: valid_env_02
 
-- name: test_accuracy_swap/0.9
+test_accuracy_09:
   class: AccuracyEvaluation
   params:
-    evaluate_on: coloured_MNIST_valid_env_0.9_swap
+    evaluate_on: valid_env_09
+
+test_ce_01:
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: valid_env_01
+
+test_ce_02:
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: valid_env_02
+
+test_ce_09:
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: valid_env_09
+
+
+train_representation:
+  class: RepresentationDensityVisualization
+  params:
+    dataset: train
+    downsample: 50000
+    evaluate_every: 10

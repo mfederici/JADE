@@ -38,6 +38,11 @@ class OneHot(nn.Module):
         return self.eye[input]
 
 
+class StopGrad(nn.Module):
+    def forward(self, x):
+        return x.detach()
+
+
 class StochasticLinear(nn.Module):
     def __init__(self, in_size, out_size, dist):
         super(StochasticLinear, self).__init__()
