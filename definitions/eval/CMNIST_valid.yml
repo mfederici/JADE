@@ -29,9 +29,9 @@ test_ce_09:
     evaluate_on: valid_env_09
 
 
-train_representation:
-  class: RepresentationDensityVisualization
-  params:
-    dataset: train
-    downsample: 50000
-    evaluate_every: 10
+# train_representation:
+#  class: RepresentationDensityVisualization
+#  params:
+#    dataset: train
+#    downsample: 50000
+#    evaluate_every: 10
