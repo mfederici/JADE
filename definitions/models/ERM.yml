@@ -1,0 +1,31 @@
+class: ERMTrainer
+params:
+  # Number of latent dimensions
+  z_dim: 64
+
+  #################
+  # Architectures #
+  #################
+
+  # Encoder
+  encoder:
+    class: 'SimpleEncoder'
+    params:
+      dist: 'Delta'
+
+  # Label classifier
+  classifier:
+    class: 'SimpleClassifier'
+
+  ###########################
+  # Optimization parameters #
+  ###########################
+
+  # Optimizer used for the encoder and the label classifier
+  optim:
+    class: 'Adam'
+    params:
+      lr: 0.0001
+
+  # Size of the training batch
+  batch_size: 256

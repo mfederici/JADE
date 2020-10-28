@@ -5,6 +5,7 @@ command:
 - --data_file=definitions/data/CMNIST.yml
 - --model_file=definitions/models/ECI.yml
 - --eval_file=definitions/eval/CMNIST_valid.yml
+- --epochs=500
 method: grid
 metric:
   goal: minimize
