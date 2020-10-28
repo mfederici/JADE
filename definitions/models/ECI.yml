@@ -1,7 +1,7 @@
-class: IDAACETrainer
+class: ECITrainer
 params:
   # Number of latent dimensions
-  z_dim: 2
+  z_dim: 64
 
   #################
   # Architectures #
@@ -12,7 +12,6 @@ params:
     class: 'SimpleEncoder'
     params:
       dist: 'Delta'
-      dropout: 0.5
 
   # Label classifier
   classifier:
@@ -28,22 +27,33 @@ params:
 
   # Optimizer used for the encoder and the label classifier
   optim:
-    class: 'RMSprop'
+    class: 'Adam'
     params:
       lr: 0.0001
 
-  # Non alternating procedure, both encoder and discriminator are trained at the same time using a
-  # gradient reversal layer
-  adv_train_type: simultaneous
+  # Adversarial optimizer used for training the environment classifier
+  adv_optim:
+    class: 'Adam'
+    params:
+      lr: 0.0001
 
   # Size of the training batch
   batch_size: 256
 
+  # Adversarial objective
+  adv_objective: CE
+
+  # Adversarial optimization strategy (simultaneous/alternating)
+  adv_train_type: alternating
+
+  # Number of adversarial steps for each optimizer step (only for alternating training)
+  n_adv_steps: 50
+
   # Parameters for the beta-scheduler
   beta_scheduler:
-    class: LinearScheduler
+    class: ExponentialScheduler
     params:
-      start_value: 0.5
-      end_value: 0.9999
+      start_value: 0.00001
+      end_value: 0.9999999
       n_iterations: 20000
       start_iteration: 10000
