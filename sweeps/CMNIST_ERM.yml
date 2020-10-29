@@ -1,0 +1,27 @@
+command:
+- ${env}
+- ${interpreter}
+- ${program}
+- --data_file=definitions/data/CMNIST.yml
+- --model_file=definitions/models/ERM.yml
+- --eval_file=definitions/eval/CMNIST_valid.yml
+- --epochs=500
+method: grid
+metric:
+  goal: minimize
+  name: test_ce_09
+parameters:
+  model.params.adv_optim.class:
+    values:
+    - Adam
+  model.params.encoder.params.dropout:
+    values:
+    - 0
+    - 0.25
+    - 0.5
+  model.params.classifier.params.dropout:
+    values:
+      - 0
+      - 0.25
+      - 0.5
+program: train.py

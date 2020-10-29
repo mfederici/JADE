@@ -52,12 +52,14 @@ class SimpleFeatureExtractor(nn.Module):
 
 # Model for q(y|z)
 class SimpleClassifier(nn.Module):
-    def __init__(self, z_dim):
+    def __init__(self, z_dim, dropout=0):
         super(SimpleClassifier, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(z_dim, 1024),
+            nn.Dropout(dropout),
             nn.ReLU(True),
             nn.Linear(1024, 1024),
+            nn.Dropout(dropout),
             nn.ReLU(True),
             StochasticLinear(1024, CMNIST_N_CLASSES, 'Categorical')
         )
