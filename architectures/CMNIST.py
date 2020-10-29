@@ -12,7 +12,7 @@ CMNIST_N_ENVS = 2
 
 # Model for p(z|x)
 class SimpleEncoder(nn.Module):
-    def __init__(self, z_dim, dist, dropout=0, x_dim=None):
+    def __init__(self, z_dim, dist, dropout=0, n_hidden=1024, x_dim=None):
         super(SimpleEncoder, self).__init__()
 
         if x_dim is None:
@@ -20,13 +20,13 @@ class SimpleEncoder(nn.Module):
 
         self.net = nn.Sequential(
             Flatten(),
-            nn.Linear(x_dim, 1024),
+            nn.Linear(x_dim, n_hidden),
             nn.Dropout(dropout),
             nn.ReLU(True),
-            nn.Linear(1024, 1024),
+            nn.Linear(n_hidden, n_hidden),
             nn.Dropout(dropout),
             nn.ReLU(True),
-            StochasticLinear(1024, z_dim, dist)
+            StochasticLinear(n_hidden, z_dim, dist)
         )
 
     def forward(self, x):
@@ -52,16 +52,16 @@ class SimpleFeatureExtractor(nn.Module):
 
 # Model for q(y|z)
 class SimpleClassifier(nn.Module):
-    def __init__(self, z_dim, dropout=0):
+    def __init__(self, z_dim, dropout=0, n_hidden=1024):
         super(SimpleClassifier, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(z_dim, 1024),
+            nn.Linear(z_dim, n_hidden),
             nn.Dropout(dropout),
             nn.ReLU(True),
-            nn.Linear(1024, 1024),
+            nn.Linear(n_hidden, n_hidden),
             nn.Dropout(dropout),
             nn.ReLU(True),
-            StochasticLinear(1024, CMNIST_N_CLASSES, 'Categorical')
+            StochasticLinear(n_hidden, CMNIST_N_CLASSES, 'Categorical')
         )
 
     def forward(self, z):
