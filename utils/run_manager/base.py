@@ -17,7 +17,8 @@ def load_desc_file(desc_filename):
 
 
 class RunManager:
-    def __init__(self, run_id, run_name, config, run_dir, resume, num_workers=0, verbose=False):
+    def __init__(self, run_id, run_name, experiments_root, config, run_dir, resume, num_workers=0, data_root='.',
+                 verbose=False):
 
         self.verbose = verbose
         self.run_name = run_name
@@ -26,6 +27,8 @@ class RunManager:
         self.run_dir = run_dir
         self.resume = resume
         self.num_workers = num_workers
+        self.experiments_root = experiments_root
+        self.data_root = data_root
         # os.makedirs(self.run_dir, exist_ok=True)
 
     @ staticmethod
@@ -70,7 +73,8 @@ class RunManager:
         dataset_manager = DatasetManager(descriptions=self.config['data'],
                                          modules=[torchvision_dataset_module,
                                                   dataset_module,
-                                                  dataset_transform_module])
+                                                  dataset_transform_module],
+                                         data_root=self.data_root)
         train_set = dataset_manager['train']
         trainer = self._make_instance(class_name=self.config['model']['class'],
                                       modules=[model_module],

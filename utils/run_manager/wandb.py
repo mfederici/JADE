@@ -35,7 +35,8 @@ def inflate_config(flat_config):
 
 
 class WANDBRunManager(RunManager):
-    def __init__(self, desc, experiments_root, run_name=None, run_id=None, verbose=False, upload_checkpoints=True, **params):
+    def __init__(self, desc, experiments_root, run_name=None, run_id=None, verbose=False, upload_checkpoints=True,
+                 **params):
         if 'WANDB_PROJECT' in os.environ:
             self.PROJECT = os.environ['WANDB_PROJECT']
         else:
@@ -68,7 +69,8 @@ class WANDBRunManager(RunManager):
         run_dir = wandb.run.dir
 
         super(WANDBRunManager, self).__init__(run_name=run_name, run_id=run_id, run_dir=run_dir,
-                                              config=config, resume=resume, verbose=verbose, **params)
+                                              config=config, resume=resume, verbose=verbose,
+                                              experiments_root=experiments_root, **params)
 
     def run_exists(self, run_id):
         return run_id in [run.id for run in self.api.runs('%s/%s' % (self.USER, self.PROJECT))]

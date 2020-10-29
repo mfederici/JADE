@@ -19,6 +19,8 @@ parser.add_argument("--run_name", type=str, default=None,
 parser.add_argument("--experiments-root", type=str, default="experiments",
                     help="Root of the experiment directory. Checkpoints will be stored in sub-directories corresponding"
                          " to their respective run id.")
+parser.add_argument("--data-root", type=str, default=".",
+                    help="Root directory for the datasets")
 parser.add_argument("--device", type=str, default="cuda",
                     help="Device on which the experiment is executed (as for tensor.device). Specify 'cpu' to "
                          "force execution on CPU.")
@@ -45,6 +47,7 @@ backup_every = args.backup_every
 epochs = args.epochs
 
 experiments_root = args.experiments_root
+data_root = args.data_root
 
 device = args.device
 if 'DEVICE' in os.environ:
@@ -69,7 +72,9 @@ run_manager = WANDBRunManager(run_name=run_name, desc={'data_file': data_file,
                                                        'model_file': model_file,
                                                        'eval_file': eval_file},
                               num_workers=num_workers,
-                              experiments_root=experiments_root, verbose=verbose, upload_checkpoints=upload_checkpoints)
+                              experiments_root=experiments_root, data_root=data_root,
+                              verbose=verbose, upload_checkpoints=upload_checkpoints)
+
 experiment_dir = run_manager.run_dir
 
 trainer, evaluators = run_manager.make_instances()

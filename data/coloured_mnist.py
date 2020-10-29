@@ -35,10 +35,10 @@ MNIST_TRAIN_EXAMPLES = 50000
 
 
 class ColouredMNIST(Dataset):
-    def __init__(self, root, environments, split):
+    def __init__(self, path, environments, split, data_root='.'):
         super(ColouredMNIST, self).__init__()
 
-        dataset = MNIST(root, download=True, train=split in ['train', 'valid'], transform=ToTensor())
+        dataset = MNIST(os.path.join(data_root, path), download=True, train=split in ['train', 'valid'], transform=ToTensor())
 
         if split == 'train':
             dataset = Subset(dataset, range(MNIST_TRAIN_EXAMPLES))

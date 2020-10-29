@@ -1,7 +1,7 @@
 train:
   class: ColouredMNIST
   params:
-    root: datasets/MNIST
+    path: datasets/MNIST
     split: train
     environments:
       - size: 25000
@@ -17,7 +17,7 @@ train:
 valid_env_01:
   class: ColouredMNIST
   params:
-    root: datasets/MNIST
+    path: datasets/MNIST
     split: valid
     environments:
       - size: 10000
@@ -29,7 +29,7 @@ valid_env_01:
 valid_env_02:
   class: ColouredMNIST
   params:
-    root: datasets/MNIST
+    path: datasets/MNIST
     split: valid
     environments:
       - size: 10000
@@ -41,7 +41,7 @@ valid_env_02:
 valid_env_09:
   class: ColouredMNIST
   params:
-    root: datasets/MNIST
+    path: datasets/MNIST
     split: valid
     environments:
       - size: 10000
