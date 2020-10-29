@@ -3,11 +3,7 @@ import torch.nn as nn
 from torch.nn.utils import spectral_norm as sn
 from torch.nn.functional import softplus
 from utils.modules import Flatten, StochasticLinear, StochasticLinear2D, Reshape, OneHot
-
-CMNIST_SIZE = 14**2*2
-CMNIST_SHAPE = [2,14,14]
-CMNIST_N_CLASSES = 2
-CMNIST_N_ENVS = 2
+from data.coloured_mnist import CMNIST_SIZE, CMNIST_N_CLASSES, CMNIST_SHAPE, CMNIST_N_ENVS
 
 
 # Model for p(z|x)
@@ -56,9 +52,6 @@ class SimpleClassifier(nn.Module):
         super(SimpleClassifier, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(z_dim, n_hidden),
-            nn.Dropout(dropout),
-            nn.ReLU(True),
-            nn.Linear(n_hidden, n_hidden),
             nn.Dropout(dropout),
             nn.ReLU(True),
             StochasticLinear(n_hidden, CMNIST_N_CLASSES, 'Categorical')

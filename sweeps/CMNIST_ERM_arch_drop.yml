@@ -1,0 +1,32 @@
+command:
+- ${env}
+- ${interpreter}
+- ${program}
+- --data_file=definitions/data/CMNIST.yml
+- --model_file=definitions/models/ERM.yml
+- --eval_file=definitions/eval/CMNIST_valid.yml
+- --epochs=100
+method: grid
+metric:
+  goal: minimize
+  name: test_ce_09
+parameters:
+  model.params.encoder.params.n_hidden:
+    values:
+    - 128
+    - 256
+    - 512
+  model.params.classifier.params.n_hidden:
+    values:
+      - 128
+      - 256
+      - 512
+  model.params.encoder.dropout:
+    values:
+      - 0
+      - 0.5
+  model.params.classifier.dropout:
+    values:
+      - 0
+      - 0.5
+program: train.py

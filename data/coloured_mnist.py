@@ -7,7 +7,10 @@ from torchvision.datasets import MNIST
 from torchvision.transforms import ToTensor
 
 MNIST_TRAIN_EXAMPLES = 50000
-
+CMNIST_SIZE = 28**2*2
+CMNIST_SHAPE = [2,28,28]
+CMNIST_N_CLASSES = 2
+CMNIST_N_ENVS = 2
 
 # class ColouredMNISTDataset(Dataset):
 #     def __init__(self, base_mnist_dataset, color_flip, label_flip=0.25):
@@ -65,7 +68,7 @@ class ColouredMNIST(Dataset):
 
     def __getitem__(self, index):
         im, label = self.dataset[index]
-        im = torch.cat([im[:, ::2, ::2], torch.zeros(1, 14, 14)], 0)
+        im = torch.cat([im, torch.zeros(1, CMNIST_SHAPE[1], CMNIST_SHAPE[2])], 0)
 
         digit = int(label > 4)
         y = (digit * (1 - self.label_flip_mask[index]) +
