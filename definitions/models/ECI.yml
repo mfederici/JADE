@@ -55,5 +55,5 @@ params:
     params:
       start_value: 0.00001
       end_value: 0.9999999
-      n_iterations: 20000
-      start_iteration: 10000
+      n_iterations: 10000
+      start_iteration: 2000

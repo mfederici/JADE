@@ -27,19 +27,19 @@ parameters:
       - 0.0
       - 0.0001
       - 0.01
-    model.params.encoder.params.n_hidden:
-      values:
-        - 128
-    model.params.classifier.params.n_hidden:
-      values:
-        - 128
-    model.params.env_classifier.params.n_hidden:
-      values:
-        - 128
-    model.params.encoder.params.dropout:
-      values:
-        - 0.5
-    model.params.classifier.params.dropout:
-      values:
-        - 0.5
+  model.params.encoder.params.n_hidden:
+    values:
+      - 128
+  model.params.classifier.params.n_hidden:
+    values:
+      - 128
+  model.params.env_classifier.params.n_hidden:
+    values:
+      - 128
+  model.params.encoder.params.dropout:
+    values:
+      - 0.5
+  model.params.classifier.params.dropout:
+    values:
+      - 0.5
 program: train.py
