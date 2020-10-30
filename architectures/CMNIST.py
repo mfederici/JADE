@@ -103,16 +103,16 @@ class SimpleEnvClassifier(nn.Module):
 
 # Model for q(e|zy)
 class SimpleConditionalEnvClassifier(nn.Module):
-    def __init__(self, z_dim, spectral_norm=False):
+    def __init__(self, z_dim, spectral_norm=False, n_hidden=1024):
         super(SimpleConditionalEnvClassifier, self).__init__()
 
         if not spectral_norm:
             self.net = nn.Sequential(
-                nn.Linear(z_dim+CMNIST_N_CLASSES, 1024),
+                nn.Linear(z_dim+CMNIST_N_CLASSES, n_hidden),
                 nn.ReLU(True),
-                nn.Linear(1024, 1024),
+                nn.Linear(n_hidden, n_hidden),
                 nn.ReLU(True),
-                StochasticLinear(1024, CMNIST_N_ENVS, 'Categorical')
+                StochasticLinear(n_hidden, CMNIST_N_ENVS, 'Categorical')
             )
         else:
             self.net = nn.Sequential(
