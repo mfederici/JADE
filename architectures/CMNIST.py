@@ -87,14 +87,14 @@ class ConstantClassifier(nn.Module):
 
 # Model for q(e|z)
 class SimpleEnvClassifier(nn.Module):
-    def __init__(self, z_dim):
+    def __init__(self, z_dim, n_hidden=1024):
         super(SimpleEnvClassifier, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(z_dim, 1024),
+            nn.Linear(z_dim, n_hidden),
             nn.ReLU(True),
-            nn.Linear(1024, 1024),
+            nn.Linear(n_hidden, n_hidden),
             nn.ReLU(True),
-            StochasticLinear(1024, CMNIST_N_ENVS, 'Categorical')
+            StochasticLinear(n_hidden, CMNIST_N_ENVS, 'Categorical')
         )
 
     def forward(self, z):
