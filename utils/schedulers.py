@@ -7,6 +7,14 @@ class Scheduler:
         raise NotImplemented()
 
 
+class ConstantScheduler(Scheduler):
+    def __init__(self, value, **params):
+        self.value = value
+
+    def __call__(self, iteration):
+        return self.value
+
+
 class LinearScheduler(Scheduler):
     def __init__(self, start_value, end_value, n_iterations, start_iteration=0):
         self.start_value = start_value

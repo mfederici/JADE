@@ -17,15 +17,14 @@ parameters:
     - 0.99
     - 0.999
     - 0.99999
-    - 0.9999999
-    - 0.99999999
   model.params.adv_train_type:
     values:
-    - simultaneous
-  model.params.optim.params.weight_decay:
+    - alternating
+  model.params.n_adv_steps:
     values:
-      - 0.0
-      - 0.01
+      - 2
+      - 5
+      - 10
   model.params.encoder.params.n_hidden:
     values:
       - 128
@@ -37,8 +36,12 @@ parameters:
       - 128
   model.params.encoder.params.dropout:
     values:
+      - 0.0
+      - 0.25
       - 0.5
   model.params.classifier.params.dropout:
     values:
+      - 0.0
+      - 0.25
       - 0.5
 program: train.py

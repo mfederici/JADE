@@ -21,7 +21,11 @@ parameters:
     - 0.99999999
   model.params.adv_train_type:
     values:
-    - simultaneous
+    - alternating
+  model.params.n_adv_steps:
+    values:
+      - 5
+      - 50
   model.params.optim.params.weight_decay:
     values:
       - 0.0
