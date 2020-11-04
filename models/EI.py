@@ -19,11 +19,11 @@ ADV_TRAIN_TYPES = {ADV_SIM_TRAIN, ADV_ALT_TRAIN}
 ADV_OBJECTIVES = {ADV_CE_LOSS, ADV_JDS_LOSS}
 
 
-class ECITrainer(RepresentationTrainer):
+class EITrainer(RepresentationTrainer):
     def __init__(self, z_dim, classifier, env_classifier, optim, beta_scheduler, n_adv_steps=5, adv_optim=None,
                  adv_objective=ADV_CE_LOSS, adv_train_type=ADV_ALT_TRAIN, **params):
 
-        super(ECITrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
+        super(EITrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
 
         # Definition of the scheduler to update the value of the regularization coefficient beta over time
         self.beta_scheduler = getattr(scheduler_module, beta_scheduler['class'])(**beta_scheduler['params'])
@@ -55,7 +55,7 @@ class ECITrainer(RepresentationTrainer):
             self.adv_opt = None
 
     def _get_items_to_store(self):
-        items_to_store = super(ECITrainer, self)._get_items_to_store()
+        items_to_store = super(EITrainer, self)._get_items_to_store()
 
         items_to_store = items_to_store.union({
             'classifier',
