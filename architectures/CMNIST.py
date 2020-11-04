@@ -50,6 +50,7 @@ class SimpleFeatureExtractor(nn.Module):
 # Model for q(z)
 class NormalPrior(nn.Module):
     def __init__(self, z_dim):
+        super(NormalPrior, self).__init__()
         self.mu = nn.Parameter(torch.zeros([1, z_dim]), requires_grad=False)
         self.sigma = nn.Parameter(torch.zeros([1, z_dim])+1, requires_grad=False)
 
