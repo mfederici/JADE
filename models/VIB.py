@@ -50,8 +50,8 @@ class VIBTrainer(RepresentationTrainer):
         p_y_given_z = self.classifier(z=z)
         y_rec_loss = - p_y_given_z.log_prob(y).mean()
 
-        p_z = self.prior(x)
-        kl = (p_z_given_x.log_prob(z)-p_z.log_prob(z)).sum() / x.shape[0]
+        p_z = self.prior()
+        kl = (p_z_given_x.log_prob(z)-p_z.log_prob(z)).mean()
 
         loss = (1-beta) * y_rec_loss + beta * kl
 

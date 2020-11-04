@@ -4,7 +4,7 @@ from torch.nn.utils import spectral_norm as sn
 from torch.nn.functional import softplus
 from utils.modules import Flatten, StochasticLinear, StochasticLinear2D, Reshape, OneHot
 from data.coloured_mnist import CMNIST_SIZE, CMNIST_N_CLASSES, CMNIST_SHAPE, CMNIST_N_ENVS
-from torch.distributions import Normal
+from torch.distributions import Normal, Independent
 
 # Model for p(z|x)
 class SimpleEncoder(nn.Module):
@@ -54,8 +54,8 @@ class NormalPrior(nn.Module):
         self.mu = nn.Parameter(torch.zeros([1, z_dim]), requires_grad=False)
         self.sigma = nn.Parameter(torch.zeros([1, z_dim])+1, requires_grad=False)
 
-    def forward(self, x):
-        return Normal(self.mu.repeat(x.shape[0],1), self.sigma.repeat(x.shape[0],1))
+    def forward(self):
+        return Independent(Normal(self.mu, self.sigma), 1)
 
 
 # Model for q(y|z)
