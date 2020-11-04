@@ -11,6 +11,14 @@ import utils.schedulers as scheduler_module
 ##############################################
 
 
+class NormalPrior(nn.Module):
+    def __init__(self, z_dim):
+        self.mu = nn.Parameter(torch.zeros([1, z_dim]), requires_grad=False)
+        self.sigma = nn.Parameter(torch.zeros([1, z_dim])+1, requires_grad=False)
+
+    def forward(self):
+        return Normal(self.mu, self.sigma)
+
 class VIBTrainer(RepresentationTrainer):
     def __init__(self, z_dim, classifier, optim, beta_scheduler, **params):
 
@@ -20,8 +28,7 @@ class VIBTrainer(RepresentationTrainer):
         self.beta_scheduler = getattr(scheduler_module, beta_scheduler['class'])(**beta_scheduler['params'])
 
         self.classifier = self.instantiate_architecture(classifier, z_dim=z_dim)
-        self.mu = nn.Parameter(torch.zeros([1, z_dim]), requires_grad=False)
-        self.prior = Normal(self.mu, self.mu+1)
+        self.prior = NormalPrior(z_dim=z_dim)
 
         self.opt.add_param_group(
             {'params': self.classifier.parameters()}
@@ -50,7 +57,8 @@ class VIBTrainer(RepresentationTrainer):
         p_y_given_z = self.classifier(z=z)
         y_rec_loss = - p_y_given_z.log_prob(y).mean()
 
-        kl = (p_z_given_x.log_prob(z)-self.prior.log_prob(z)).sum() / x.shape[0]
+        p_z = self.prior()
+        kl = (p_z_given_x.log_prob(z)-p_z.log_prob(z)).sum() / x.shape[0]
 
         loss = (1-beta) * y_rec_loss + beta * kl
 
