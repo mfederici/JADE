@@ -12,7 +12,7 @@ import utils.schedulers as scheduler_module
 
 
 class VIBTrainer(RepresentationTrainer):
-    def __init__(self, z_dim, classifier, optim, **params):
+    def __init__(self, z_dim, classifier, optim, beta_scheduler, **params):
 
         super(VIBTrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
 
