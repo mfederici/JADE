@@ -27,12 +27,6 @@ params:
     params:
       lr: 0.0001
 
-  # Adversarial optimizer used for training the environment classifier
-  adv_optim:
-    class: 'Adam'
-    params:
-      lr: 0.0001
-
   # Size of the training batch
   batch_size: 256
 
