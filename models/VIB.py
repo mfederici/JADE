@@ -11,16 +11,8 @@ import utils.schedulers as scheduler_module
 ##############################################
 
 
-class NormalPrior(nn.Module):
-    def __init__(self, z_dim):
-        self.mu = nn.Parameter(torch.zeros([1, z_dim]), requires_grad=False)
-        self.sigma = nn.Parameter(torch.zeros([1, z_dim])+1, requires_grad=False)
-
-    def forward(self):
-        return Normal(self.mu, self.sigma)
-
 class VIBTrainer(RepresentationTrainer):
-    def __init__(self, z_dim, classifier, optim, beta_scheduler, **params):
+    def __init__(self, z_dim, classifier, optim, beta_scheduler, prior, **params):
 
         super(VIBTrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
 
@@ -28,8 +20,9 @@ class VIBTrainer(RepresentationTrainer):
         self.beta_scheduler = getattr(scheduler_module, beta_scheduler['class'])(**beta_scheduler['params'])
 
         self.classifier = self.instantiate_architecture(classifier, z_dim=z_dim)
-        self.prior = NormalPrior(z_dim=z_dim)
+        self.prior = self.instantiate_architecture(prior, z_dim=z_dim)
 
+        # TODO add prior parameters if any
         self.opt.add_param_group(
             {'params': self.classifier.parameters()}
         )

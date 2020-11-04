@@ -17,6 +17,10 @@ params:
   classifier:
     class: 'SimpleClassifier'
 
+  # Prior
+  prior:
+    class: 'NormalPrior'
+
   ###########################
   # Optimization parameters #
   ###########################
