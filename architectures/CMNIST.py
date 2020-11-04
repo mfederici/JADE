@@ -54,8 +54,8 @@ class NormalPrior(nn.Module):
         self.mu = nn.Parameter(torch.zeros([1, z_dim]), requires_grad=False)
         self.sigma = nn.Parameter(torch.zeros([1, z_dim])+1, requires_grad=False)
 
-    def forward(self):
-        return Normal(self.mu, self.sigma)
+    def forward(self, x):
+        return Normal(self.mu.repeat(x.shape[0],1), self.sigma.repeat(x.shape[0],1))
 
 
 # Model for q(y|z)
