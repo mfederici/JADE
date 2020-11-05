@@ -109,7 +109,9 @@ class BuildDynamicCMNIST(DatasetTransform):
         return y, e, c
 
     def __getitem__(self, index):
-        im, d = self.dataset[index]
+        data = self.dataset[index]
+        im = data['x']
+        d = data['y']
 
         # Binarize the digits
         d = torch.LongTensor([int(d > 4)]).squeeze()
