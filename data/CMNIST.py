@@ -35,7 +35,7 @@ class MNIST(Dataset):
 
     def __getitem__(self, index):
         x, y = self.dataset[index]
-        return {'x':x, 'y': y}
+        return {'x':x, 'y': torch.LongTensor([y])}
 
     def __len__(self):
         return len(self.dataset)
