@@ -3,25 +3,25 @@ train:
   params:
     path: datasets/MNIST
     split: train
-    cond_dist_file: data/cmist_resources/CMNIST_train.pyt
+    cond_dist_file: data/cmnist_resources/CMNIST_train.pyt
 
 valid_env_01:
   class: DynamicCMNIST
   params:
     path: datasets/MNIST
     split: valid
-    cond_dist_file: data/cmist_resources/CMNIST_env_1.pyt
+    cond_dist_file: data/cmnist_resources/CMNIST_env_1.pyt
 
 valid_env_02:
   class: DynamicCMNIST
   params:
     path: datasets/MNIST
     split: valid
-    cond_dist_file: data/cmist_resources/CMNIST_env_2.pyt
+    cond_dist_file: data/cmnist_resources/CMNIST_env_2.pyt
 
 valid_env_09:
   class: DynamicCMNIST
   params:
     path: datasets/MNIST
     split: valid
-    cond_dist_file: data/cmist_resources/CMNIST_env_3.pyt
+    cond_dist_file: data/cmnist_resources/CMNIST_env_3.pyt
