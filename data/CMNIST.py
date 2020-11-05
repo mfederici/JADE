@@ -34,7 +34,8 @@ class MNIST(Dataset):
         self.dataset = dataset
 
     def __getitem__(self, index):
-        return self.dataset[index]
+        x, y = self.dataset[index]
+        return {'x':x, 'y': y}
 
     def __len__(self):
         return len(self.dataset)
@@ -63,7 +64,9 @@ class CMNIST(Dataset):
         self.color_flip_mask = torch.cat(color_flip_masks, 0)
 
     def __getitem__(self, index):
-        im, label = self.dataset[index]
+        data = self.dataset[index]
+        im = data['x']
+        label = data['y']
         im = torch.cat([im, torch.zeros(1, CMNIST_SHAPE[1], CMNIST_SHAPE[2])], 0)
 
         digit = int(label > 4)

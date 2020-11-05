@@ -2,7 +2,7 @@ command:
 - ${env}
 - ${interpreter}
 - ${program}
-- --data_file=definitions/data/DynamicCMNIST.yml
+- --data_file=definitions/data/Dynamic_CMNIST.yml
 - --model_file=definitions/models/ECI.yml
 - --eval_file=definitions/eval/CMNIST_valid.yml
 - --epochs=100
