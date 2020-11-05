@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.nn.utils import spectral_norm as sn
 from torch.nn.functional import softplus
 from utils.modules import Flatten, StochasticLinear, StochasticLinear2D, Reshape, OneHot
-from data.coloured_mnist import CMNIST_SIZE, CMNIST_N_CLASSES, CMNIST_SHAPE, CMNIST_N_ENVS
+from data.CMNIST import CMNIST_SIZE, CMNIST_N_CLASSES, CMNIST_SHAPE, CMNIST_N_ENVS
 from torch.distributions import Normal, Independent
 
 # Model for p(z|x)
