@@ -87,7 +87,6 @@ class CMNIST(Dataset):
 class BuildDynamicCMNIST(DatasetTransform):
     def __init__(self, p, **params):
         super(BuildDynamicCMNIST, self).__init__(**params)
-        assert isinstance(p, torch.FloatTensor) or isinstance(p, torch.cuda.FloatTensor)
 
         # tensor expressing digit x label x environment x color
         assert len(p.shape) == 4
