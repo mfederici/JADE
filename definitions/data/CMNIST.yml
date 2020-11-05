@@ -1,5 +1,5 @@
 train:
-  class: ColouredMNIST
+  class: CMNIST
   params:
     path: datasets/MNIST
     split: train
@@ -15,7 +15,7 @@ train:
 
 
 valid_env_01:
-  class: ColouredMNIST
+  class: CMNIST
   params:
     path: datasets/MNIST
     split: valid
@@ -27,7 +27,7 @@ valid_env_01:
     - class: MoveToCache
 
 valid_env_02:
-  class: ColouredMNIST
+  class: CMNIST
   params:
     path: datasets/MNIST
     split: valid
@@ -39,7 +39,7 @@ valid_env_02:
     - class: MoveToCache
 
 valid_env_09:
-  class: ColouredMNIST
+  class: CMNIST
   params:
     path: datasets/MNIST
     split: valid

@@ -1,3 +1,3 @@
-from data.coloured_mnist import ColouredMNIST
+from data.CMNIST import CMNIST, DynamicCMNIST
 
 

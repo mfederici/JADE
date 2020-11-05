@@ -94,9 +94,11 @@ class MoveToCache(DatasetTransform):
                 values = {name: element[index] for name, element in self.cache.items()}
         else:
             values = self.dataset[index]
+            for name, value in values.items():
+              values[name] = value.to(self.device)
             self.lock.acquire()
             for name, value in values.items():
-                self.cache[name][index] = value.to(self.device)
+                self.cache[name][index] = value
             self.is_cached[index] = True
             if self.is_cached.long().sum() == len(self.is_cached):
                 self.all_cached = True
