@@ -53,7 +53,6 @@ p_yc_de = p_y_d * p_c_ye
 
 export_dir = '.'
 
-p_yec_d = {}
 for name, p_env in p_e.items():
-    p_yec_d[name] = p_yc_de * p_env
+    p_yec_d = p_yc_de * p_env
     torch.save(p_yec_d, os.path.join(export_dir, 'CMNIST_%s.pyt' % name))
