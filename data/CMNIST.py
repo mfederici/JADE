@@ -7,7 +7,7 @@ from torchvision.transforms import ToTensor
 import torchvision
 from torch.distributions import Categorical
 
-from data.transforms.dataset import DatasetTransform, MoveToCache
+from data.transforms.dataset import DatasetTransform, MoveToCache, Apply
 
 MNIST_TRAIN_EXAMPLES = 50000
 CMNIST_SIZE = 28 ** 2 * 2
@@ -110,19 +110,18 @@ class BuildDynamicCMNIST(DatasetTransform):
 
     def __getitem__(self, index):
         data = self.dataset[index]
-        im = data['x']
+        x = data['x']
         d = data['y']
 
         # Binarize the digits
         d = torch.LongTensor([int(d > 4)]).squeeze()
 
-        if self.p.device != im.device:
-            self.p = self.p.to(im.device)
+        if self.p.device != x.device:
+            self.p = self.p.to(x.device)
 
         # Sample label, environment and color conditioned on the digit
         y, e, c = self.sample_yec(d)
 
-        x = torch.cat([im, im * 0], 0)
         if c == 1:
             x = torch.roll(x, 1, 0)
 
@@ -134,9 +133,13 @@ class DynamicCMNIST(Dataset):
         super(DynamicCMNIST, self).__init__()
 
         dataset = MNIST(path=path, split=split, data_root=data_root)
+        # Add a duplicate empty channel (every digit is red)
+        dataset = Apply(instance=dataset, f=lambda x: torch.cat([x, x*0], 1).contiguous(), f_in='x', f_out='x')
+        # Cache the dataset in memory of <device> for efficiency
         dataset = MoveToCache(instance=dataset, device=device)
-        # Load a tensor representing p(yec|d)
+        # Load a tensor representing p(y,e,c|d)
         p = torch.load(cond_dist_file)
+        # Sample using ancestral sampling x_i, d_i~p(d,x) then y_i,e_i,c_i~p(y,e,c|d=d_i)
         self.dataset = BuildDynamicCMNIST(instance=dataset, p=p)
 
     def __getitem__(self, index):
