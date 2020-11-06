@@ -35,7 +35,7 @@ class MNIST(Dataset):
 
     def __getitem__(self, index):
         x, y = self.dataset[index]
-        return {'x':x, 'y': torch.LongTensor([y])}
+        return {'x': x, 'y': torch.LongTensor([y])}
 
     def __len__(self):
         return len(self.dataset)
@@ -134,7 +134,8 @@ class DynamicCMNIST(Dataset):
 
         dataset = MNIST(path=path, split=split, data_root=data_root)
         # Add a duplicate empty channel (every digit is red)
-        dataset = Apply(instance=dataset, f=lambda x: torch.cat([x, x*0], 1).contiguous(), f_in='x', f_out='x')
+        dataset = Apply(instance=dataset, f=lambda data: {'x': torch.cat([data['x'], data['x']*0], 0)},
+                        f_in='x', f_out='x')
         # Cache the dataset in memory of <device> for efficiency
         dataset = MoveToCache(instance=dataset, device=device)
         # Load a tensor representing p(y,e,c|d)
