@@ -13,10 +13,9 @@ ADV_ALT_TRAIN = 'alternating'
 ADV_SIM_TRAIN = 'simultaneous'
 
 ADV_CE_LOSS = 'CE'
-ADV_JDS_LOSS = 'JSD'
 
 ADV_TRAIN_TYPES = {ADV_SIM_TRAIN, ADV_ALT_TRAIN}
-ADV_OBJECTIVES = {ADV_CE_LOSS, ADV_JDS_LOSS}
+ADV_OBJECTIVES = {ADV_CE_LOSS}
 
 
 class ECITrainer(RepresentationTrainer):
@@ -107,8 +106,8 @@ class ECITrainer(RepresentationTrainer):
 
         y_rec_loss = - p_y_given_z.log_prob(y).mean()
 
+        p_e_given_zy = self.env_classifier(z=ScaleGrad.apply(z, -beta), y=y)
         if self.adv_objective == ADV_CE_LOSS:
-            p_e_given_zy = self.env_classifier(z=ScaleGrad.apply(z, -beta), y=y)
             e_rec_loss = -p_e_given_zy.log_prob(e).mean()
             self._add_loss_item('loss/CE_e_yz', e_rec_loss.item())
         else:

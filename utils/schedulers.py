@@ -1,4 +1,5 @@
 import math
+import numpy as np
 
 
 # Schedulers for beta
@@ -44,3 +45,20 @@ class ExponentialScheduler(LinearScheduler):
     def __call__(self, iteration):
         linear_value = super(ExponentialScheduler, self).__call__(iteration)
         return self.base ** linear_value
+
+
+class SigmoidScheduler(Scheduler):
+    def __init__(self, start_value, end_value, n_iterations, start_iteration):
+        self.start_value = start_value
+        self.start_iteration = start_iteration
+        self.end_value = end_value
+        self.n_iterations = n_iterations
+
+    def __sigmoid(self, x):
+        return 1/(1+np.e**(-x))
+
+    def __call__(self, iteration):
+        s = self. n_iterations/10.
+        beta = self.start_value + self.__sigmoid((iteration - self.start_iteration - self.n_iterations / 2)
+                                                 / s) * (self.end_value - self.start_value)
+        return beta

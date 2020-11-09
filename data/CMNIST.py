@@ -123,13 +123,13 @@ class BuildDynamicCMNIST(DatasetTransform):
         y, e, c = self.sample_yec(d)
 
         if c == 1:
-            x = torch.roll(x, 1, 0)
+            x = x[::-1]
 
         return {'x': x, 'y': y, 'd': d, 'c': c, 'e': e}
 
 
 class DynamicCMNIST(Dataset):
-    def __init__(self, path, split, cond_dist_file, data_root='.', device='cuda'):
+    def __init__(self, path, split, cond_dist_file, data_root='.', device=None):
         super(DynamicCMNIST, self).__init__()
 
         dataset = MNIST(path=path, split=split, data_root=data_root)
