@@ -123,7 +123,7 @@ class BuildDynamicCMNIST(DatasetTransform):
         y, e, c = self.sample_yec(d)
 
         if c == 1:
-            x = x[::-1]
+            x = torch.roll(x, 1, 0)
 
         return {'x': x, 'y': y, 'd': d, 'c': c, 'e': e}
 
