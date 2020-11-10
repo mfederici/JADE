@@ -58,7 +58,7 @@ class IRMTrainer(RepresentationTrainer):
 
         assert isinstance(p_y_given_z, Bernoulli)
 
-        p_y_given_z.logits = self.scale * p_y_given_z.logits[:, 0]
+        p_y_given_z.logits = self.scale * p_y_given_z.logits
 
         y_rec_loss = - p_y_given_z.log_prob(y)
 
