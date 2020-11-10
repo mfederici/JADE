@@ -8,7 +8,7 @@ from torch.distributions import Normal, Independent
 
 # Model for p(z|x)
 class SimpleEncoder(nn.Module):
-    def __init__(self, z_dim, dist, dropout=0, n_hidden=1024, x_dim=None):
+    def __init__(self, z_dim, dist='Delta', dropout=0, n_hidden=1024, x_dim=None):
         super(SimpleEncoder, self).__init__()
 
         if x_dim is None:
