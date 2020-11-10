@@ -22,7 +22,7 @@ class IRMTrainer(RepresentationTrainer):
 
         self.classifier = self.instantiate_architecture(classifier, z_dim=z_dim)
         # Dummy vector used for gradient penalization
-        self.scale = torch.nn.Parameter(torch.ones(1))
+        self.scale = torch.nn.Parameter(torch.ones(1).float())
         self.opt.add_param_group(
             {'params': self.classifier.parameters()}
         )
@@ -45,7 +45,7 @@ class IRMTrainer(RepresentationTrainer):
 
     def _compute_loss(self, data):
         x = data['x']
-        y = data['y'].squeeze().long()
+        y = data['y']
 
         beta = self.beta_scheduler(self.iterations)
 
@@ -57,6 +57,7 @@ class IRMTrainer(RepresentationTrainer):
         p_y_given_z = self.classifier(z=z)
         p_y_given_z = Bernoulli(logits=self.scale * p_y_given_z.logits[:, 0])
 
+        print(p_y_given_z.logits.shape, y.shape)
         y_rec_loss = - p_y_given_z.log_prob(y)
 
         # Gradient penalty
