@@ -99,7 +99,7 @@ class CrossEntropyEvaluation(Evaluation):
                 if isinstance(y_pred, Bernoulli):
                     c_ = binary_cross_entropy_with_logits(y_pred.logits.squeeze(), y.float(), reduction='none')
                 else:
-                    c_ = -y_pred.log_prob(y).mean().item()
+                    c_ = -y_pred.log_prob(y)
 
                 ce.append(c_.mean().item())
 
