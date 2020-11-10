@@ -2,6 +2,7 @@ from models.base import RepresentationTrainer
 from utils.functions import ScaleGrad
 import torch
 import torch.nn as nn
+from torch.nn.functional import binary_cross_entropy_with_logits
 from torch.distributions import Normal, Bernoulli
 import torch.autograd as autograd
 
@@ -58,9 +59,7 @@ class IRMTrainer(RepresentationTrainer):
 
         assert isinstance(p_y_given_z, Bernoulli)
 
-        p_y_given_z.logits = self.scale * p_y_given_z.logits
-
-        y_rec_loss = - p_y_given_z.log_prob(y)
+        y_rec_loss = binary_cross_entropy_with_logits(self.scale * p_y_given_z.logits.squeeze(), y, reduction='none')
 
         # Gradient penalty
         penalty = self._compute_regularization(y_rec_loss)
