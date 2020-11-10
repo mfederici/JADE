@@ -2,7 +2,7 @@ from eval.base import Evaluation
 from eval.utils import evaluate
 import torch
 import numpy as np
-from torch.distributions import Distribution
+from torch.distributions import Distribution, Bernoulli, Categorical
 
 
 class LinearAccuracyEvaluation(Evaluation):
@@ -48,11 +48,15 @@ class AccuracyEvaluation(Evaluation):
                         z = z.mean
 
                 y = self.classifier(z)
-                if isinstance(y, Distribution):
+                if isinstance(y, Categorical):
                     y = y.logits
+                    y = torch.argmax(y, 1)
+                elif isinstance(y, Bernoulli):
+                    y = (y.probs >= 0.5).long()
+                else:
+                    raise NotImplemented()
 
-                correct += (torch.argmax(y, 1) == batch['y'].to(device).long()).sum().item()
-
+                correct += (y == batch['y'].to(device).long()).sum().item()
 
         return {
             'type': 'scalar',

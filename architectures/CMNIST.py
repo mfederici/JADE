@@ -60,13 +60,20 @@ class NormalPrior(nn.Module):
 
 # Model for q(y|z)
 class SimpleClassifier(nn.Module):
-    def __init__(self, z_dim, dropout=0, n_hidden=1024):
+    def __init__(self, z_dim, dropout=0, n_hidden=1024, dist='Categorical'):
         super(SimpleClassifier, self).__init__()
+
+        if dist == 'Categorical':
+            out_dim = CMNIST_N_CLASSES
+        elif dist == 'Bernoulli':
+            out_dim = 1
+        else:
+            raise NotImplemented()
         self.net = nn.Sequential(
             nn.Linear(z_dim, n_hidden),
             nn.Dropout(dropout),
             nn.ReLU(True),
-            StochasticLinear(n_hidden, CMNIST_N_CLASSES, 'Categorical')
+            StochasticLinear(n_hidden, out_dim, 'Categorical')
         )
 
     def forward(self, z):

@@ -55,7 +55,10 @@ class IRMTrainer(RepresentationTrainer):
 
         # Label Reconstruction
         p_y_given_z = self.classifier(z=z)
-        p_y_given_z = Bernoulli(logits=self.scale * p_y_given_z.logits[:, 0])
+
+        assert isinstance(p_y_given_z, Bernoulli)
+
+        p_y_given_z.logits = self.scale * p_y_given_z.logits[:, 0]
 
         y_rec_loss = - p_y_given_z.log_prob(y)
 
