@@ -8,20 +8,25 @@ import torch.autograd as autograd
 
 import utils.schedulers as scheduler_module
 
-#######################################
-# Invariant Risk Minimization Trainer #
-#######################################
+###############################################
+# variance-reduction-based Risk EXtrapolation #
+###############################################
+
+# http://arxiv.org/abs/2003.00688
+from utils.modules import OneHot
 
 
-class IRMTrainer(RepresentationTrainer):
-    def __init__(self, z_dim, classifier, optim, beta_scheduler, **params):
+class vREXTrainer(RepresentationTrainer):
+    def __init__(self, z_dim, classifier, n_envs, optim, beta_scheduler, **params):
 
-        super(IRMTrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
+        super(vREXTrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
 
         # Definition of the scheduler to update the value of the regularization coefficient beta over time
         self.beta_scheduler = getattr(scheduler_module, beta_scheduler['class'])(**beta_scheduler['params'])
 
         self.classifier = self.instantiate_architecture(classifier, z_dim=z_dim)
+
+        self.one_hot = OneHot(n_envs)
         # Dummy vector used for gradient penalization
         self.scale = torch.nn.Parameter(torch.ones(1).float())
         self.opt.add_param_group(
@@ -29,7 +34,7 @@ class IRMTrainer(RepresentationTrainer):
         )
 
     def _get_items_to_store(self):
-        items_to_store = super(IRMTrainer, self)._get_items_to_store()
+        items_to_store = super(vREXTrainer, self)._get_items_to_store()
 
         items_to_store = items_to_store.union({
             'classifier'
@@ -37,16 +42,10 @@ class IRMTrainer(RepresentationTrainer):
 
         return items_to_store
 
-    # See https://github.com/facebookresearch/DomainBed/blob/master/domainbed/algorithms.py
-    def _compute_regularization(self, y_rec_loss):
-        grad_1 = autograd.grad(y_rec_loss[0::2].mean(), [self.scale], create_graph=True)[0]
-        grad_2 = autograd.grad(y_rec_loss[1::2].mean(), [self.scale], create_graph=True)[0]
-        result = torch.mean(grad_1 * grad_2)
-        return result
-
     def _compute_loss(self, data):
         x = data['x']
         y = data['y'].float()
+        e = data['e']
 
         beta = self.beta_scheduler(self.iterations)
 
@@ -57,17 +56,21 @@ class IRMTrainer(RepresentationTrainer):
         # Label Reconstruction
         p_y_given_z = self.classifier(z=z)
 
-        assert isinstance(p_y_given_z, Bernoulli)
+        y_rec_loss = -p_y_given_z.log_prob(y).squeeze()
 
-        y_rec_loss = binary_cross_entropy_with_logits(self.scale * p_y_given_z.logits.squeeze(), y, reduction='none')
+        # Long to one hot encoding
+        one_hot_e = self.one_hot(e.long())
 
-        # Gradient penalty
-        penalty = self._compute_regularization(y_rec_loss)
+        # Environment variance penalty
+        e_sum = one_hot_e.sum(0)
+        env_loss = (y_rec_loss.unsqueeze(1) * one_hot_e).sum(0)
+        env_loss[e_sum > 0] = env_loss[e_sum > 0] / e_sum[e_sum > 0]
+        loss_variance = ((env_loss - env_loss[e_sum > 0].mean()) ** 2)[e_sum > 0].mean()
 
-        loss = (1-beta) * y_rec_loss.mean() + beta * penalty
+        loss = (1-beta) * y_rec_loss.mean() + beta * loss_variance
 
         self._add_loss_item('loss/CE_y_z', y_rec_loss.mean().item())
-        self._add_loss_item('loss/Gradient_penalty', penalty.item())
+        self._add_loss_item('loss/V_CE_y_z', loss_variance.item())
         self._add_loss_item('loss/beta', beta)
 
         return loss

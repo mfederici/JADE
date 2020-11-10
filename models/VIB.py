@@ -57,5 +57,6 @@ class VIBTrainer(RepresentationTrainer):
 
         self._add_loss_item('loss/CE_y_z', y_rec_loss.item())
         self._add_loss_item('loss/KL_z_x', kl.item())
+        self._add_loss_item('loss/beta', beta)
 
         return loss
