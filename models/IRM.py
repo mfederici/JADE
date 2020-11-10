@@ -64,7 +64,7 @@ class IRMTrainer(RepresentationTrainer):
 
         loss = (1-beta) * y_rec_loss.mean() + beta * penalty
 
-        self._add_loss_item('loss/CE_y_z', y_rec_loss.item())
+        self._add_loss_item('loss/CE_y_z', y_rec_loss.mean().item())
         self._add_loss_item('loss/Gradient_penalty', penalty.item())
 
         return loss
