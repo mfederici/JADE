@@ -57,7 +57,7 @@ class IRMTrainer(RepresentationTrainer):
         p_y_given_z = self.classifier(z=z)
         p_y_given_z = Bernoulli(logits=self.scale * p_y_given_z.logits[:, 0])
 
-        print(p_y_given_z.logits.shape, y.shape)
+        print(p_y_given_z.logits, y)
         y_rec_loss = - p_y_given_z.log_prob(y)
 
         # Gradient penalty
