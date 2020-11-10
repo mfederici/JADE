@@ -95,6 +95,9 @@ class CrossEntropyEvaluation(Evaluation):
 
                 y_pred = self.classifier(z)
 
+                if isinstance(y_pred, Bernoulli):
+                    y = y.float()
+
                 ce.append(-y_pred.log_prob(y).mean().item())
 
         return {
