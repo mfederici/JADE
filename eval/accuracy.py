@@ -3,7 +3,7 @@ from eval.utils import evaluate
 import torch
 import numpy as np
 from torch.distributions import Distribution, Bernoulli, Categorical
-from torch.nn.funtional import binary_cross_entropy_with_logits
+from torch.nn.functional import binary_cross_entropy_with_logits
 
 
 class LinearAccuracyEvaluation(Evaluation):
