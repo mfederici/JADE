@@ -73,7 +73,7 @@ class SimpleClassifier(nn.Module):
             nn.Linear(z_dim, n_hidden),
             nn.Dropout(dropout),
             nn.ReLU(True),
-            StochasticLinear(n_hidden, out_dim, 'Categorical')
+            StochasticLinear(n_hidden, out_dim, dist)
         )
 
     def forward(self, z):
