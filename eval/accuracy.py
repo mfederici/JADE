@@ -3,6 +3,7 @@ from eval.utils import evaluate
 import torch
 import numpy as np
 from torch.distributions import Distribution, Bernoulli, Categorical
+from torch.nn.funtional import binary_cross_entropy_with_logits
 
 
 class LinearAccuracyEvaluation(Evaluation):
@@ -96,9 +97,11 @@ class CrossEntropyEvaluation(Evaluation):
                 y_pred = self.classifier(z)
 
                 if isinstance(y_pred, Bernoulli):
-                    y = y.float()
+                    c_ = binary_cross_entropy_with_logits(y_pred.logits.squeeze(), y.float(), reduction='none')
+                else:
+                    c_ = -y_pred.log_prob(y).mean().item()
 
-                ce.append(-y_pred.log_prob(y).mean().item())
+                ce.append(c_.mean().item())
 
         return {
             'type': 'scalar',
