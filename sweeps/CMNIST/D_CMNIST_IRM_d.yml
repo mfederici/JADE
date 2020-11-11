@@ -3,9 +3,9 @@ command:
 - ${interpreter}
 - ${program}
 - --data_file=definitions/data/Dynamic_CMNIST.yml
-- --model_file=definitions/models/ECI.yml
+- --model_file=definitions/models/IRM.yml
 - --eval_file=definitions/eval/CMNIST_valid.yml
-- --epochs=500
+- --epochs=100
 method: grid
 metric:
   goal: minimize
@@ -13,30 +13,18 @@ metric:
 parameters:
   model.params.beta_scheduler.params.end_value:
     values:
-    - 0.1
-    - 0.9
-    - 0.99
-    - 0.999
-    - 0.999999
-  model.params.adv_train_type:
-    values:
-    - alternating
-  model.params.n_adv_steps:
-    values:
-      - 5
+      - 0.99
+      - 0.9999
+      - 0.999999
+      - 0.9999999
+      - 0.99999999
   model.params.encoder.params.n_hidden:
     values:
       - 128
   model.params.classifier.params.n_hidden:
     values:
       - 128
-  model.params.env_classifier.params.n_hidden:
-    values:
-      - 128
   model.params.encoder.params.dropout:
     values:
       - 0.25
-  model.params.classifier.params.dropout:
-    values:
-      - 0.0
 program: train.py
