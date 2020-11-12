@@ -47,13 +47,13 @@ params:
   adv_train_type: alternating
 
   # Number of adversarial steps for each optimizer step (only for alternating training)
-  n_adv_steps: 50
+  n_adv_steps: 5
 
   # Parameters for the beta-scheduler
   beta_scheduler:
-    class: ExponentialScheduler
+    class: LinearScheduler
     params:
       start_value: 0.00001
       end_value: 0.9999999
-      n_iterations: 10000
-      start_iteration: 2000
+      n_iterations: 50000
+      start_iteration: 10000

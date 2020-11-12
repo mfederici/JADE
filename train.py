@@ -24,7 +24,7 @@ parser.add_argument("--data-root", type=str, default=".",
 parser.add_argument("--device", type=str, default="cuda",
                     help="Device on which the experiment is executed (as for tensor.device). Specify 'cpu' to "
                          "force execution on CPU.")
-parser.add_argument("--num-workers", type=int, default=1,
+parser.add_argument("--num-workers", type=int, default=0,
                     help="Number of CPU threads used during the data loading procedure.")
 # Change checkpoint frequency
 parser.add_argument("--checkpoint-every", type=int, default=500, help="Frequency of model checkpointing (in epochs).")
