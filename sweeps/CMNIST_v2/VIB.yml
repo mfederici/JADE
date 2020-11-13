@@ -1,0 +1,30 @@
+command:
+- ${env}
+- ${interpreter}
+- ${program}
+- --data_file=definitions/data/Dynamic_CMNIST_v2.yml
+- --model_file=definitions/models/VIB.yml
+- --eval_file=definitions/eval/CMNIST_v2_valid.yml
+- --epochs=100
+method: grid
+metric:
+  goal: minimize
+  name: valid_test_ce
+parameters:
+  model.params.beta_scheduler.params.end_value:
+    values:
+      - 0.0
+      - 0.1
+      - 0.2
+      - 0.3
+      - 0.4
+  model.params.encoder.params.n_hidden:
+    values:
+      - 128
+  model.params.classifier.params.n_hidden:
+    values:
+      - 128
+  model.params.encoder.params.dropout:
+    values:
+      - 0.25
+program: train.py
