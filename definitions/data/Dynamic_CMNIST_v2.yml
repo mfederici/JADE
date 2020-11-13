@@ -1,0 +1,20 @@
+train:
+  class: DynamicCMNIST
+  params:
+    path: datasets/MNIST
+    split: train
+    cond_dist_file: data/cmnist_resources/CMNIST_v2_train.pyt
+
+valid_train_env:
+  class: DynamicCMNIST
+  params:
+    path: datasets/MNIST
+    split: valid
+    cond_dist_file: data/cmnist_resources/CMNIST_v2_train.pyt
+
+test_train_env:
+  class: DynamicCMNIST
+  params:
+    path: datasets/MNIST
+    split: valid
+    cond_dist_file: data/cmnist_resources/CMNIST_v2_test.pyt

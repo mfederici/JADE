@@ -1,0 +1,19 @@
+train_accuracy:
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: valid_train_env
+
+test_accuracy:
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: valid_test_env
+
+train_ce:
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: valid_train_env
+
+test_ce:
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: valid_test_env
