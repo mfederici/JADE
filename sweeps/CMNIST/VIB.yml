@@ -5,6 +5,8 @@ command:
 - --data_file=definitions/data/Dynamic_CMNIST.yml
 - --model_file=definitions/models/VIB.yml
 - --eval_file=definitions/eval/CMNIST_valid.yml
+- --arch_pyfile=definitions/architectures/CMNIST.py
+- --num-workers=16
 - --epochs=100
 method: grid
 metric:
@@ -18,13 +20,4 @@ parameters:
       - 0.2
       - 0.3
       - 0.4
-  model.params.encoder.params.n_hidden:
-    values:
-      - 128
-  model.params.classifier.params.n_hidden:
-    values:
-      - 128
-  model.params.encoder.params.dropout:
-    values:
-      - 0.25
 program: train.py

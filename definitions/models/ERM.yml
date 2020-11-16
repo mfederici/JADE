@@ -9,13 +9,14 @@ params:
 
   # Encoder
   encoder:
-    class: 'SimpleEncoder'
-    params:
-      dist: 'Delta'
+    dropout: 0.25
+    n_hidden: 128
+    dist: Delta
 
   # Label classifier
-  classifier:
-    class: 'SimpleClassifier'
+  label_classifier:
+    dropout: 0.0
+    n_hidden: 128
 
   ###########################
   # Optimization parameters #
@@ -23,7 +24,7 @@ params:
 
   # Optimizer used for the encoder and the label classifier
   optim:
-    class: 'Adam'
+    class: Adam
     params:
       lr: 0.0001
 

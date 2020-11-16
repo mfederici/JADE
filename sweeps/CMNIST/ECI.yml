@@ -5,6 +5,8 @@ command:
 - --data_file=definitions/data/Dynamic_CMNIST.yml
 - --model_file=definitions/models/ECI.yml
 - --eval_file=definitions/eval/CMNIST_valid.yml
+- --arch_pyfile=definitions/architectures/CMNIST.py
+- --num-workers=16
 - --epochs=500
 method: grid
 metric:
@@ -24,19 +26,4 @@ parameters:
   model.params.n_adv_steps:
     values:
       - 5
-  model.params.encoder.params.n_hidden:
-    values:
-      - 128
-  model.params.classifier.params.n_hidden:
-    values:
-      - 128
-  model.params.env_classifier.params.n_hidden:
-    values:
-      - 128
-  model.params.encoder.params.dropout:
-    values:
-      - 0.25
-  model.params.classifier.params.dropout:
-    values:
-      - 0.0
 program: train.py

@@ -14,14 +14,14 @@ import utils.schedulers as scheduler_module
 
 
 class IRMTrainer(RepresentationTrainer):
-    def __init__(self, z_dim, classifier, optim, beta_scheduler, **params):
+    def __init__(self, z_dim, optim, beta_scheduler, label_classifier=None, **params):
 
         super(IRMTrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
 
         # Definition of the scheduler to update the value of the regularization coefficient beta over time
         self.beta_scheduler = getattr(scheduler_module, beta_scheduler['class'])(**beta_scheduler['params'])
 
-        self.classifier = self.instantiate_architecture(classifier, z_dim=z_dim)
+        self.classifier = self.instantiate_architecture('LabelClassifier', z_dim=z_dim, **label_classifier)
         # Dummy vector used for gradient penalization
         self.scale = torch.nn.Parameter(torch.ones(1).float())
         self.opt.add_param_group(

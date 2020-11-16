@@ -1,5 +1,6 @@
 import os
 import yaml
+import importlib
 
 from utils.instance_manager import DatasetManager
 
@@ -17,7 +18,7 @@ def load_desc_file(desc_filename):
 
 
 class RunManager:
-    def __init__(self, run_id, run_name, experiments_root, config, run_dir, resume, num_workers=0, data_root='.',
+    def __init__(self, run_id, run_name, arch_filepath, experiments_root, config, run_dir, resume, num_workers=0, data_root='.',
                  verbose=False):
 
         self.verbose = verbose
@@ -29,6 +30,7 @@ class RunManager:
         self.num_workers = num_workers
         self.experiments_root = experiments_root
         self.data_root = data_root
+        self.arch_filepath = arch_filepath
         # os.makedirs(self.run_dir, exist_ok=True)
 
     @ staticmethod
@@ -76,10 +78,16 @@ class RunManager:
                                                   dataset_transform_module],
                                          data_root=self.data_root)
         train_set = dataset_manager['train']
+
+        arch_spec = importlib.util.spec_from_file_location(self.arch_filepath.split('.')[-2].split('/')[-1], self.arch_filepath)
+        arch_module = importlib.util.module_from_spec(arch_spec)
+        arch_spec.loader.exec_module(arch_module)
+
         trainer = self._make_instance(class_name=self.config['model']['class'],
                                       modules=[model_module],
                                       writer=self,
                                       dataset=train_set,
+                                      arch_module=arch_module,
                                       num_workers=self.num_workers,
                                       **self.config['model']['params'])
 

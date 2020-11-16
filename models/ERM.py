@@ -11,11 +11,11 @@ import utils.schedulers as scheduler_module
 
 
 class ERMTrainer(RepresentationTrainer):
-    def __init__(self, z_dim, classifier, optim, **params):
+    def __init__(self, z_dim, optim, label_classifier=None, **params):
 
         super(ERMTrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
 
-        self.classifier = self.instantiate_architecture(classifier, z_dim=z_dim)
+        self.classifier = self.instantiate_architecture('LabelClassifier', z_dim=z_dim, **label_classifier)
 
         self.opt.add_param_group(
             {'params': self.classifier.parameters()}

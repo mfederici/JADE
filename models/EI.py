@@ -20,16 +20,17 @@ ADV_OBJECTIVES = {ADV_CE_LOSS, ADV_JDS_LOSS}
 
 
 class EITrainer(RepresentationTrainer):
-    def __init__(self, z_dim, classifier, env_classifier, optim, beta_scheduler, n_adv_steps=5, adv_optim=None,
-                 adv_objective=ADV_CE_LOSS, adv_train_type=ADV_ALT_TRAIN, **params):
+    def __init__(self, z_dim, optim, beta_scheduler, n_adv_steps=5, adv_optim=None,
+                 adv_objective=ADV_CE_LOSS, adv_train_type=ADV_ALT_TRAIN, label_classifier=None, env_classifier=None,
+                 **params):
 
         super(EITrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
 
         # Definition of the scheduler to update the value of the regularization coefficient beta over time
         self.beta_scheduler = getattr(scheduler_module, beta_scheduler['class'])(**beta_scheduler['params'])
 
-        self.classifier = self.instantiate_architecture(classifier, z_dim=z_dim)
-        self.env_classifier = self.instantiate_architecture(env_classifier, z_dim=z_dim)
+        self.classifier = self.instantiate_architecture('LabelClassifier', z_dim=z_dim, **label_classifier)
+        self.env_classifier = self.instantiate_architecture('EnvClassifier', z_dim=z_dim, **env_classifier)
 
         self.n_adv_steps = n_adv_steps
         self.step = 0
@@ -123,7 +124,6 @@ class EITrainer(RepresentationTrainer):
 
     def _compute_adv_loss(self, data):
         x = data['x']
-        y = data['y']
         e = data['e']
 
         # Encode a batch of data
@@ -134,5 +134,5 @@ class EITrainer(RepresentationTrainer):
         e_rec_loss = -p_e_given_z.log_prob(e).mean()
         self._add_loss_item('loss/CE_e_z', e_rec_loss.item())
 
-        loss = e_rec_loss #+ y_rec_loss
+        loss = e_rec_loss
         return loss

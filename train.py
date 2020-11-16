@@ -14,6 +14,8 @@ parser.add_argument("--model_file", type=str, default=None,
                     help="Path to the .yml file containing the model description.")
 parser.add_argument("--eval_file", type=str, default=None,
                     help="Path to the .yml file containing the evaluation description.")
+parser.add_argument('--arch_pyfile', type=str, default=None,
+                    help="Path to the .py file containing the architecture descriptions.")
 parser.add_argument("--run_name", type=str, default=None,
                     help="Unique name associated to the experiment")
 parser.add_argument("--experiments-root", type=str, default="experiments",
@@ -39,6 +41,7 @@ logging = True
 data_file = args.data_file
 model_file = args.model_file
 eval_file = args.eval_file
+arch_file = args.arch_pyfile
 
 run_name = args.run_name
 
@@ -71,6 +74,7 @@ verbose = True
 run_manager = WANDBRunManager(run_name=run_name, desc={'data_file': data_file,
                                                        'model_file': model_file,
                                                        'eval_file': eval_file},
+                              arch_filepath=arch_file,
                               num_workers=num_workers,
                               experiments_root=experiments_root, data_root=data_root,
                               verbose=verbose, upload_checkpoints=upload_checkpoints)

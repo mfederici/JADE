@@ -19,16 +19,17 @@ ADV_OBJECTIVES = {ADV_CE_LOSS}
 
 
 class ECITrainer(RepresentationTrainer):
-    def __init__(self, z_dim, classifier, env_classifier, optim, beta_scheduler, n_adv_steps=5, adv_optim=None,
-                 adv_objective=ADV_CE_LOSS, adv_train_type=ADV_ALT_TRAIN, **params):
+    def __init__(self, z_dim, optim, beta_scheduler, n_adv_steps=5, adv_optim=None,
+                 adv_objective=ADV_CE_LOSS, adv_train_type=ADV_ALT_TRAIN, label_classifier=None, conditional_env_classifier=None,
+                 **params):
 
         super(ECITrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
 
         # Definition of the scheduler to update the value of the regularization coefficient beta over time
         self.beta_scheduler = getattr(scheduler_module, beta_scheduler['class'])(**beta_scheduler['params'])
 
-        self.classifier = self.instantiate_architecture(classifier, z_dim=z_dim)
-        self.env_classifier = self.instantiate_architecture(env_classifier, z_dim=z_dim)
+        self.classifier = self.instantiate_architecture('LabelClassifier', z_dim=z_dim, **label_classifier)
+        self.env_classifier = self.instantiate_architecture('ConditionalEnvClassifier', z_dim=z_dim, **conditional_env_classifier)
 
         self.n_adv_steps = n_adv_steps
         self.step = 0

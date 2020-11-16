@@ -4,9 +4,7 @@ import torch.nn as nn
 import numpy as np
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
-import architectures as arch_module
 import torch.optim as optim_module
-from utils.modules import StochasticLinear, Flatten
 
 
 ##########################
@@ -14,7 +12,7 @@ from utils.modules import StochasticLinear, Flatten
 ##########################
 
 class Trainer(nn.Module):
-    def __init__(self, dataset, batch_size, log_loss_every=10, num_workers=0, writer=None):
+    def __init__(self, dataset, batch_size, arch_module, log_loss_every=10, num_workers=0, writer=None):
         super(Trainer, self).__init__()
         self.iterations = 0
 
@@ -23,12 +21,14 @@ class Trainer(nn.Module):
         self.log_loss_every = log_loss_every
 
         self.loss_items = {}
+        self.arch_module = arch_module
 
-    @staticmethod
-    def instantiate_architecture(arch_desc, **arch_params):
-        if 'params' in arch_desc:
-            arch_params.update(arch_desc['params'])
-        return getattr(arch_module, arch_desc['class'])(**arch_params)
+    def instantiate_architecture(self, class_name, **arch_params):
+        if not hasattr(self.arch_module, class_name):
+            raise Exception('A class implementation of %s(%s) has to be included in %s' % (
+                class_name, ','.join(arch_params.keys()), self.arch_module.__file__
+            ))
+        return getattr(self.arch_module, class_name)(**arch_params)
 
     @staticmethod
     def instantiate_optimizer(opt_desc, **opt_params):
@@ -129,7 +129,7 @@ class RepresentationTrainer(Trainer):
         self.z_dim = z_dim
 
         # Instantiating the encoder
-        self.encoder = self.instantiate_architecture(encoder, z_dim=z_dim)
+        self.encoder = self.instantiate_architecture('Encoder', z_dim=z_dim, **encoder)
 
         # Instantiating the optimizer
         self.opt = self.instantiate_optimizer(optim, params=self.encoder.parameters())
