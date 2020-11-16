@@ -1,0 +1,40 @@
+train:
+  class: SpeechCommands
+  params:
+    path: datasets/speech_commands
+    split: train
+    lookup_filename: data/speech_commands_resources/lookup.yml
+    split_filename: data/speech_commands_resources/split.yml
+  transforms:
+    - class: MoveToCache
+
+
+valid:
+  class: SpeechCommands
+  params:
+    path: datasets/speech_commands
+    split: valid
+    lookup_filename: data/speech_commands_resources/lookup.yml
+    split_filename: data/speech_commands_resources/split.yml
+  transforms:
+    - class: MoveToCache
+
+test:
+  class: SpeechCommands
+  params:
+    path: datasets/speech_commands
+    split: test
+    lookup_filename: data/speech_commands_resources/lookup.yml
+    split_filename: data/speech_commands_resources/split.yml
+  transforms:
+    - class: MoveToCache
+
+trainvalid:
+  class: SpeechCommands
+    params:
+      path: datasets/speech_commands
+      split: train+valid
+      lookup_filename: data/speech_commands_resources/lookup.yml
+      split_filename: data/speech_commands_resources/split.yml
+    transforms:
+      - class: MoveToCache

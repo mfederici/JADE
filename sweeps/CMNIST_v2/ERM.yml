@@ -13,7 +13,7 @@ metric:
 parameters:
   model.params.encoder.params.n_hidden:
     values:
-      - 1024
+      - 128
   model.params.classifier.params.n_hidden:
     values:
       - 128
