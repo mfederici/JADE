@@ -69,7 +69,7 @@ class AccuracyEvaluation(Evaluation):
                 else:
                     raise NotImplemented()
 
-                correct += (y == batch['y'].to(device).long()).sum().item()
+                correct += (y.squeeze() == batch['y'].to(device).long().squeeze()).sum().item()
                 total += batch['y'].shape[0]
                 n_batches += 1
 
