@@ -21,13 +21,14 @@ class LinearAccuracyEvaluation(Evaluation):
 
 
 class AccuracyEvaluation(Evaluation):
-    def __init__(self, evaluate_on, encoder='encoder', classifier='classifier', batch_size=256, sample=True, **params):
+    def __init__(self, evaluate_on, encoder='encoder', classifier='classifier', batch_size=256, n_samples=None, sample=True, **params):
         super(AccuracyEvaluation, self).__init__(**params)
         self.dataset = self.datasets[evaluate_on]
         self.encoder = getattr(self.trainer, encoder)
         self.classifier = getattr(self.trainer, classifier)
         self.batch_size = batch_size
         self.sample = sample
+        self.n_samples = n_samples
 
     def evaluate(self):
         data_loader = torch.utils.data.DataLoader(
@@ -36,10 +37,21 @@ class AccuracyEvaluation(Evaluation):
             shuffle=False)
         device = list(self.encoder.parameters())[0].device
         correct = 0
+        n_batches = 0
+        total = 0
+
+        max_batches = -1
+        if not (self.n_samples is None):
+            max_batches = self.n_samples//self.batch_size
+
         self.encoder.eval()
         self.classifier.eval()
+
         with torch.no_grad():
             for batch in data_loader:
+                if max_batches > 0:
+                    if n_batches > max_batches:
+                        break
                 z = self.encoder(batch['x'].to(device))
 
                 if isinstance(z, Distribution):
@@ -58,33 +70,45 @@ class AccuracyEvaluation(Evaluation):
                     raise NotImplemented()
 
                 correct += (y == batch['y'].to(device).long()).sum().item()
+                total += batch['y'].shape[0]
+                n_batches += 1
 
         return {
             'type': 'scalar',
-            'value': float(correct)/len(self.dataset)
+            'value': float(correct)/total
         }
 
 
 class CrossEntropyEvaluation(Evaluation):
-    def __init__(self, evaluate_on, encoder='encoder', classifier='classifier', batch_size=256, sample=True, **params):
+    def __init__(self, evaluate_on, encoder='encoder', classifier='classifier', batch_size=256, n_samples=None, sample=True, **params):
         super(CrossEntropyEvaluation, self).__init__(**params)
         self.dataset = self.datasets[evaluate_on]
         self.encoder = getattr(self.trainer, encoder)
         self.classifier = getattr(self.trainer, classifier)
         self.batch_size = batch_size
         self.sample = sample
+        self.n_samples = n_samples
 
     def evaluate(self):
         data_loader = torch.utils.data.DataLoader(
             self.dataset,
             batch_size=self.batch_size,
-            shuffle=False)
+            shuffle=True)
         device = list(self.encoder.parameters())[0].device
         ce = []
+
+        max_batches = -1
+        if not (self.n_samples is None):
+            max_batches = self.n_samples//self.batch_size
+
         self.encoder.eval()
         self.classifier.eval()
+        n_batches = 0
         with torch.no_grad():
             for batch in data_loader:
+                if max_batches > 0:
+                    if n_batches > max_batches:
+                        break
                 y = batch['y'].to(device)
                 z = self.encoder(batch['x'].to(device))
 
@@ -102,6 +126,7 @@ class CrossEntropyEvaluation(Evaluation):
                     c_ = -y_pred.log_prob(y)
 
                 ce.append(c_.mean().item())
+                n_batches += 1
 
         return {
             'type': 'scalar',
