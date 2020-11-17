@@ -60,6 +60,9 @@ num_workers = args.num_workers
 if 'N_WORKERS' in os.environ:
     num_workers = int(os.environ['N_WORKERS'])
 
+if 'DATA_ROOT' in os.environ:
+    data_root = int(os.environ['DATA_ROOT'])
+
 seed = args.seed
 
 # Set random seed
