@@ -42,7 +42,7 @@ class SpeechCommands(SPEECHCOMMANDS):
         label = self.lookup['label'][label]
         sid = self.lookup['sid'][speaker_id]
 
-        return {'x': waveform, 'y': label, 'e': sid}
+        return {'x': waveform, 'y': torch.LongTensor([label]), 'e': torch.LongTensor([sid])}
 
     def __len__(self):
         return len(self.id_lookup)
