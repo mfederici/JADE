@@ -28,6 +28,8 @@ class Trainer(nn.Module):
             raise Exception('A class implementation of %s(%s) has to be included in %s' % (
                 class_name, ','.join(arch_params.keys()), self.arch_module.__file__
             ))
+
+        print('Instantiating %s with the parameters %s'%(class_name, str(arch_params)))
         return getattr(self.arch_module, class_name)(**arch_params)
 
     @staticmethod
