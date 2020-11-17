@@ -49,20 +49,17 @@ class Prior(nn.Module):
 
 # Model for q(y|z)
 class LabelClassifier(nn.Module):
-    def __init__(self, z_dim, dropout=0, n_hidden=1024, dist='Categorical'):
+    def __init__(self, z_dim, dropout, n_hidden, dist='Categorical'):
         super(LabelClassifier, self).__init__()
 
-        if dist == 'Categorical':
-            out_dim = SPEECH_COMMANDS_N_CLASSES
-        elif dist == 'Bernoulli':
-            out_dim = 1
-        else:
+        if not (dist == 'Categorical'):
             raise NotImplemented()
+
         self.net = nn.Sequential(
             nn.Linear(z_dim, n_hidden),
             nn.Dropout(dropout),
             nn.ReLU(True),
-            StochasticLinear(n_hidden, out_dim, dist)
+            StochasticLinear(n_hidden, SPEECH_COMMANDS_N_CLASSES, dist)
         )
 
     def forward(self, z):

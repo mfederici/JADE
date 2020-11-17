@@ -2,18 +2,22 @@ train_accuracy:
   class: AccuracyEvaluation
   params:
     evaluate_on: train
+    n_samples: 5000
 
 test_accuracy:
   class: AccuracyEvaluation
   params:
     evaluate_on: valid
+    n_samples: 5000
 
 train_ce:
   class: CrossEntropyEvaluation
   params:
     evaluate_on: train
+    n_samples: 5000
 
 test_ce:
   class: CrossEntropyEvaluation
   params:
     evaluate_on: valid
+    n_samples: 5000
