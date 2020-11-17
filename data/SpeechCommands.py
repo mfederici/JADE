@@ -22,9 +22,9 @@ class SpeechCommands(SPEECHCOMMANDS):
         self.pad_to = pad_to
 
         with open(lookup_filename) as lookup_file:
-            self.lookup = yaml.load(lookup_file)
+            self.lookup = yaml.safe_load(lookup_file)
         with open(split_filename) as split_file:
-            split_ids = yaml.load(split_file)
+            split_ids = yaml.safe_load(split_file)
 
         if split == 'train+valid':
             self.id_lookup = split_ids['train'].update(split_ids['valid'])
