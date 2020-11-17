@@ -129,7 +129,7 @@ class BuildDynamicCMNIST(DatasetTransform):
 
 
 class DynamicCMNIST(Dataset):
-    def __init__(self, path, split, cond_dist_file, data_root='.', device=None):
+    def __init__(self, path, split, cond_dist_file, data_root='.'):
         super(DynamicCMNIST, self).__init__()
 
         dataset = MNIST(path=path, split=split, data_root=data_root)
@@ -137,7 +137,7 @@ class DynamicCMNIST(Dataset):
         dataset = Apply(instance=dataset, f=lambda data: {'x': torch.cat([data['x'], data['x']*0], 0)},
                         f_in='x', f_out='x')
         # Cache the dataset in memory of <device> for efficiency
-        dataset = MoveToCache(instance=dataset, device=device)
+        dataset = MoveToCache(instance=dataset, device="cpu") # TODO cuda multiprocessing problem
         # Load a tensor representing p(y,e,c|d)
         p = torch.load(cond_dist_file)
         # Sample using ancestral sampling x_i, d_i~p(d,x) then y_i,e_i,c_i~p(y,e,c|d=d_i)

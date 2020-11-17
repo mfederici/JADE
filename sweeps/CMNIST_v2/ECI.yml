@@ -7,7 +7,7 @@ command:
 - --eval_file=definitions/eval/CMNIST_v2_valid.yml
 - --arch_pyfile=definitions/architectures/CMNIST.py
 - --num-workers=16
-- --epochs=500
+- --epochs=1000
 method: grid
 metric:
   goal: minimize
@@ -20,25 +20,7 @@ parameters:
     - 0.99
     - 0.999
     - 0.999999
-  model.params.adv_train_type:
-    values:
-    - alternating
   model.params.n_adv_steps:
     values:
-      - 5
-  model.params.encoder.params.n_hidden:
-    values:
-      - 128
-  model.params.classifier.params.n_hidden:
-    values:
-      - 128
-  model.params.env_classifier.params.n_hidden:
-    values:
-      - 128
-  model.params.encoder.params.dropout:
-    values:
-      - 0.25
-  model.params.classifier.params.dropout:
-    values:
-      - 0.0
+      - 10
 program: train.py
