@@ -7,9 +7,9 @@ from data.SpeechCommands import SPEECH_COMMANDS_N_CLASSES, SPEECH_COMMANDS_N_ENV
 from torch.distributions import Normal, Independent
 
 # Model for p(z|x)
-class SimpleEncoder(nn.Module):
+class Encoder(nn.Module):
     def __init__(self, z_dim, dist='Delta', dropout=0, n_hidden=1024):
-        super(SimpleEncoder, self).__init__()
+        super(Encoder, self).__init__()
 
         self.net = nn.Sequential(
             nn.Conv1d(1, n_hidden, 10, 5),
@@ -37,9 +37,9 @@ class SimpleEncoder(nn.Module):
 
 
 # Model for q(z)
-class NormalPrior(nn.Module):
+class Prior(nn.Module):
     def __init__(self, z_dim):
-        super(NormalPrior, self).__init__()
+        super(Prior, self).__init__()
         self.mu = nn.Parameter(torch.zeros([1, z_dim]), requires_grad=False)
         self.sigma = nn.Parameter(torch.zeros([1, z_dim])+1, requires_grad=False)
 
@@ -48,9 +48,9 @@ class NormalPrior(nn.Module):
 
 
 # Model for q(y|z)
-class SimpleClassifier(nn.Module):
+class LabelClassifier(nn.Module):
     def __init__(self, z_dim, dropout=0, n_hidden=1024, dist='Categorical'):
-        super(SimpleClassifier, self).__init__()
+        super(LabelClassifier, self).__init__()
 
         if dist == 'Categorical':
             out_dim = SPEECH_COMMANDS_N_CLASSES
@@ -69,9 +69,9 @@ class SimpleClassifier(nn.Module):
         return self.net(z)
 
 # Model for q(ye|z)
-class SimpleJointClassifier(nn.Module):
+class JointClassifier(nn.Module):
     def __init__(self, z_dim):
-        super(SimpleJointClassifier, self).__init__()
+        super(JointClassifier, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(z_dim, 1024),
             nn.ReLU(True),
@@ -84,21 +84,10 @@ class SimpleJointClassifier(nn.Module):
         return self.net(z).view(z.shape[0], SPEECH_COMMANDS_N_CLASSES, SPEECH_COMMANDS_N_ENVS)
 
 
-# Constant Model for q(y|z)
-class ConstantClassifier(nn.Module):
-    def __init__(self, z_dim):
-        super(ConstantClassifier, self).__init__()
-        self.z_dim = z_dim
-
-    def forward(self, z):
-        params = z[:, :SPEECH_COMMANDS_N_CLASSES]
-        return torch.distributions.Categorical(logits=params)
-
-
 # Model for q(e|z)
-class SimpleEnvClassifier(nn.Module):
+class EnvClassifier(nn.Module):
     def __init__(self, z_dim, n_hidden=1024):
-        super(SimpleEnvClassifier, self).__init__()
+        super(EnvClassifier, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(z_dim, n_hidden),
             nn.ReLU(True),
@@ -112,9 +101,9 @@ class SimpleEnvClassifier(nn.Module):
 
 
 # Model for q(e|zy)
-class SimpleConditionalEnvClassifier(nn.Module):
+class ConditionalEnvClassifier(nn.Module):
     def __init__(self, z_dim, spectral_norm=False, n_hidden=1024):
-        super(SimpleConditionalEnvClassifier, self).__init__()
+        super(ConditionalEnvClassifier, self).__init__()
 
         if not spectral_norm:
             self.net = nn.Sequential(
@@ -141,9 +130,9 @@ class SimpleConditionalEnvClassifier(nn.Module):
 
 
 # Auxiliary network for mutual information estimation
-class SimpleMIEstimator(nn.Module):
+class MIEstimator(nn.Module):
     def __init__(self, size1, size2):
-        super(SimpleMIEstimator, self).__init__()
+        super(MIEstimator, self).__init__()
 
         # Vanilla MLP
         self.net = nn.Sequential(
