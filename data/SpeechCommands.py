@@ -13,6 +13,7 @@ SPEECH_COMMANDS_N_ENVS = 2618
 
 class SpeechCommands(SPEECHCOMMANDS):
     def __init__(self, root, lookup_filename, split_filename, split, download=True, pad_to=16000):
+        os.makedirs(root, exist_ok=True)
         super(SpeechCommands, self).__init__(root=root, url='speech_commands_v0.02',
                                              folder_in_archive='SpeechCommands', download=download)
 
