@@ -1,7 +1,10 @@
 import os
 import torch
+import torchaudio
 from torchaudio.datasets import SPEECHCOMMANDS
 import yaml
+
+torchaudio.set_audio_backend("sox_io")
 
 SPEECH_COMMANDS_SHAPE = [1, 16000]
 SPEECH_COMMANDS_N_CLASSES = 35

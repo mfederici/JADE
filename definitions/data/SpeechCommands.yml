@@ -31,10 +31,10 @@ test:
 
 trainvalid:
   class: SpeechCommands
-    params:
-      path: datasets/speech_commands
-      split: train+valid
-      lookup_filename: data/speech_commands_resources/lookup.yml
-      split_filename: data/speech_commands_resources/split.yml
-    transforms:
-      - class: MoveToCache
+  params:
+    path: datasets/speech_commands
+    split: train+valid
+    lookup_filename: data/speech_commands_resources/lookup.yml
+    split_filename: data/speech_commands_resources/split.yml
+  transforms:
+    - class: MoveToCache
