@@ -50,8 +50,8 @@ class vREXTrainer(RepresentationTrainer):
 
     def _compute_loss(self, data):
         x = data['x']
-        y = data['y'].float()
-        e = data['e']
+        y = data['y'].float().squeeze()
+        e = data['e'].squeeze()
 
         beta = self.beta_scheduler(self.iterations)
 

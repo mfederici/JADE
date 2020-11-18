@@ -38,7 +38,7 @@ class VIBTrainer(RepresentationTrainer):
 
     def _compute_loss(self, data):
         x = data['x']
-        y = data['y']
+        y = data['y'].squeeze()
 
         beta = self.beta_scheduler(self.iterations)
 

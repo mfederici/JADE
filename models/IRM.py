@@ -46,7 +46,7 @@ class IRMTrainer(RepresentationTrainer):
 
     def _compute_loss(self, data):
         x = data['x']
-        y = data['y'].float()
+        y = data['y'].float().squeeze()
 
         beta = self.beta_scheduler(self.iterations)
 

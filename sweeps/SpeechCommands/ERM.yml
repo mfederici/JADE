@@ -7,6 +7,7 @@ command:
 - --eval_file=definitions/eval/SpeechCommands_valid.yml
 - --arch_pyfile=definitions/architectures/SpeechCommands.py
 - --epochs=100
+- --num-workers=0
 method: grid
 metric:
   goal: minimize

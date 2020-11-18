@@ -32,7 +32,7 @@ class ERMTrainer(RepresentationTrainer):
 
     def _compute_loss(self, data):
         x = data['x']
-        y = data['y']
+        y = data['y'].squeeze()
 
         # Encode a batch of data
         z = self.encoder(x=x).rsample()

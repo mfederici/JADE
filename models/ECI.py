@@ -95,8 +95,8 @@ class ECITrainer(RepresentationTrainer):
 
     def _compute_loss(self, data):
         x = data['x']
-        y = data['y']
-        e = data['e']
+        y = data['y'].squeeze()
+        e = data['e'].squeeze()
         beta = self.beta_scheduler(self.iterations)
 
         # Encode a batch of data
@@ -123,8 +123,8 @@ class ECITrainer(RepresentationTrainer):
 
     def _compute_adv_loss(self, data):
         x = data['x']
-        y = data['y']
-        e = data['e']
+        y = data['y'].squeeze()
+        e = data['e'].squeeze()
 
         # Encode a batch of data
         with torch.no_grad():
