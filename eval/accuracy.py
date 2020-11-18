@@ -109,7 +109,7 @@ class CrossEntropyEvaluation(Evaluation):
                 if max_batches > 0:
                     if n_batches > max_batches:
                         break
-                y = batch['y'].to(device)
+                y = batch['y'].to(device).squeeze()
                 z = self.encoder(batch['x'].to(device))
 
                 if isinstance(z, Distribution):
