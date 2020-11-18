@@ -6,6 +6,8 @@ from utils.modules import Flatten, StochasticLinear, OneHot
 from data.SpeechCommands import SPEECH_COMMANDS_N_CLASSES, SPEECH_COMMANDS_N_ENVS
 from torch.distributions import Normal, Independent
 
+N_ENVS = SPEECH_COMMANDS_N_ENVS
+
 # Model for p(z|x)
 class Encoder(nn.Module):
     def __init__(self, z_dim, dist='Delta', dropout=0, n_hidden=1024):
