@@ -26,8 +26,8 @@ class InstanceManager:
                 class_name, str([module.__name__ for module in self.modules])))
 
         if self.verbose:
-            print('Instantiating class %s from %s' %
-                  (class_name, module.__name__))
+            print('Instantiating class %s from %s with %s' %
+                  (class_name, module.__name__, str(params)))
 
         instance = Class(**params)
 

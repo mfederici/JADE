@@ -76,7 +76,8 @@ class RunManager:
                                          modules=[torchvision_dataset_module,
                                                   dataset_module,
                                                   dataset_transform_module],
-                                         data_root=self.data_root)
+                                         data_root=self.data_root,
+                                         verbose=self.verbose)
         train_set = dataset_manager['train']
 
         arch_spec = importlib.util.spec_from_file_location(self.arch_filepath.split('.')[-2].split('/')[-1], self.arch_filepath)
