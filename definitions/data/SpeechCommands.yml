@@ -15,8 +15,6 @@ valid:
     split: valid
     lookup_filename: data/speech_commands_resources/lookup.yml
     split_filename: data/speech_commands_resources/split.yml
-  transforms:
-    - class: MoveToCache
 
 test:
   class: SpeechCommands
@@ -25,8 +23,6 @@ test:
     split: test
     lookup_filename: data/speech_commands_resources/lookup.yml
     split_filename: data/speech_commands_resources/split.yml
-  transforms:
-    - class: MoveToCache
 
 trainvalid:
   class: SpeechCommands
