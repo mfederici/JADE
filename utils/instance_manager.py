@@ -74,8 +74,11 @@ class DatasetManager(InstanceManager):
             raise Exception('A description for %s has not been found in the description file' % item)
 
         descr = self.descriptions[item]
+        params = descr['params']
+        params.update(self.extra_params)
+
         if 'class' in descr:
-            instance = self._make_instance(self.descriptions[item]['class'], self.descriptions[item]['params'])
+            instance = self._make_instance(self.descriptions[item]['class'], params)
         elif 'extend' in descr:
             instance = self.__getitem__(descr['extend']['base'])
         else:

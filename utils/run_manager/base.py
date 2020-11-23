@@ -18,9 +18,11 @@ def load_desc_file(desc_filename):
 
 
 class RunManager:
-    def __init__(self, run_id, run_name, arch_filepath, experiments_root, config, run_dir, resume, num_workers=0, data_root='.',
-                 verbose=False):
+    def __init__(self, run_id, run_name, arch_filepath, experiments_root, config, run_dir, resume, num_workers=0,
+                 data_root='.', verbose=False):
 
+        if verbose:
+            print('Data root: %s' % data_root)
         self.verbose = verbose
         self.run_name = run_name
         self.run_id = run_id
