@@ -13,9 +13,9 @@ SPEECH_COMMANDS_N_ENVS = 2618
 
 class SpeechCommands(SPEECHCOMMANDS):
     def __init__(self, path, lookup_filename, split_filename, split, download=True, pad_to=16000, data_root='.'):
+        path = os.path.join(data_root, path)
         os.makedirs(path, exist_ok=True)
-        print(os.path.join(data_root, path))
-        super(SpeechCommands, self).__init__(root=os.path.join(data_root, path), url='speech_commands_v0.02',
+        super(SpeechCommands, self).__init__(root=path, url='speech_commands_v0.02',
                                              folder_in_archive='SpeechCommands', download=download)
 
         assert split in {'train', 'test', 'valid', 'train+valid'}
