@@ -99,6 +99,8 @@ class ECITrainer(RepresentationTrainer):
         e = data['e'].squeeze()
         beta = self.beta_scheduler(self.iterations)
 
+        self.env_classifier.eval()
+
         # Encode a batch of data
         z = self.encoder(x=x).rsample()
 
@@ -118,6 +120,8 @@ class ECITrainer(RepresentationTrainer):
 
         self._add_loss_item('loss/CE_y_z', y_rec_loss.item())
         self._add_loss_item('loss/beta', beta)
+
+        self.env_classifier.train()
 
         return loss
 

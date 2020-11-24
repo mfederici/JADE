@@ -1,6 +1,7 @@
 from eval.base import Evaluation
 from eval.utils import evaluate
 import torch
+from torch.utils.data import DataLoader
 import numpy as np
 from torch.distributions import Distribution, Bernoulli, Categorical
 from torch.nn.functional import binary_cross_entropy_with_logits
@@ -21,7 +22,7 @@ class LinearAccuracyEvaluation(Evaluation):
 
 
 class AccuracyEvaluation(Evaluation):
-    def __init__(self, evaluate_on, encoder='encoder', classifier='classifier', batch_size=256, n_samples=None, sample=True, **params):
+    def __init__(self, evaluate_on, encoder='encoder', classifier='classifier', batch_size=256, n_samples=None, sample=True, num_workers=0, **params):
         super(AccuracyEvaluation, self).__init__(**params)
         self.dataset = self.datasets[evaluate_on]
         self.encoder = getattr(self.trainer, encoder)
@@ -29,12 +30,13 @@ class AccuracyEvaluation(Evaluation):
         self.batch_size = batch_size
         self.sample = sample
         self.n_samples = n_samples
+        self.num_workers = num_workers
 
     def evaluate(self):
-        data_loader = torch.utils.data.DataLoader(
+        data_loader = DataLoader(
             self.dataset,
             batch_size=self.batch_size,
-            shuffle=False)
+            shuffle=False, num_workers=self.num_workers)
         device = list(self.encoder.parameters())[0].device
         correct = 0
         n_batches = 0
@@ -80,7 +82,7 @@ class AccuracyEvaluation(Evaluation):
 
 
 class CrossEntropyEvaluation(Evaluation):
-    def __init__(self, evaluate_on, encoder='encoder', classifier='classifier', batch_size=256, n_samples=None, sample=True, **params):
+    def __init__(self, evaluate_on, encoder='encoder', classifier='classifier', batch_size=256, num_workers=8, n_samples=None, sample=True, **params):
         super(CrossEntropyEvaluation, self).__init__(**params)
         self.dataset = self.datasets[evaluate_on]
         self.encoder = getattr(self.trainer, encoder)
@@ -88,12 +90,15 @@ class CrossEntropyEvaluation(Evaluation):
         self.batch_size = batch_size
         self.sample = sample
         self.n_samples = n_samples
+        self.num_workers = num_workers
 
     def evaluate(self):
-        data_loader = torch.utils.data.DataLoader(
+        data_loader = DataLoader(
             self.dataset,
             batch_size=self.batch_size,
-            shuffle=True)
+            shuffle=True,
+            num_workers=self.num_workers)
+
         device = list(self.encoder.parameters())[0].device
         ce = []
 

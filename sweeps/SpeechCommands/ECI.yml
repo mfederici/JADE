@@ -6,20 +6,23 @@ command:
 - --model_file=definitions/models/ECI.yml
 - --eval_file=definitions/eval/SpeechCommands_valid.yml
 - --arch_pyfile=definitions/architectures/SpeechCommands.py
-- --epochs=1000
-- --num-workers=0
+- --epochs=2000
+- --num-workers=16
 method: grid
 metric:
   goal: minimize
   name: test_ce
 parameters:
+  model.log_loss_every:
+    values:
+      - 1000
   model.params.beta_scheduler.params.end_value:
     values:
     - 0.1
-    - 0.2
     - 0.3
-    - 0.4
     - 0.5
+    - 0.7
+    - 0.9
   model.params.n_adv_steps:
     values:
       - 10
@@ -32,4 +35,14 @@ parameters:
   model.params.encoder.n_hidden:
     values:
       - 256
+  model.params.encoder.dropout:
+    values:
+      - 0.5
+  model.params.conditional_env_classifier.n_hidden:
+    values:
+      - 512
+  model.params.conditional_env_classifier.dropout:
+    values:
+      - 0
+      - 0.25
 program: train.py

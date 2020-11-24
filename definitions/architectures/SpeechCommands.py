@@ -85,12 +85,14 @@ class JointClassifier(nn.Module):
 
 # Model for q(e|z)
 class EnvClassifier(nn.Module):
-    def __init__(self, z_dim, n_hidden=1024):
+    def __init__(self, z_dim, n_hidden=1024, dropout=0):
         super(EnvClassifier, self).__init__()
         self.net = nn.Sequential(
             nn.Linear(z_dim, n_hidden),
+            nn.Dropout(dropout),
             nn.ReLU(True),
             nn.Linear(n_hidden, n_hidden),
+            nn.Dropout(dropout),
             nn.ReLU(True),
             StochasticLinear(n_hidden, SPEECH_COMMANDS_N_ENVS, 'Categorical')
         )
@@ -101,24 +103,29 @@ class EnvClassifier(nn.Module):
 
 # Model for q(e|zy)
 class ConditionalEnvClassifier(nn.Module):
-    def __init__(self, z_dim, spectral_norm=False, n_hidden=1024):
+    def __init__(self, z_dim, spectral_norm=False, n_hidden=1024, dropout=0):
         super(ConditionalEnvClassifier, self).__init__()
 
         if not spectral_norm:
             self.net = nn.Sequential(
                 nn.Linear(z_dim+SPEECH_COMMANDS_N_CLASSES, n_hidden),
+                nn.Dropout(dropout),
                 nn.ReLU(True),
                 nn.Linear(n_hidden, n_hidden),
+                nn.Dropout(dropout),
                 nn.ReLU(True),
                 StochasticLinear(n_hidden, SPEECH_COMMANDS_N_ENVS, 'Categorical')
             )
         else:
             self.net = nn.Sequential(
-                sn(nn.Linear(z_dim + SPEECH_COMMANDS_N_CLASSES, 1024)),
+                sn(nn.Linear(z_dim + SPEECH_COMMANDS_N_CLASSES, n_hidden)),
+                nn.Dropout(dropout),
                 nn.ReLU(True),
-                sn(nn.Linear(1024, 1024)),
+                sn(nn.Linear(n_hidden, n_hidden)),
+                nn.Dropout(dropout),
                 nn.ReLU(True),
-                sn(nn.Linear(1024, SPEECH_COMMANDS_N_ENVS))
+                sn(nn.Linear(n_hidden, SPEECH_COMMANDS_N_ENVS)),
+                StochasticLinear(n_hidden, SPEECH_COMMANDS_N_ENVS, 'Categorical')
             )
 
         self.long2onehot = OneHot(SPEECH_COMMANDS_N_CLASSES)
