@@ -40,14 +40,20 @@ class Encoder(nn.Module):
 
 # Model for q(z)
 class Prior(nn.Module):
-    def __init__(self, z_dim):
+    def __init__(self, z_dim, dist):
         super(Prior, self).__init__()
-        self.mu = nn.Parameter(torch.zeros([1, z_dim]), requires_grad=False)
-        self.sigma = nn.Parameter(torch.zeros([1, z_dim])+1, requires_grad=False)
+        self.dist = dist
+        if dist == 'Normal':
+            self.mu = nn.Parameter(torch.zeros([1, z_dim]), requires_grad=False)
+            self.sigma = nn.Parameter(torch.zeros([1, z_dim])+1, requires_grad=False)
+        else:
+            raise NotImplemented('%s prior distribution is not implemented' % dist)
 
     def forward(self):
-        return Independent(Normal(self.mu, self.sigma), 1)
-
+        if self.dist == 'Normal':
+            return Independent(Normal(self.mu, self.sigma), 1)
+        else:
+            raise NotImplemented('%s prior distribution is not implemented' % self.dist)
 
 # Model for q(y|z)
 class LabelClassifier(nn.Module):
