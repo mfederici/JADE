@@ -6,8 +6,8 @@ command:
 - --model_file=definitions/models/vREX.yml
 - --eval_file=definitions/eval/SpeechCommands_valid.yml
 - --arch_pyfile=definitions/architectures/SpeechCommands.py
-- --epochs=100
-- --num-workers=0
+- --epochs=200
+- --num-workers=16
 method: grid
 metric:
   goal: minimize
@@ -15,10 +15,16 @@ metric:
 parameters:
   model.params.beta_scheduler.params.end_value:
     values:
-      - 0.5
+      - 0.0
+      - 0.2
+      - 0.4
+      - 0.6
+      - 0.8
       - 0.9
-      - 0.99
-      - 0.9945
-      - 0.999
-      - 0.9999
+  model.params.encoder.dropout:
+    values:
+      - 0.5
+  model.params.encoder.n_hidden:
+    values:
+      - 256
 program: train.py

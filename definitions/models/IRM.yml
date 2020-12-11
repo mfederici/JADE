@@ -17,7 +17,6 @@ params:
   label_classifier:
     dropout: 0.0
     n_hidden: 128
-    dist: Bernoulli
 
   ###########################
   # Optimization parameters #
@@ -36,7 +35,7 @@ params:
   beta_scheduler:
     class: LinearScheduler
     params:
-      start_value: 0.9
-      end_value: 0.9999999
+      start_value: 0.5
+      end_value: 0.999999
       n_iterations: 5000
       start_iteration: 2000

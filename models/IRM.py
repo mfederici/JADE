@@ -5,6 +5,7 @@ import torch.nn as nn
 from torch.nn.functional import binary_cross_entropy_with_logits
 from torch.distributions import Normal, Bernoulli
 import torch.autograd as autograd
+import torch.nn.functional as F
 
 import utils.schedulers as scheduler_module
 
@@ -41,12 +42,24 @@ class IRMTrainer(RepresentationTrainer):
     def _compute_regularization(self, y_rec_loss):
         grad_1 = autograd.grad(y_rec_loss[0::2].mean(), [self.scale], create_graph=True)[0]
         grad_2 = autograd.grad(y_rec_loss[1::2].mean(), [self.scale], create_graph=True)[0]
+        print(grad_1.shape, grad_2.shape)
         result = torch.mean(grad_1 * grad_2)
         return result
 
+
+    def _compute_irm_loss(self, logits, y):
+        device = logits.device
+        scale = torch.tensor(1.).to(device).requires_grad_()
+        loss_1 = F.cross_entropy(logits[::2] * scale, y[::2].long())
+        loss_2 = F.cross_entropy(logits[1::2] * scale, y[1::2].long())
+        grad_1 = autograd.grad(loss_1, [scale], create_graph=True)[0]
+        grad_2 = autograd.grad(loss_2, [scale], create_graph=True)[0]
+
+        return torch.sum(grad_1 * grad_2)
+
     def _compute_loss(self, data):
         x = data['x']
-        y = data['y'].float().squeeze()
+        y = data['y'].squeeze()
 
         beta = self.beta_scheduler(self.iterations)
 
@@ -57,12 +70,13 @@ class IRMTrainer(RepresentationTrainer):
         # Label Reconstruction
         p_y_given_z = self.classifier(z=z)
 
-        assert isinstance(p_y_given_z, Bernoulli)
+        # assert isinstance(p_y_given_z, Bernoulli)
 
-        y_rec_loss = binary_cross_entropy_with_logits(self.scale * p_y_given_z.logits.squeeze(), y, reduction='none')
+        y_rec_loss = -p_y_given_z.log_prob(y)
 
         # Gradient penalty
-        penalty = self._compute_regularization(y_rec_loss)
+        #penalty = self._compute_regularization(y_rec_loss)
+        penalty = self._compute_irm_loss(p_y_given_z.logits, y)
 
         loss = (1-beta) * y_rec_loss.mean() + beta * penalty
 
