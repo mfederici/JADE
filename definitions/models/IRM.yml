@@ -29,7 +29,7 @@ params:
       lr: 0.0001
 
   # Size of the training batch
-  batch_size: 256
+  batch_size: 1024
 
   # Parameters for the beta-scheduler
   beta_scheduler:

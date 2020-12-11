@@ -7,7 +7,7 @@ command:
 - --eval_file=definitions/eval/CMNIST_valid.yml
 - --arch_pyfile=definitions/architectures/CMNIST.py
 - --num-workers=16
-- --epochs=500
+- --epochs=400
 method: grid
 metric:
   goal: minimize
