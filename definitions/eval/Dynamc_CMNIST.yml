@@ -1,0 +1,39 @@
+Accuracy(train_t0):
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: train
+
+Accuracy(train_t1):
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: train_t1
+
+Accuracy(test_t0):
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: valid_t0
+
+Accuracy(test_t1):
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: valid_t1
+
+CE(train_t0):
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: train_t0
+
+CE(train_t1):
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: train_t1
+
+CE(test_t0):
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: test_t0
+
+CE(test_t1):
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: test_t1

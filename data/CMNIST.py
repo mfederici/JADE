@@ -29,7 +29,7 @@ class MNIST(Dataset):
         elif split == 'valid':
             dataset = Subset(dataset, range(MNIST_TRAIN_EXAMPLES, len(dataset)))
         elif not (split == 'test') and not (split == 'train+valid'):
-            raise Exception('The possible splits are "train", "valid", "train+valid" and "test"')
+            raise Exception('The possible splits are "train", "valid", "train+valid", "test"')
 
         self.dataset = dataset
 

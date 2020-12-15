@@ -1,0 +1,28 @@
+train:
+  class: DynamicCMNIST
+  params:
+    path: datasets/MNIST
+    split: train+valid
+    cond_dist_file: data/cmnist_resources/CMNIST_v3_t0.pyt
+
+train_t1:
+  class: DynamicCMNIST
+  params:
+    path: datasets/MNIST
+    split: train+valid
+    cond_dist_file: data/cmnist_resources/CMNIST_v3_t1.pyt
+
+test_t0:
+  class: DynamicCMNIST
+  params:
+    path: datasets/MNIST
+    split: test
+    cond_dist_file: data/cmnist_resources/CMNIST_v3_t0.pyt
+
+test_t1:
+  class: DynamicCMNIST
+  params:
+    path: datasets/MNIST
+    split: test
+    cond_dist_file: data/cmnist_resources/CMNIST_v3_t1.pyt
+

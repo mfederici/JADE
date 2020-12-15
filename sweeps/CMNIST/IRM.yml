@@ -16,8 +16,8 @@ parameters:
   model.params.beta_scheduler.params.end_value:
     values:
       - 0.99
+      - 0.999
       - 0.9999
+      - 0.99999
       - 0.999999
-      - 0.9999999
-      - 0.99999999
 program: train.py
