@@ -117,11 +117,11 @@ class ConditionalEnvClassifier(nn.Module):
             )
         else:
             self.net = nn.Sequential(
-                sn(nn.Linear(z_dim + CMNIST_N_CLASSES, 1024)),
+                sn(nn.Linear(z_dim + CMNIST_N_CLASSES, n_hidden)),
                 nn.ReLU(True),
-                sn(nn.Linear(1024, 1024)),
+                sn(nn.Linear(n_hidden, n_hidden)),
                 nn.ReLU(True),
-                sn(nn.Linear(1024, CMNIST_N_ENVS))
+                sn(StochasticLinear(n_hidden, CMNIST_N_ENVS, 'Categorical'))
             )
 
         self.long2onehot = OneHot(CMNIST_N_CLASSES)
