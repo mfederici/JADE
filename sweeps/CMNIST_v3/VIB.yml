@@ -20,13 +20,4 @@ parameters:
       - 0.2
       - 0.3
       - 0.4
-  model.params.encoder.params.n_hidden:
-    values:
-      - 128
-  model.params.classifier.params.n_hidden:
-    values:
-      - 128
-  model.params.encoder.params.dropout:
-    values:
-      - 0.25
 program: train.py
