@@ -43,9 +43,8 @@ class StopGrad(nn.Module):
         return x.detach()
 
 
-class StochasticLinear(nn.Module):
+class StochasticLinear(nn.Linear):
     def __init__(self, in_size, out_size, dist):
-        super(StochasticLinear, self).__init__()
         self.in_size = in_size
         self.out_size = out_size
         self.dist = dist
@@ -57,10 +56,11 @@ class StochasticLinear(nn.Module):
         else:
             raise NotImplementedError('"%s"' % dist)
 
-        self.layer = nn.Linear(in_size, out_size * self.n_params)
+        super(StochasticLinear, self).__init__(in_size, out_size)
 
     def forward(self, input):
-        params = torch.split(self.layer(input), [self.out_size] * self.n_params, 1)
+        params = super(StochasticLinear, self).forward(input)
+        params = torch.split(params, [self.out_size] * self.n_params, 1)
 
         if self.dist == 'Normal':
             mu, sigma = params[0], softplus(params[1]) + 1e-7
