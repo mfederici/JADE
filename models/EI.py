@@ -67,7 +67,7 @@ class EITrainer(RepresentationTrainer):
 
         return items_to_store
 
-    def _train_step(self, data):
+    def train_step(self, data):
         # Alternating adversarial procedure
         if self.adv_train_type == ADV_ALT_TRAIN:
            if self.step < self.n_adv_steps:

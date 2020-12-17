@@ -15,14 +15,14 @@ metric:
 parameters:
   model.params.beta_scheduler.params.end_value:
     values:
-    - 0.999999
+    - 0.99999
   model.params.adv_train_type:
     values:
     - alternating
   model.params.n_adv_steps:
     values:
-      - 5
       - 10
+      - 20
   model.params.conditional_env_classifier.spectral_norm:
     values:
       - True

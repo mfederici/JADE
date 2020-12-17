@@ -21,7 +21,7 @@ ADV_OBJECTIVES = {ADV_CE_LOSS}
 class ECITrainer(RepresentationTrainer):
     def __init__(self, z_dim, optim, beta_scheduler, n_adv_steps=5, adv_optim=None,
                  adv_objective=ADV_CE_LOSS, adv_train_type=ADV_ALT_TRAIN, label_classifier=None, conditional_env_classifier=None,
-                 **params):
+                 lr_schedule=None, **params):
 
         super(ECITrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
 
@@ -54,6 +54,20 @@ class ECITrainer(RepresentationTrainer):
             )
             self.adv_opt = None
 
+        # Todo: add as a function to superclass
+        self.lr_schedules = []
+        if not (lr_schedule is None):
+            LRScheduleClass = getattr(torch.optim.lr_scheduler, lr_schedule['class'])
+            for opt_name in lr_schedule['apply_to']:
+                opt = getattr(self, opt_name)
+                lr_schedule = LRScheduleClass(opt, **lr_schedule['params'])
+                self.lr_schedules.append(lr_schedule)
+
+    def on_iteration_end(self):
+        super(ECITrainer, self).on_iteration_end()
+        for lr_schedule in self.lr_schedules:
+            lr_schedule.step()
+
     def _get_items_to_store(self):
         items_to_store = super(ECITrainer, self)._get_items_to_store()
 
@@ -66,7 +80,7 @@ class ECITrainer(RepresentationTrainer):
 
         return items_to_store
 
-    def _train_step(self, data):
+    def train_step(self, data):
         # Alternating adversarial procedure
         if self.adv_train_type == ADV_ALT_TRAIN:
            if self.step < self.n_adv_steps:

@@ -15,6 +15,7 @@ class Trainer(nn.Module):
     def __init__(self, dataset, batch_size, arch_module, log_loss_every=10, num_workers=0, writer=None):
         super(Trainer, self).__init__()
         self.iterations = 0
+        self.epochs = 0
 
         self.train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
         self.writer = writer
@@ -43,25 +44,30 @@ class Trainer(nn.Module):
 
     def train_epoch(self):
         for data in tqdm(self.train_loader):
+
+            # Log the values in loss_items every log_loss_every iterations
+            if not (self.writer is None):
+                if (self.iterations + 1) % self.log_loss_every == 0:
+                    self._log_loss()
+
+            # Move the data to the appropriate device
+            device = self.get_device()
+            for name, value in data.items():
+                data[name] = value.to(device)
+
+            # Set all the models in training mode
+            self.train(True)
+
             self.train_step(data)
+            self.on_iteration_end()
 
-    def train_step(self, data):
-        # Set all the models in training mode
-        self.train(True)
+        self.on_epoch_end()
 
-        # Log the values in loss_items every log_loss_every iterations
-        if not (self.writer is None):
-            if (self.iterations + 1) % self.log_loss_every == 0:
-                self._log_loss()
-
-        # Move the data to the appropriate device
-        device = self.get_device()
-        for name, value in data.items():
-            data[name] = value.to(device)
-
-        # Perform the training step and update the iteration count
-        self._train_step(data)
+    def on_iteration_end(self):
         self.iterations += 1
+
+    def on_epoch_end(self):
+        self.epochs += 1
 
     def _add_loss_item(self, name, value):
         assert isinstance(name, str)
@@ -115,7 +121,7 @@ class Trainer(nn.Module):
     def _get_items_to_store(self):
         return {'iterations'}
 
-    def _train_step(self, data):
+    def train_step(self, data):
         raise NotImplemented()
 
 
@@ -147,7 +153,7 @@ class RepresentationTrainer(Trainer):
 
         return items_to_store
 
-    def _train_step(self, data):
+    def train_step(self, data):
         loss = self._compute_loss(data)
 
         self.opt.zero_grad()
