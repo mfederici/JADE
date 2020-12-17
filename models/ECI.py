@@ -60,8 +60,7 @@ class ECITrainer(RepresentationTrainer):
             LRScheduleClass = getattr(torch.optim.lr_scheduler, lr_schedule['class'])
             for opt_name in lr_schedule['apply_to']:
                 opt = getattr(self, opt_name)
-                lr_schedule = LRScheduleClass(opt, **lr_schedule['params'])
-                self.lr_schedules.append(lr_schedule)
+                self.lr_schedules.append(LRScheduleClass(opt, **lr_schedule['params']))
 
     def on_iteration_end(self):
         super(ECITrainer, self).on_iteration_end()

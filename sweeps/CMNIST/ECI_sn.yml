@@ -27,4 +27,8 @@ parameters:
     values:
       - True
       - False
+  model.params.lr_schedule.params.gamma:
+    values:
+      - 1
+      - 0.1
 program: train.py
