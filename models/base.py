@@ -24,6 +24,8 @@ class Trainer(nn.Module):
         self.loss_items = {}
         self.arch_module = arch_module
 
+        self.first_iteration = True
+
     def instantiate_architecture(self, class_name, **arch_params):
         if not hasattr(self.arch_module, class_name):
             raise Exception('A class implementation of %s(%s) has to be included in %s' % (
@@ -42,7 +44,14 @@ class Trainer(nn.Module):
     def get_device(self):
         return list(self.parameters())[0].device
 
+    def on_start(self):
+        pass
+
     def train_epoch(self):
+        if self.first_iteration:
+            self.first_iteration = False
+            self.on_start()
+
         for data in tqdm(self.train_loader):
 
             # Log the values in loss_items every log_loss_every iterations
@@ -143,16 +152,19 @@ class RepresentationTrainer(Trainer):
         self.opt = self.instantiate_optimizer(optim, params=self.encoder.parameters())
 
         # Definition of learning rate schedulers
-        self.lr_schedules = []
-        if not (lr_schedule is None):
-            LRScheduleClass = getattr(torch.optim.lr_scheduler, lr_schedule['class'])
-            for opt_name in lr_schedule['apply_to']:
+        self.lr_scheduler = []
+        self.lr_schedule = lr_schedule
+
+    def on_start(self):
+        if not (self.lr_schedule is None):
+            LRScheduleClass = getattr(torch.optim.lr_scheduler, self.lr_schedule['class'])
+            for opt_name in self.lr_schedule['apply_to']:
                 opt = getattr(self, opt_name)
-                self.lr_schedules.append(LRScheduleClass(opt, **lr_schedule['params']))
+                self.lr_scheduler.append(LRScheduleClass(opt, **self.lr_schedule['params']))
 
     def on_iteration_end(self):
         super(RepresentationTrainer, self).on_iteration_end()
-        for lr_schedule in self.lr_schedules:
+        for lr_schedule in self.lr_scheduler:
             lr_schedule.step()
 
     def _get_items_to_store(self):

@@ -88,15 +88,24 @@ class JointClassifier(nn.Module):
 
 # Model for q(e|z)
 class EnvClassifier(nn.Module):
-    def __init__(self, z_dim, n_hidden):
+    def __init__(self, z_dim, n_hidden, spectral_norm=False):
         super(EnvClassifier, self).__init__()
-        self.net = nn.Sequential(
-            nn.Linear(z_dim, n_hidden),
-            nn.ReLU(True),
-            nn.Linear(n_hidden, n_hidden),
-            nn.ReLU(True),
-            StochasticLinear(n_hidden, CMNIST_N_ENVS, 'Categorical')
-        )
+        if spectral_norm:
+            self.net = nn.Sequential(
+                sn(nn.Linear(z_dim, n_hidden)),
+                nn.ReLU(True),
+                sn(nn.Linear(n_hidden, n_hidden)),
+                nn.ReLU(True),
+                sn(StochasticLinear(n_hidden, CMNIST_N_ENVS, 'Categorical'))
+            )
+        else:
+            self.net = nn.Sequential(
+                nn.Linear(z_dim, n_hidden),
+                nn.ReLU(True),
+                nn.Linear(n_hidden, n_hidden),
+                nn.ReLU(True),
+                StochasticLinear(n_hidden, CMNIST_N_ENVS, 'Categorical')
+            )
 
     def forward(self, z):
         return self.net(z)

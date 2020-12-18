@@ -54,6 +54,7 @@ class ECITrainer(RepresentationTrainer):
             )
             self.adv_opt = None
 
+
     def _get_items_to_store(self):
         items_to_store = super(ECITrainer, self)._get_items_to_store()
 
