@@ -1,4 +1,4 @@
-class: ECITrainer
+class: EITrainer
 params:
   # Number of latent dimensions
   z_dim: 64

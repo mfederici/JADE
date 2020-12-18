@@ -55,7 +55,7 @@ class StochasticLinear(nn.Linear):
         else:
             raise NotImplementedError('"%s"' % dist)
 
-        super(StochasticLinear, self).__init__(in_size, out_size)
+        super(StochasticLinear, self).__init__(in_size, out_size*self.n_params)
 
     def forward(self, input):
         params = super(StochasticLinear, self).forward(input)

@@ -21,4 +21,7 @@ parameters:
     - 0.995
     - 0.999
     - 0.9999
+  model.params.encoder.dropout:
+    values:
+      - 0.25
 program: train.py

@@ -3,7 +3,7 @@ command:
 - ${interpreter}
 - ${program}
 - --data_file=definitions/data/Dynamic_CMNIST.yml
-- --model_file=definitions/models/ECI.yml
+- --model_file=definitions/models/EI.yml
 - --eval_file=definitions/eval/Dynamic_CMNIST.yml
 - --arch_pyfile=definitions/architectures/CMNIST.py
 - --num-workers=16
@@ -23,5 +23,5 @@ parameters:
     - 0.9999
   model.params.encoder.dropout:
     values:
-      - 0.25
+      - 0.0
 program: train.py
