@@ -131,7 +131,7 @@ class Trainer(nn.Module):
 
 # Generic class to train an model with a (stochastic) neural network encoder
 class RepresentationTrainer(Trainer):
-    def __init__(self, z_dim, encoder, optim, **params):
+    def __init__(self, z_dim, encoder, optim, lr_schedule=None, **params):
         super(RepresentationTrainer, self).__init__(**params)
 
         self.z_dim = z_dim
@@ -141,6 +141,19 @@ class RepresentationTrainer(Trainer):
 
         # Instantiating the optimizer
         self.opt = self.instantiate_optimizer(optim, params=self.encoder.parameters())
+
+        # Definition of learning rate schedulers
+        self.lr_schedules = []
+        if not (lr_schedule is None):
+            LRScheduleClass = getattr(torch.optim.lr_scheduler, lr_schedule['class'])
+            for opt_name in lr_schedule['apply_to']:
+                opt = getattr(self, opt_name)
+                self.lr_schedules.append(LRScheduleClass(opt, **lr_schedule['params']))
+
+    def on_iteration_end(self):
+        super(RepresentationTrainer, self).on_iteration_end()
+        for lr_schedule in self.lr_schedules:
+            lr_schedule.step()
 
     def _get_items_to_store(self):
         items_to_store = super(RepresentationTrainer, self)._get_items_to_store()

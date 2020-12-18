@@ -4,10 +4,10 @@ command:
 - ${program}
 - --data_file=definitions/data/Dynamic_CMNIST.yml
 - --model_file=definitions/models/EI.yml
-- --eval_file=definitions/eval/CMNIST_valid.yml
+- --eval_file=definitions/eval/Dynamic_CMNIST.yml
 - --arch_pyfile=definitions/architectures/CMNIST.py
 - --num-workers=16
-- --epochs=500
+- --epochs=1000
 method: grid
 metric:
   goal: minimize
@@ -18,12 +18,7 @@ parameters:
     - 0.1
     - 0.9
     - 0.99
+    - 0.995
     - 0.999
-    - 0.999999
-  model.params.adv_train_type:
-    values:
-    - alternating
-  model.params.n_adv_steps:
-    values:
-      - 5
+    - 0.9999
 program: train.py

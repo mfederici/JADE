@@ -4,10 +4,10 @@ command:
 - ${program}
 - --data_file=definitions/data/Dynamic_CMNIST.yml
 - --model_file=definitions/models/IRM.yml
-- --eval_file=definitions/eval/CMNIST_valid.yml
+- --eval_file=definitions/eval/Dynamic_CMNIST.yml
 - --arch_pyfile=definitions/architectures/CMNIST.py
 - --num-workers=16
-- --epochs=400
+- --epochs=100
 method: grid
 metric:
   goal: minimize
@@ -20,4 +20,5 @@ parameters:
       - 0.9999
       - 0.99999
       - 0.999999
+      - 0.9999999
 program: train.py

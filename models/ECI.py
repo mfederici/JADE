@@ -54,19 +54,6 @@ class ECITrainer(RepresentationTrainer):
             )
             self.adv_opt = None
 
-        # Todo: add as a function to superclass
-        self.lr_schedules = []
-        if not (lr_schedule is None):
-            LRScheduleClass = getattr(torch.optim.lr_scheduler, lr_schedule['class'])
-            for opt_name in lr_schedule['apply_to']:
-                opt = getattr(self, opt_name)
-                self.lr_schedules.append(LRScheduleClass(opt, **lr_schedule['params']))
-
-    def on_iteration_end(self):
-        super(ECITrainer, self).on_iteration_end()
-        for lr_schedule in self.lr_schedules:
-            lr_schedule.step()
-
     def _get_items_to_store(self):
         items_to_store = super(ECITrainer, self)._get_items_to_store()
 

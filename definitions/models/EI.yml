@@ -1,4 +1,4 @@
-class: EITrainer
+class: ECITrainer
 params:
   # Number of latent dimensions
   z_dim: 64
@@ -15,12 +15,13 @@ params:
 
   # Label classifier
   label_classifier:
-    dropout: 0.0
-    n_hidden: 128
+      dropout: 0.0
+      n_hidden: 128
 
   # Environment Classifier
   env_classifier:
     n_hidden: 128
+    spectral_norm: True
 
   ###########################
   # Optimization parameters #
@@ -38,6 +39,14 @@ params:
     params:
       lr: 0.0001
 
+  # Lowers the learning rate over time
+  lr_schedule:
+    class: MultiStepLR
+    params:
+      milestones: [50000]
+      gamma: 0.1
+    apply_to: [opt, adv_opt]
+
   # Size of the training batch
   batch_size: 256
 
@@ -48,7 +57,7 @@ params:
   adv_train_type: alternating
 
   # Number of adversarial steps for each optimizer step (only for alternating training)
-  n_adv_steps: 5
+  n_adv_steps: 10
 
   # Parameters for the beta-scheduler
   beta_scheduler:
@@ -56,5 +65,5 @@ params:
     params:
       start_value: 0.00001
       end_value: 0.9999999
-      n_iterations: 50000
+      n_iterations: 150000
       start_iteration: 10000

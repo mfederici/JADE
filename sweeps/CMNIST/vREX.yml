@@ -3,8 +3,8 @@ command:
 - ${interpreter}
 - ${program}
 - --data_file=definitions/data/Dynamic_CMNIST.yml
-- --model_file=definitions/models/vREX.yml
-- --eval_file=definitions/eval/CMNIST_valid.yml
+- --model_file=definitions/models/IRM.yml
+- --eval_file=definitions/eval/Dynamic_CMNIST.yml
 - --arch_pyfile=definitions/architectures/CMNIST.py
 - --num-workers=16
 - --epochs=100
