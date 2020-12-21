@@ -43,7 +43,7 @@ params:
   lr_schedule:
     class: MultiStepLR
     params:
-      milestones: [50000]
+      milestones: [100000]
       gamma: 0.1
     apply_to: [opt, adv_opt]
 
@@ -65,5 +65,5 @@ params:
     params:
       start_value: 0.00001
       end_value: 0.9999999
-      n_iterations: 150000
+      n_iterations: 100000
       start_iteration: 10000

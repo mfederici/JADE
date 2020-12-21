@@ -3,25 +3,25 @@ command:
 - ${interpreter}
 - ${program}
 - --data_file=definitions/data/Dynamic_CMNIST.yml
-- --model_file=definitions/models/EI.yml
+- --model_file=definitions/models/VIB.yml
 - --eval_file=definitions/eval/Dynamic_CMNIST.yml
 - --arch_pyfile=definitions/architectures/CMNIST.py
 - --num-workers=16
-- --epochs=1000
+- --epochs=100
 method: grid
 metric:
   goal: minimize
-  name: test_ce_09
+  name: CE(test_t1)
 parameters:
   model.params.beta_scheduler.params.end_value:
     values:
-    - 0.1
-    - 0.9
-    - 0.99
-    - 0.995
-    - 0.999
-    - 0.9999
+      - 0.0
+      - 0.1
+      - 0.2
+      - 0.25
+      - 0.3
+      - 0.4
   model.params.encoder.dropout:
     values:
-      - 0.0
+      - 0.25
 program: train.py

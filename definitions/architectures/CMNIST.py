@@ -72,14 +72,14 @@ class LabelClassifier(nn.Module):
 
 # Model for q(ye|z)
 class JointClassifier(nn.Module):
-    def __init__(self, z_dim):
+    def __init__(self, z_dim, n_hidden):
         super(JointClassifier, self).__init__()
         self.net = nn.Sequential(
-            nn.Linear(z_dim, 1024),
+            nn.Linear(z_dim, n_hidden),
             nn.ReLU(True),
-            nn.Linear(1024, 1024),
+            nn.Linear(n_hidden, n_hidden),
             nn.ReLU(True),
-            nn.Linear(1024, CMNIST_N_CLASSES * CMNIST_N_ENVS)
+            nn.Linear(n_hidden, CMNIST_N_CLASSES * CMNIST_N_ENVS)
         )
 
     def compute_logits(self, z):
