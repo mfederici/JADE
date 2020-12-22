@@ -37,7 +37,7 @@ def inflate_config(flat_config):
 
 class WANDBRunManager(RunManager):
     def __init__(self, desc, experiments_root, arch_filepath, run_name=None, run_id=None, run_dir=None, verbose=False,
-                 upload_checkpoints=True, init=False, **params):
+                 upload_checkpoints=True, init=True, **params):
         self.verbose = verbose
 
         if 'WANDB_PROJECT' in os.environ:
@@ -54,7 +54,7 @@ class WANDBRunManager(RunManager):
         self.api = wandb.Api()
         self.upload_checkpoints = upload_checkpoints
 
-        resume = self.run_exists(run_id)
+        resume = self.run_exists(run_id) and not (run_id is None)
         if resume:
             config = self.resume_run(run_id)
             config = inflate_config(config)

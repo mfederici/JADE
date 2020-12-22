@@ -1,3 +1,3 @@
-from data.CMNIST import CMNIST, DynamicCMNIST
+from data.CMNIST import DynamicCMNIST
 from data.SpeechCommands import SpeechCommands
 
