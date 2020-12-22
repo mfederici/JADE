@@ -1,51 +1,36 @@
 train:
-  class: CMNIST
+  class: DynamicCMNIST
   params:
     path: datasets/MNIST
-    split: train
-    environments:
-      - size: 25000
-        flip_label: 0.25
-        flip_color: 0.2
-      - size: 25000
-        flip_label: 0.25
-        flip_color: 0.1
+    split: train+valid
+    cond_dist_file: data/cmnist_resources/CMNIST_t0.pyt
   transforms:
-    - class: MoveToCache
+    - class: MoveToCache # Sample the color once and then keep it fixed (cache lookup)
 
-
-valid_env_01:
-  class: CMNIST
+train_t1:
+  class: DynamicCMNIST
   params:
     path: datasets/MNIST
-    split: valid
-    environments:
-      - size: 10000
-        flip_label: 0.25
-        flip_color: 0.1
+    split: train+valid
+    cond_dist_file: data/cmnist_resources/D_CMNIST_t1.pyt
   transforms:
-    - class: MoveToCache
+    - class: MoveToCache # Sample the color once and then keep it fixed (cache lookup)
 
-valid_env_02:
-  class: CMNIST
+test_t0:
+  class: DynamicCMNIST
   params:
     path: datasets/MNIST
-    split: valid
-    environments:
-      - size: 10000
-        flip_label: 0.25
-        flip_color: 0.2
+    split: test
+    cond_dist_file: data/cmnist_resources/D_CMNIST_t0.pyt
   transforms:
-    - class: MoveToCache
+    - class: MoveToCache # Sample the color once and then keep it fixed (cache lookup)
 
-valid_env_09:
-  class: CMNIST
+test_t1:
+  class: DynamicCMNIST
   params:
     path: datasets/MNIST
-    split: valid
-    environments:
-      - size: 10000
-        flip_label: 0.25
-        flip_color: 0.9
+    split: test
+    cond_dist_file: data/cmnist_resources/D_CMNIST_t1.pyt
   transforms:
-    - class: MoveToCache
+    - class: MoveToCache # Sample the color once and then keep it fixed (cache lookup)
+

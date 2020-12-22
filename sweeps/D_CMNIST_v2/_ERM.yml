@@ -2,9 +2,9 @@ command:
 - ${env}
 - ${interpreter}
 - ${program}
-- --data_file=definitions/data/Dynamic_CMNIST_v2.yml
-- --model_file=definitions/models/vREX.yml
-- --eval_file=definitions/eval/CMNIST_v2_valid.yml
+- --data_file=definitions/data/D_CMNIST_v2.yml
+- --model_file=definitions/models/ERM.yml
+- --eval_file=definitions/eval/Dynamic_CMNIST.yml
 - --arch_pyfile=definitions/architectures/CMNIST.py
 - --num-workers=16
 - --epochs=100
@@ -13,14 +13,6 @@ metric:
   goal: minimize
   name: test_ce
 parameters:
-  model.params.beta_scheduler.params.end_value:
-    values:
-      - 0.5
-      - 0.9
-      - 0.99
-      - 0.9945
-      - 0.999
-      - 0.9999
   model.params.encoder.params.n_hidden:
     values:
       - 128

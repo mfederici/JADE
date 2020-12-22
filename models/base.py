@@ -12,10 +12,12 @@ import torch.optim as optim_module
 ##########################
 
 class Trainer(nn.Module):
-    def __init__(self, dataset, batch_size, arch_module, log_loss_every=10, num_workers=0, writer=None):
+    def __init__(self, dataset, batch_size, arch_module, log_loss_every=10, num_workers=0, writer=None, verbose=True):
         super(Trainer, self).__init__()
         self.iterations = 0
         self.epochs = 0
+
+        self.verbose = verbose
 
         self.train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
         self.writer = writer
@@ -32,7 +34,8 @@ class Trainer(nn.Module):
                 class_name, ','.join(arch_params.keys()), self.arch_module.__file__
             ))
 
-        print('Instantiating %s with the parameters %s'%(class_name, str(arch_params)))
+        if self.verbose:
+            print('Instantiating %s with the parameters %s'%(class_name, str(arch_params)))
         return getattr(self.arch_module, class_name)(**arch_params)
 
     @staticmethod
@@ -105,7 +108,7 @@ class Trainer(nn.Module):
         torch.save(save_dict, model_path)
 
     def load(self, model_path):
-        items_to_load = torch.load(model_path)
+        items_to_load = torch.load(model_path, map_location=torch.device('cpu'))
         for key, value in items_to_load.items():
             assert hasattr(self, key)
             attribute = getattr(self, key)

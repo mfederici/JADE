@@ -2,6 +2,7 @@ import wandb
 import os
 from utils.run_manager.base import RunManager
 import matplotlib.pyplot as plt
+import torch
 
 SPLIT_TOKEN = '.'
 
@@ -35,8 +36,10 @@ def inflate_config(flat_config):
 
 
 class WANDBRunManager(RunManager):
-    def __init__(self, desc, experiments_root, run_name=None, run_id=None, verbose=False, upload_checkpoints=True,
-                 **params):
+    def __init__(self, desc, experiments_root, arch_filepath, run_name=None, run_id=None, run_dir=None, verbose=False,
+                 upload_checkpoints=True, init=False, **params):
+        self.verbose = verbose
+
         if 'WANDB_PROJECT' in os.environ:
             self.PROJECT = os.environ['WANDB_PROJECT']
         else:
@@ -54,26 +57,36 @@ class WANDBRunManager(RunManager):
         resume = self.run_exists(run_id)
         if resume:
             config = self.resume_run(run_id)
+            config = inflate_config(config)
         else:
             config = self.load_config(desc)
 
         flat_config = flatten_config(config) # wandb can't process nested dictionaries
 
-        wandb.init(name=run_name, project=self.PROJECT, config=flat_config, dir=experiments_root,
-                   resume=resume, id=(run_id if resume else None))
+        if init:
+            wandb.init(name=run_name, project=self.PROJECT, config=flat_config, dir=experiments_root,
+                       resume=resume, id=(run_id if resume else None))
 
-        flat_config = dict(wandb.config)
-        config = inflate_config(flat_config)
+            flat_config = dict(wandb.config)
+            config = inflate_config(flat_config)
 
-        run_id = wandb.run.id
-        run_dir = wandb.run.dir
+            run_id = wandb.run.id
+            run_dir = wandb.run.dir
+
+            # Upload arch file
+            wandb.save(arch_filepath)
 
         super(WANDBRunManager, self).__init__(run_name=run_name, run_id=run_id, run_dir=run_dir,
                                               config=config, resume=resume, verbose=verbose,
-                                              experiments_root=experiments_root, **params)
+                                              experiments_root=experiments_root, arch_filepath=arch_filepath, **params)
 
     def run_exists(self, run_id):
-        return run_id in [run.id for run in self.api.runs('%s/%s' % (self.USER, self.PROJECT))]
+        try:
+            run = self.api.runs('%s/%s/%s' % (self.USER, self.PROJECT, run_id))
+            success = True
+        except:
+            success = False
+        return success
 
     def resume_run(self, run_id):
         run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, run_id))
@@ -85,12 +98,14 @@ class WANDBRunManager(RunManager):
         # Download the last model
         if self.verbose:
             print("Dowloading the last checkpoint")
-        restored_model = wandb.restore("model.pt", root=wandb.run.dir, replace=True)
+        os.makedirs('/tmp', exist_ok=True)
+        run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, self.run_id))
+        run.file('model.pt').download('/tmp', replace=True)
 
         if self.verbose:
             print("Resuming Training")
 
-        trainer.load(restored_model.name)
+        trainer.load('/tmp/model.pt')
         if self.verbose:
             print("Resuming Training from iteration %d" % trainer.iterations)
 

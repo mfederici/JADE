@@ -92,6 +92,7 @@ class RunManager:
                                       dataset=train_set,
                                       arch_module=arch_module,
                                       num_workers=self.num_workers,
+                                      verbose=self.verbose,
                                       **self.config['model']['params'])
 
         # Load the evaluators
@@ -106,7 +107,7 @@ class RunManager:
 
         # Resume the training if specified
         if self.resume:
-            trainer = self.load_last_model()
+            trainer = self.load_last_model(trainer)
 
         return trainer, evaluators
 
