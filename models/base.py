@@ -12,7 +12,7 @@ import torch.optim as optim_module
 ##########################
 
 class Trainer(nn.Module):
-    def __init__(self, dataset, batch_size, arch_module, log_loss_every=10, num_workers=0, writer=None, verbose=True):
+    def __init__(self, dataset, batch_size, arch_module, log_loss_every=100, num_workers=0, writer=None, verbose=True):
         super(Trainer, self).__init__()
         self.iterations = 0
         self.epochs = 0
