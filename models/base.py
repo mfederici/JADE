@@ -272,6 +272,7 @@ class RegularizedClassifierTrainer(ClassifierTrainer):
             loss = y_rec_loss - beta * reg_loss
 
         self._add_loss_item('loss/beta', beta)
+        self._add_loss_item('loss/CE_y_z', y_rec_loss.item())
 
         return loss
 
