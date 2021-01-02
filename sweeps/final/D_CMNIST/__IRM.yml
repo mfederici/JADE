@@ -1,0 +1,27 @@
+command:
+- ${env}
+- ${interpreter}
+- ${program}
+- --data_file=definitions/data/D_CMNIST.yml
+- --model_file=definitions/models/IRM.yml
+- --eval_file=definitions/eval/CMNIST.yml
+- --arch_pyfile=definitions/architectures/CMNIST.py
+- --num-workers=16
+- --epochs=100
+method: grid
+metric:
+  goal: minimize
+  name: CE(test_t1)
+parameters:
+  model.params.beta_scheduler.params.end_value:
+    values:
+      - 0.99
+      - 0.999
+      - 0.9999
+      - 0.99999
+      - 0.999999
+      - 0.9999999
+  model.params.encoder.dropout:
+    values:
+      - 0.25
+program: train.py

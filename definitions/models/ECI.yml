@@ -18,7 +18,7 @@ params:
       dropout: 0.0
       n_hidden: 128
 
-  # Label-Conditional Environment Classifier
+  # Label-Conditional Environment (Adversarial) Classifier
   conditional_env_classifier:
     n_hidden: 128
     spectral_norm: True
@@ -49,9 +49,6 @@ params:
 
   # Size of the training batch
   batch_size: 256
-
-  # Adversarial objective
-  adv_objective: CE
 
   # Adversarial optimization strategy (simultaneous/alternating)
   adv_train_type: alternating

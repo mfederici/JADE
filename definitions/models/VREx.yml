@@ -1,4 +1,4 @@
-class: vREXTrainer
+class: VRExTrainer
 params:
   # Number of latent dimensions
   z_dim: 64
@@ -11,7 +11,7 @@ params:
   encoder:
     dropout: 0.25
     n_hidden: 128
-    dist: Normal
+    dist: Delta
 
   # Label classifier
   label_classifier:

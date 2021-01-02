@@ -1,48 +1,55 @@
 D_CMNIST-EI:
-  id: 4daosven
-  status: updateid
+  sid:
+    - 00e3hpt5 #old y7e78p8u
+    - y6gcxtrk
+  status: ok
 D_CMNIST-VIB:
-  id: t6o169vv
+  sid: t6o169vv
   status: ok
 D_CMNIST-ECI:
-  id: gfqkcxl8
-  status: updateid
-D_CMNIST-VREx:
-  id: vp47pffe
+  sid:
+    - bypw2d1j #old gfqkcxl8
+    - mg63ad8d
   status: ok
-D_CMNIST-IRM:
-  id: 6uos5gnr
-  status: fix
+  # add
+D_CMNIST-VREx:
+  sid: vp47pffe
+  status: ok
+#D_CMNIST-IRM:
+#  id: 6uos5gnr
+#  status: fix
 
 D_CMNIST_v2-VIB:
-  id: hhtes4gg
-  status: ok
+  sid: c13bqorp
+  status: check
 D_CMNIST_v2-ECI:
-  id: yjah6ns9
-  status: ok
+  sid: 48a2vuze
+  status: check
+  # add g9397z7l
 D_CMNIST_v2-EI:
-  id: nxb43k44
-  status: ok
+  sid: y7e78p8u
+  status: check
 D_CMNIST_v2-VREx:
-  id: 7jxcnbit
-  status: ok
+  sid: wzyshity
+  status: check
 
 
-#sweeps = {
-#    'CMNIST_v2':{
-#        'VIB':{'id':'hhtes4gg', 'color':'r', 'sortkey':'model.params.beta_scheduler.params.end_value'},
-#        'ECI':{'id':'firphswq', 'color':'g', 'sortkey':'model.params.beta_scheduler.params.end_value'},
-#        'vREx':{'id':'7jxcnbit', 'color':'b','sortkey':'model.params.beta_scheduler.params.end_value'},
-#        'EI':{'id':'965r8yyo', 'color':'k', 'sortkey':'model.params.beta_scheduler.params.end_value'}, #increase adv-steps
-#        #'ERM': {'id':'57ztrhmp', 'color':'purple', 'sortkey':'model.params.beta_scheduler.params.end_value'},
-#    },
-#    'CMNIST_v3':
-#    {
-#        'VIB':{'id':'faw3adou', 'color':'r', 'sortkey':'model.params.beta_scheduler.params.end_value'},
-#        'ECI':{'id':'x1ojtoab', 'color':'g', 'sortkey':'model.params.beta_scheduler.params.end_value'},
-#        'vREx':{'id':'jp0symme', 'color':'b','sortkey':'model.params.beta_scheduler.params.end_value'},
-#        'EI':{'id':'asta04qs', 'color':'k', 'sortkey':'model.params.beta_scheduler.params.end_value'},
-#    },
+D_CMNIST_v3-VIB:
+  sid: jgqszt96
+  status: check
+D_CMNIST_v3-ECI:
+  sid: ioeuf8v3
+  status: check
+  # add xvmh0rc3
+D_CMNIST_v3-EI:
+  sid: dbk09540
+  status: check
+  # add 16tyezsh
+D_CMNIST_v3-VREx:
+  sid: f04zphb4
+  status: check
+
+
 #    'SpeechCommands':{
 #        #'ERM': {'id':'feb2qdue', 'color':'r', 'sortkey':'model.encoder.dropout'},
 #        'vREx': {'id':'1idiom10', 'color':'b','sortkey':'model.params.beta_scheduler.params.end_value',

@@ -1,4 +1,4 @@
-from models.base import RepresentationTrainer
+from models.base import RegularizedClassifierTrainer
 from utils.functions import ScaleGrad
 import torch
 import torch.nn as nn
@@ -13,39 +13,8 @@ import utils.schedulers as scheduler_module
 # Invariant Risk Minimization Trainer #
 #######################################
 
-
-class IRMTrainer(RepresentationTrainer):
-    def __init__(self, z_dim, optim, beta_scheduler, label_classifier=None, **params):
-
-        super(IRMTrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
-
-        # Definition of the scheduler to update the value of the regularization coefficient beta over time
-        self.beta_scheduler = getattr(scheduler_module, beta_scheduler['class'])(**beta_scheduler['params'])
-
-        self.classifier = self.instantiate_architecture('LabelClassifier', z_dim=z_dim, **label_classifier)
-        # Dummy vector used for gradient penalization
-        self.scale = torch.nn.Parameter(torch.ones(1).float())
-        self.opt.add_param_group(
-            {'params': self.classifier.parameters()}
-        )
-
-    def _get_items_to_store(self):
-        items_to_store = super(IRMTrainer, self)._get_items_to_store()
-
-        items_to_store = items_to_store.union({
-            'classifier'
-        })
-
-        return items_to_store
-
+class IRMTrainer(RegularizedClassifierTrainer):
     # See https://github.com/facebookresearch/DomainBed/blob/master/domainbed/algorithms.py
-    def _compute_regularization(self, y_rec_loss):
-        grad_1 = autograd.grad(y_rec_loss[0::2].mean(), [self.scale], create_graph=True)[0]
-        grad_2 = autograd.grad(y_rec_loss[1::2].mean(), [self.scale], create_graph=True)[0]
-        print(grad_1.shape, grad_2.shape)
-        result = torch.mean(grad_1 * grad_2)
-        return result
-
 
     def _compute_irm_loss(self, logits, y):
         device = logits.device
@@ -57,31 +26,11 @@ class IRMTrainer(RepresentationTrainer):
 
         return torch.sum(grad_1 * grad_2)
 
-    def _compute_loss(self, data):
-        x = data['x']
+    def _compute_reg_loss(self, data, z):
         y = data['y'].squeeze()
 
-        beta = self.beta_scheduler(self.iterations)
-
-        # Encode a batch of data
-        p_z_given_x = self.encoder(x=x)
-        z = p_z_given_x.rsample()
-
-        # Label Reconstruction
         p_y_given_z = self.classifier(z=z)
-
-        # assert isinstance(p_y_given_z, Bernoulli)
-
-        y_rec_loss = -p_y_given_z.log_prob(y)
-
-        # Gradient penalty
-        #penalty = self._compute_regularization(y_rec_loss)
         penalty = self._compute_irm_loss(p_y_given_z.logits, y)
-
-        loss = (1-beta) * y_rec_loss.mean() + beta * penalty
-
-        self._add_loss_item('loss/CE_y_z', y_rec_loss.mean().item())
         self._add_loss_item('loss/Gradient_penalty', penalty.item())
-        self._add_loss_item('loss/beta', beta)
 
-        return loss
+        return penalty

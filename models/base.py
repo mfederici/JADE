@@ -5,7 +5,7 @@ import numpy as np
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 import torch.optim as optim_module
-
+import utils.schedulers as scheduler_module
 
 ##########################
 # Generic training class #
@@ -190,3 +190,166 @@ class RepresentationTrainer(Trainer):
 
     def _compute_loss(self, data):
         raise NotImplemented()
+
+
+######################
+# Classifier Trainer #
+######################
+
+class ClassifierTrainer(RepresentationTrainer):
+    def __init__(self, z_dim, optim, label_classifier=None, **params):
+
+        super(ClassifierTrainer, self).__init__(z_dim=z_dim, optim=optim, **params)
+
+        self.classifier = self.instantiate_architecture('LabelClassifier', z_dim=z_dim, **label_classifier)
+
+        self.opt.add_param_group(
+            {'params': self.classifier.parameters()}
+        )
+
+    def _get_items_to_store(self):
+        items_to_store = super(ClassifierTrainer, self)._get_items_to_store()
+
+        items_to_store = items_to_store.union({
+            'classifier'
+        })
+
+        return items_to_store
+
+    def _compute_loss(self, data):
+        x = data['x']
+        y = data['y'].squeeze()
+
+        # Encode a batch of data
+        z = self.encoder(x=x).rsample()
+
+        # Label Reconstruction
+        p_y_given_z = self.classifier(z=z)
+        y_rec_loss = - p_y_given_z.log_prob(y).mean()
+
+        loss = y_rec_loss
+
+        self._add_loss_item('loss/CE_y_z', y_rec_loss.item())
+
+        return loss
+
+
+##################################
+# Regularized Classifier Trainer #
+##################################
+
+class RegularizedClassifierTrainer(ClassifierTrainer):
+    def __init__(self, beta_scheduler, normalize_reg_coeff=True, **params):
+
+        super(RegularizedClassifierTrainer, self).__init__(**params)
+
+        # Definition of the scheduler to update the value of the regularization coefficient beta over time
+        self.beta_scheduler = getattr(scheduler_module, beta_scheduler['class'])(**beta_scheduler['params'])
+        self.normalize_reg_coeff = normalize_reg_coeff
+
+    def _compute_reg_loss(self, data, z):
+        raise NotImplemented()
+
+    def _compute_loss(self, data):
+
+        x = data['x']
+        y = data['y'].squeeze()
+
+        # Encode a batch of data
+        z = self.encoder(x=x).rsample()
+
+        # Label Reconstruction
+        p_y_given_z = self.classifier(z=z)
+        y_rec_loss = - p_y_given_z.log_prob(y).mean()
+
+        reg_loss = self._compute_reg_loss(data, z)
+
+        beta = self.beta_scheduler(self.iterations)
+
+        if self.normalize_reg_coeff:
+            loss = 1. / (beta + 1.) * y_rec_loss - beta / (beta + 1.) * reg_loss
+        else:
+            loss = y_rec_loss - beta * reg_loss
+
+        self._add_loss_item('loss/beta', beta)
+
+        return loss
+
+
+######################################
+# Adversarial Representation trainer #
+######################################
+
+ADV_ALT_TRAIN = 'alternating'
+#ADV_SIM_TRAIN = 'simultaneous'
+
+
+ADV_TRAIN_TYPES = {ADV_ALT_TRAIN} #, ADV_SIM_TRAIN}
+
+
+class AdversarialRepresentationTrainer(RegularizedClassifierTrainer):
+    def __init__(self, adversary, n_adv_steps=5, adv_optim=None,
+                 adv_train_type=ADV_ALT_TRAIN,
+                 **params):
+
+        super(AdversarialRepresentationTrainer, self).__init__(**params)
+
+        self.n_adv_steps = n_adv_steps
+        self.step = 0
+
+        # Instantiate the adversary
+
+        self.adversary = self.instantiate_architecture(**adversary)
+
+        if adv_train_type == ADV_ALT_TRAIN:
+            assert not (adv_optim is None)
+            self.adv_opt = self.instantiate_optimizer(adv_optim, params=self.adversary.parameters())
+        else:
+            raise NotImplemented()
+
+        assert adv_train_type in ADV_TRAIN_TYPES
+        assert adv_train_type != ADV_ALT_TRAIN or not (adv_optim is None)
+        self.adv_train_type = adv_train_type
+
+    def _get_items_to_store(self):
+        items_to_store = super(AdversarialRepresentationTrainer, self)._get_items_to_store()
+
+        items_to_store = items_to_store.union({
+            'adversary'
+        })
+
+        if self.adv_opt:
+            items_to_store = items_to_store.union({'adv_opt'})
+
+        return items_to_store
+
+    def train_step(self, data):
+        # Alternating adversarial procedure
+        if self.adv_train_type == ADV_ALT_TRAIN:
+           if self.step < self.n_adv_steps:
+                # Train the adversary
+                self.adversary.train()
+                loss = self._compute_adv_loss(data)
+
+                self.adv_opt.zero_grad()
+                loss.backward()
+                self.adv_opt.step()
+                self.step += 1
+           else:
+                self.adversary.eval()
+
+                # Train the model
+                loss = self._compute_loss(data)
+
+                self.opt.zero_grad()
+                loss.backward()
+                self.opt.step()
+                self.step = 0
+
+    def _compute_reg_loss(self, data, z):
+        return self._compute_adv_loss(data, z)
+
+    def _compute_adv_loss(self, data, z=None):
+        raise NotImplemented()
+
+
