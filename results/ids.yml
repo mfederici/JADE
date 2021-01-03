@@ -4,49 +4,59 @@ D_CMNIST-EI:
     - y6gcxtrk
   status: ok
 D_CMNIST-VIB:
-  sid: t6o169vv
+  sid:
+    - t6o169vv
   status: ok
 D_CMNIST-ECI:
   sid:
-    - bypw2d1j #old gfqkcxl8
-    - mg63ad8d
+    - dxjxfqjo #bypw2d1j #old gfqkcxl8
+    # - mg63ad8d
   status: ok
   # add
 D_CMNIST-VREx:
-  sid: vp47pffe
+  sid:
+    - ki1bmwd7
   status: ok
 #D_CMNIST-IRM:
 #  id: 6uos5gnr
 #  status: fix
 
 D_CMNIST_v2-VIB:
-  sid: c13bqorp
+  sid:
+    - c13bqorp
   status: check
 D_CMNIST_v2-ECI:
-  sid: 48a2vuze
+  sid:
+    - 48a2vuze
   status: check
   # add g9397z7l
 D_CMNIST_v2-EI:
-  sid: y7e78p8u
+  sid:
+    - y7e78p8u
   status: check
 D_CMNIST_v2-VREx:
-  sid: wzyshity
+  sid:
+    - wzyshity
   status: check
 
 
 D_CMNIST_v3-VIB:
-  sid: jgqszt96
+  sid:
+    - jgqszt96
   status: check
 D_CMNIST_v3-ECI:
-  sid: ioeuf8v3
+  sid:
+    - ioeuf8v3
   status: check
   # add xvmh0rc3
 D_CMNIST_v3-EI:
-  sid: dbk09540
+  sid:
+    - dbk09540
   status: check
   # add 16tyezsh
 D_CMNIST_v3-VREx:
-  sid: f04zphb4
+  sid:
+    - f04zphb4
   status: check
 
 

@@ -267,9 +267,9 @@ class RegularizedClassifierTrainer(ClassifierTrainer):
         beta = self.beta_scheduler(self.iterations)
 
         if self.normalize_reg_coeff:
-            loss = 1. / (beta + 1.) * y_rec_loss - beta / (beta + 1.) * reg_loss
+            loss = 1. / (beta + 1.) * y_rec_loss + beta / (beta + 1.) * reg_loss
         else:
-            loss = y_rec_loss - beta * reg_loss
+            loss = y_rec_loss + beta * reg_loss
 
         self._add_loss_item('loss/beta', beta)
         self._add_loss_item('loss/CE_y_z', y_rec_loss.item())
@@ -348,7 +348,7 @@ class AdversarialRepresentationTrainer(RegularizedClassifierTrainer):
                 self.step = 0
 
     def _compute_reg_loss(self, data, z):
-        return self._compute_adv_loss(data, z)
+        return - self._compute_adv_loss(data, z)
 
     def _compute_adv_loss(self, data, z=None):
         raise NotImplemented()
