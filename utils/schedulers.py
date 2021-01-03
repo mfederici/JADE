@@ -33,6 +33,19 @@ class LinearScheduler(Scheduler):
             return (iteration - self.start_iteration) * self.m + self.start_value
 
 
+class LinearIncrementScheduler(Scheduler):
+    def __init__(self, start_value, increment_by, start_iteration=0):
+        self.start_value = start_value
+        self.start_iteration = start_iteration
+        self.increment_by = increment_by
+
+    def __call__(self, iteration):
+        if iteration <= self.start_iteration:
+            return self.start_value
+        else:
+            return (iteration - self.start_iteration) * self.increment_by + self.start_value
+
+
 class ExponentialScheduler(LinearScheduler):
     def __init__(self, start_value, end_value, n_iterations, start_iteration=0, base=10):
         self.base = base

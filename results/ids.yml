@@ -1,7 +1,6 @@
 D_CMNIST-EI:
   sid:
-    - 00e3hpt5 #old y7e78p8u
-    - y6gcxtrk
+    - toyu9a7d #old y7e78p8u
   status: ok
 D_CMNIST-VIB:
   sid:
@@ -15,7 +14,7 @@ D_CMNIST-ECI:
   # add
 D_CMNIST-VREx:
   sid:
-    - ki1bmwd7
+    - vp47pffe
   status: ok
 #D_CMNIST-IRM:
 #  id: 6uos5gnr

@@ -26,6 +26,7 @@ class Trainer(nn.Module):
         self.loss_items = {}
         self.arch_module = arch_module
 
+        self.last_logged = -1
         self.first_iteration = True
 
     def instantiate_architecture(self, class_name, **arch_params):
@@ -58,9 +59,10 @@ class Trainer(nn.Module):
         for data in tqdm(self.train_loader):
 
             # Log the values in loss_items every log_loss_every iterations
-            if not (self.writer is None):
+            if not (self.writer is None) and not self.iterations == self.last_logged:
                 if (self.iterations + 1) % self.log_loss_every == 0:
                     self._log_loss()
+                    self.last_logged = self.iterations
 
             # Move the data to the appropriate device
             device = self.get_device()
@@ -297,6 +299,7 @@ class AdversarialRepresentationTrainer(RegularizedClassifierTrainer):
 
         self.n_adv_steps = n_adv_steps
         self.step = 0
+        self.discriminator_step = False
 
         # Instantiate the adversary
 
@@ -336,6 +339,8 @@ class AdversarialRepresentationTrainer(RegularizedClassifierTrainer):
                 loss.backward()
                 self.adv_opt.step()
                 self.step += 1
+
+                self.discriminator_step = True
            else:
                 self.adversary.eval()
 
@@ -345,7 +350,14 @@ class AdversarialRepresentationTrainer(RegularizedClassifierTrainer):
                 self.opt.zero_grad()
                 loss.backward()
                 self.opt.step()
+
                 self.step = 0
+                self.discriminator_step = False
+
+    def on_iteration_end(self):
+        # Update the iteration count only when updating the model
+        if not self.self.discriminator_step:
+            self.iterations += 1
 
     def _compute_reg_loss(self, data, z):
         return - self._compute_adv_loss(data, z)

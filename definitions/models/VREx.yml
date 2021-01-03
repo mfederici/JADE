@@ -32,18 +32,17 @@ params:
   batch_size: 256
 
   # Lowers the learning rate over time
-  lr_schedule:
-    class: MultiStepLR
-    params:
-      milestones: [ 10000 ]
-      gamma: 0.1
-    apply_to: [ opt ]
+  #lr_schedule:
+  #  class: MultiStepLR
+  #  params:
+  #    milestones: [ 10000 ]
+  #    gamma: 0.1
+  #  apply_to: [ opt ]
 
   # Parameters for the beta-scheduler
   beta_scheduler:
-    class: LinearScheduler
+    class: LinearIncrementScheduler
     params:
-      start_value: 0.5
-      end_value: 1
-      n_iterations: 10000
+      start_value: 0.00001
       start_iteration: 5000
+      increment_by: 0.001

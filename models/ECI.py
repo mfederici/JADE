@@ -28,14 +28,13 @@ class ECITrainer(AdversarialRepresentationTrainer):
                 z = self.encoder(x=x).sample()
 
             p_e_given_zy = self.adversary(z=z.detach(), y=y)
+            e_rec_loss = -p_e_given_zy.log_prob(e).mean()
 
         # Compute the loss with the gradient with respect to the encoder
         else:
             self.adversary.eval()
             p_e_given_zy = self.adversary(z=z, y=y)
+            e_rec_loss = -p_e_given_zy.log_prob(e).mean()
+            self._add_loss_item('loss/CE_e_yz', e_rec_loss.item())
 
-        e_rec_loss = -p_e_given_zy.log_prob(e).mean()
-        self._add_loss_item('loss/CE_e_yz', e_rec_loss.item())
-        loss = e_rec_loss
-
-        return loss
+        return e_rec_loss

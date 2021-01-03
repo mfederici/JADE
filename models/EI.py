@@ -26,13 +26,13 @@ class EITrainer(AdversarialRepresentationTrainer):
                 z = self.encoder(x=x).sample()
 
             p_e_given_z = self.adversary(z=z.detach())
+            e_rec_loss = -p_e_given_z.log_prob(e).mean()
 
         # Compute the loss with the gradient with respect to the encoder
         else:
             p_e_given_z = self.adversary(z=z)
 
-        e_rec_loss = -p_e_given_z.log_prob(e).mean()
-        self._add_loss_item('loss/CE_e_z', e_rec_loss.item())
-        loss = e_rec_loss
+            e_rec_loss = -p_e_given_z.log_prob(e).mean()
+            self._add_loss_item('loss/CE_e_z', e_rec_loss.item())
 
-        return loss
+        return e_rec_loss
