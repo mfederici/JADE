@@ -356,7 +356,7 @@ class AdversarialRepresentationTrainer(RegularizedClassifierTrainer):
 
     def on_iteration_end(self):
         # Update the iteration count only when updating the model
-        if not self.self.discriminator_step:
+        if not self.discriminator_step:
             self.iterations += 1
 
     def _compute_reg_loss(self, data, z):
