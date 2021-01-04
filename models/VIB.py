@@ -21,12 +21,7 @@ class VIBTrainer(RegularizedClassifierTrainer):
 
         return items_to_store
 
-    def _compute_reg_loss(self, data, z):
-        x = data['x']
-
-        # Encode a batch of data
-        p_z_given_x = self.encoder(x=x)
-
+    def _compute_reg_loss(self, z, p_z_given_x, **params):
         p_z = self.prior()
         kl = (p_z_given_x.log_prob(z)-p_z.log_prob(z)).mean()
 

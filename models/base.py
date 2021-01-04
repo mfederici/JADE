@@ -249,22 +249,22 @@ class RegularizedClassifierTrainer(ClassifierTrainer):
         self.beta_scheduler = getattr(scheduler_module, beta_scheduler['class'])(**beta_scheduler['params'])
         self.normalize_reg_coeff = normalize_reg_coeff
 
-    def _compute_reg_loss(self, data, z):
+    def _compute_reg_loss(self, data, z, p_y_given_z, p_z_given_x):
         raise NotImplemented()
 
     def _compute_loss(self, data):
-
         x = data['x']
         y = data['y'].squeeze()
 
         # Encode a batch of data
-        z = self.encoder(x=x).rsample()
+        p_z_given_x = self.encoder(x=x)
+        z = p_z_given_x.rsample()
 
         # Label Reconstruction
         p_y_given_z = self.classifier(z=z)
         y_rec_loss = - p_y_given_z.log_prob(y).mean()
 
-        reg_loss = self._compute_reg_loss(data, z)
+        reg_loss = self._compute_reg_loss(data=data, z=z, p_y_given_z=p_y_given_z, p_z_given_x=p_z_given_x)
 
         beta = self.beta_scheduler(self.iterations)
 
@@ -359,7 +359,7 @@ class AdversarialRepresentationTrainer(RegularizedClassifierTrainer):
         if not self.discriminator_step:
             super(AdversarialRepresentationTrainer, self).on_iteration_end()
 
-    def _compute_reg_loss(self, data, z):
+    def _compute_reg_loss(self, data, z, **params):
         return - self._compute_adv_loss(data, z)
 
     def _compute_adv_loss(self, data, z=None):
