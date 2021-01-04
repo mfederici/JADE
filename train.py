@@ -63,6 +63,9 @@ if 'N_WORKERS' in os.environ:
 if 'DATA_ROOT' in os.environ:
     data_root = os.environ['DATA_ROOT']
 
+if 'EXPERIMENTS_ROOT' in os.environ:
+    experiments_root = os.environ['EXPERIMENTS_ROOT']
+
 seed = args.seed
 
 # Set random seed
