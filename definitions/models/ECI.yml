@@ -40,12 +40,12 @@ params:
       lr: 0.0001
 
   # Lowers the learning rate over time
-  lr_schedule:
-    class: MultiStepLR
-    params:
-      milestones: [5000]
-      gamma: 0.1
-    apply_to: [opt, adv_opt]
+  #lr_schedule:
+  #  class: MultiStepLR
+  #  params:
+  #    milestones: [5000]
+  #    gamma: 0.1
+  #  apply_to: [opt, adv_opt]
 
   # Size of the training batch
   batch_size: 256
