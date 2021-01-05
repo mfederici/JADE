@@ -12,12 +12,17 @@ import utils.schedulers as scheduler_module
 ##########################
 
 class Trainer(nn.Module):
-    def __init__(self, dataset, batch_size, arch_module, log_loss_every=100, num_workers=0, writer=None, verbose=True):
+    def __init__(self, dataset, batch_size, arch_module, log_loss_every=100, num_workers=0, writer=None, verbose=True,
+                 seed=None):
         super(Trainer, self).__init__()
         self.iterations = 0
         self.epochs = 0
 
         self.verbose = verbose
+
+        if seed:
+            torch.manual_seed(seed)
+            np.random.seed(seed)
 
         self.train_loader = DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=num_workers)
         self.writer = writer

@@ -37,7 +37,7 @@ def inflate_config(flat_config):
 
 class WANDBRunManager(RunManager):
     def __init__(self, desc, experiments_root, arch_filepath, run_name=None, run_id=None, run_dir=None, verbose=False,
-                 upload_checkpoints=True, init=True, **params):
+                 upload_checkpoints=True, init=True, resume=True, **params):
         self.verbose = verbose
 
         if 'WANDB_PROJECT' in os.environ:
@@ -54,18 +54,19 @@ class WANDBRunManager(RunManager):
         self.api = wandb.Api()
         self.upload_checkpoints = upload_checkpoints
 
-        resume = self.run_exists(run_id) and not (run_id is None)
-        if resume:
+        run_exists = self.run_exists(run_id) and not (run_id is None)
+        if run_exists:
             config = self.resume_run(run_id)
             config = inflate_config(config)
         else:
             config = self.load_config(desc)
 
         flat_config = flatten_config(config) # wandb can't process nested dictionaries
+        resume = resume and run_exists
 
         if init:
             wandb.init(name=run_name, project=self.PROJECT, config=flat_config, dir=experiments_root,
-                       resume=resume, id=(run_id if resume else None))
+                       resume=resume , id=(run_id if run_exists else None))
 
             flat_config = dict(wandb.config)
             config = inflate_config(flat_config)
@@ -94,22 +95,25 @@ class WANDBRunManager(RunManager):
             print('Warning: the specified configuration will be ingnored since the run is being resumed')
         return run.config
 
-    def load_last_model(self, trainer):
+    def load_model(self, trainer, model):
         # Download the last model
         if self.verbose:
             print("Dowloading the last checkpoint")
         os.makedirs('/tmp', exist_ok=True)
         run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, self.run_id))
-        run.file('model.pt').download('/tmp', replace=True)
+        run.file(model).download('/tmp', replace=True)
 
         if self.verbose:
             print("Resuming Training")
 
-        trainer.load('/tmp/model.pt')
+        trainer.load('/tmp/%s'%model)
         if self.verbose:
             print("Resuming Training from iteration %d" % trainer.iterations)
 
         return trainer
+
+    def load_last_model(self, trainer):
+        return self.load_model(trainer, 'model.pt')
 
     def make_instances(self):
         trainer, evaluators = super(WANDBRunManager, self).make_instances()
