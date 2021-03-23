@@ -1,30 +1,10 @@
 ECI:
   name: 'CDANN'
-  color: (0.0,1.0,0.0)
-  params:
-    beta:
-      config_key: model.params.beta_scheduler.params.end_value
 EI:
   name: 'DANN'
-  color: (0.0,0.8,0.8)
-  params:
-    beta:
-      config_key: model.params.beta_scheduler.params.end_value
 VREx:
   name: 'VREx'
-  color: (0.0,0.0,1.0)
-  params:
-    beta:
-      config_key: model.params.beta_scheduler.params.end_value
 VIB:
   name: 'VIB'
-  color: (1.0,0.0,0.0)
-  params:
-    beta:
-      config_key: model.params.beta_scheduler.params.end_value
 IRM:
   name: 'IRM'
-  color: (0.8,0.0,0.0)
-  params:
-    beta:
-      config_key: model.params.beta_scheduler.params.end_value

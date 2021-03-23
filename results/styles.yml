@@ -1,0 +1,83 @@
+ECI:
+  name: 'CDANN'
+  params:
+    color: [ 0.09019607843137255, 0.7450980392156863, 0.8117647058823529 ]
+    marker: 'o'
+EI:
+  name: 'DANN'
+  params:
+    color: [ 0.5803921568627451, 0.403921568627451, 0.7411764705882353 ]
+    marker: 'o'
+VREx:
+  name: 'VREx'
+  params:
+    color: [ 0.12156862745098039, 0.4666666666666667, 0.7058823529411765 ]
+    marker: 'o'
+VIB:
+  name: 'VIB'
+  params:
+    color: [ 0.8901960784313725, 0.4666666666666667, 0.7607843137254902 ]
+    marker: 'o'
+IRM:
+  name: 'IRM'
+  params:
+    color: [ 0.12156862745098039, 0.4666666666666667, 0.7058823529411765 ]
+    marker: 'o'
+    lynestyle: ':'
+p(y|x,t=1):
+  params:
+    color: [1.0, 0.4980392156862745, 0.054901960784313725]
+    marker: 'X'
+    markersize: 10
+    zorder: 10
+p(y|t=1):
+  params:
+    color: [0.4980392156862745, 0.4980392156862745, 0.4980392156862745]
+    marker: 'X'
+    markersize: 10
+    zorder: 10
+p(y|c,t=1):
+  params:
+    color: [0.8392156862745098, 0.15294117647058825, 0.1568627450980392]
+    marker: 'X'
+    markersize: 10
+    zorder: 10
+p(y|d,t=1):
+  params:
+    color: [0.17254901960784313, 0.6274509803921569, 0.17254901960784313]
+    marker: 'X'
+    markersize: 10
+    zorder: 10
+I(E;Z|Y):
+  params:
+    linestyle: '-'
+    linewidth: 2
+    markersize: 5
+    marker: 'o'
+    alpha: 0.6
+    color: [ 0.09019607843137255, 0.7450980392156863, 0.8117647058823529 ]
+I(E;Y|Z):
+  params:
+    linestyle: '-'
+    linewidth: 2
+    markersize: 5
+    marker: 'o'
+    alpha: 0.6
+    color: [ 0.12156862745098039, 0.4666666666666667, 0.7058823529411765 ]
+    zorder: 3
+I(E;Z):
+  params:
+    linestyle: '-'
+    linewidth: 2
+    markersize: 5
+    marker: 'o'
+    alpha: 0.6
+    color: [ 0.5803921568627451, 0.403921568627451, 0.7411764705882353 ]
+I(X;Z):
+  params:
+    linestyle: '-'
+    linewidth: 2
+    markersize: 5
+    marker: 'o'
+    alpha: 0.6
+    color: [ 0.8901960784313725, 0.4666666666666667, 0.7607843137254902 ]

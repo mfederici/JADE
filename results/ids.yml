@@ -1,20 +1,20 @@
 D_CMNIST-EI:
   sid:
-    - 3uv6198u #toyu9a7d #old y7e78p8u
+    - uyrz2w42 #toyu9a7d #old y7e78p8u
   status: ok
 D_CMNIST-VIB:
   sid:
-    - 7vdmuq9s
+    - 53rv5psj
   status: ok
 D_CMNIST-ECI:
   sid:
-    - 17fcow6t #7vk586vk #bypw2d1j #old gfqkcxl8
+    - q9igztxs #7vk586vk #bypw2d1j #old gfqkcxl8
     # - mg63ad8d
   status: ok
   # add
 D_CMNIST-VREx:
   sid:
-    - h1c1j1zx #vp47pffe
+    - m3td2jyo #vp47pffe
   status: ok
 #D_CMNIST-IRM:
 #  id: 6uos5gnr
@@ -22,40 +22,40 @@ D_CMNIST-VREx:
 
 D_CMNIST_v2-VIB:
   sid:
-    - c13bqorp
-  status: check
+    - xswyph9w
+  status: ok
 D_CMNIST_v2-ECI:
   sid:
-    - 48a2vuze
-  status: check
+    - c0fwhrh7
+  status: stronger reg?
   # add g9397z7l
 D_CMNIST_v2-EI:
   sid:
-    - y7e78p8u
-  status: check
+    - nit8r7f7
+  status: ok
 D_CMNIST_v2-VREx:
   sid:
-    - wzyshity
+    - sgo9gjsb
   status: check
 
 
 D_CMNIST_v3-VIB:
   sid:
-    - jgqszt96
+    - mo1dnzuv
   status: check
 D_CMNIST_v3-ECI:
   sid:
-    - ioeuf8v3
+    - 2ja7rgjg
   status: check
   # add xvmh0rc3
 D_CMNIST_v3-EI:
   sid:
-    - dbk09540
+    - g09cejai
   status: check
   # add 16tyezsh
 D_CMNIST_v3-VREx:
   sid:
-    - f04zphb4
+    - rfce3iwq
   status: check
 
 
