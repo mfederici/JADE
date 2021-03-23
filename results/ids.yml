@@ -16,8 +16,11 @@ D_CMNIST-VREx:
   sid:
     - m3td2jyo #vp47pffe
   status: ok
-#D_CMNIST-IRM:
-#  id: 6uos5gnr
+D_CMNIST-IRM:
+  sid:
+    - xcn9aem8
+  status: ok
+
 #  status: fix
 
 D_CMNIST_v2-VIB:
@@ -36,6 +39,11 @@ D_CMNIST_v2-EI:
 D_CMNIST_v2-VREx:
   sid:
     - sgo9gjsb
+  status: check
+
+D_CMNIST_v2-IRM:
+  sid:
+    - 3ntay7vi
   status: check
 
 
@@ -58,6 +66,10 @@ D_CMNIST_v3-VREx:
     - rfce3iwq
   status: check
 
+D_CMNIST_v3-IRM:
+  sid:
+    - 2krgb7dp
+  status: check
 
 #    'SpeechCommands':{
 #        #'ERM': {'id':'feb2qdue', 'color':'r', 'sortkey':'model.encoder.dropout'},
