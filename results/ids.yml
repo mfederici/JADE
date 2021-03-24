@@ -18,7 +18,7 @@ D_CMNIST-VREx:
   status: ok
 D_CMNIST-IRM:
   sid:
-    - s9bzb6zx # lower reg xcn9aem8
+    - 50h3dpmi # lower reg xcn9aem8
   status: ok
 
 #  status: fix

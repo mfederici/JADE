@@ -14,6 +14,10 @@ import utils.schedulers as scheduler_module
 #######################################
 
 class IRMTrainer(RegularizedClassifierTrainer):
+    def __init__(self, use_std=False, **params):
+        super(IRMTrainer, self).__init__(**params)
+        self.use_std = use_std
+
     # See https://github.com/facebookresearch/DomainBed/blob/master/domainbed/algorithms.py
 
     def _compute_irm_loss(self, logits, y, e):
@@ -39,6 +43,6 @@ class IRMTrainer(RegularizedClassifierTrainer):
 
         p_y_given_z = self.classifier(z=z)
         penalty = self._compute_irm_loss(p_y_given_z.logits, y, e)
-        self._add_loss_item('loss/Gradient_penalty', penalty.item())
+        self._add_loss_item('loss/Gradient_penalty'+('(std)' if self.use_std else ''), penalty.item())
 
         return penalty
