@@ -16,9 +16,14 @@ D_CMNIST-VREx:
   sid:
     - m3td2jyo #vp47pffe
   status: ok
+D_CMNIST-IRM_new:
+  sid:
+    - kotiwovh # lower reg xcn9aem8
+  status: ok
+
 D_CMNIST-IRM:
   sid:
-    - h1424hk4 # lower reg xcn9aem8
+    - xcn9aem8
   status: ok
 
 #  status: fix
