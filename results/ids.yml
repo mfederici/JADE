@@ -18,7 +18,7 @@ D_CMNIST-VREx:
   status: ok
 D_CMNIST-IRM:
   sid:
-    - xcn9aem8
+    - s9bzb6zx # lower reg xcn9aem8
   status: ok
 
 #  status: fix
@@ -68,7 +68,7 @@ D_CMNIST_v3-VREx:
 
 D_CMNIST_v3-IRM:
   sid:
-    - 2krgb7dp
+    - h2yner78
   status: check
 
 #    'SpeechCommands':{

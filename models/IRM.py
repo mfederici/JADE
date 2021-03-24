@@ -27,7 +27,10 @@ class IRMTrainer(RegularizedClassifierTrainer):
             loss_2 = F.cross_entropy(logits_e[1::2] * scale, y_e[1::2].long())
             grad_1 = autograd.grad(loss_1, [scale], create_graph=True)[0]
             grad_2 = autograd.grad(loss_2, [scale], create_graph=True)[0]
-            penalty += torch.sum(grad_1 * grad_2)
+            if self.use_std:
+                penalty += torch.abs(torch.mean(grad_1 * grad_2))**0.5
+            else:
+                penalty += torch.mean(grad_1 * grad_2)
         return penalty
 
     def _compute_reg_loss(self, data, z, **params):
