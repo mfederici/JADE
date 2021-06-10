@@ -1,0 +1,29 @@
+Accuracy(train):
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: train
+    n_samples: 5000
+
+Accuracy(test):
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: test
+    n_samples: 5000
+
+CE(train):
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: train
+    n_samples: 5000
+
+CE(test):
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: test
+    n_samples: 5000
+
+CE(test_t0):
+  class: CrossEntropyEvaluation
+  params:
+    evaluate_on: test_t0
+    n_samples: 5000

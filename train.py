@@ -5,7 +5,7 @@ from tqdm import tqdm
 import torch
 import numpy as np
 
-from utils.run_manager.wandb import WANDBRunManager
+from jade.run_manager.wandb import WANDBRunManager
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--data_file", type=str, default=None,
@@ -56,13 +56,6 @@ device = args.device
 if 'DEVICE' in os.environ:
     device = os.environ['DEVICE']
 
-num_workers = args.num_workers
-if 'N_WORKERS' in os.environ:
-    num_workers = int(os.environ['N_WORKERS'])
-
-if 'DATA_ROOT' in os.environ:
-    data_root = os.environ['DATA_ROOT']
-
 if 'EXPERIMENTS_ROOT' in os.environ:
     experiments_root = os.environ['EXPERIMENTS_ROOT']
 
@@ -97,7 +90,7 @@ for epoch in tqdm(range(epochs)):
     for name, evaluator in evaluators.items():
         if epoch % evaluator.evaluate_every == 0:
             entry = evaluator.evaluate()
-            run_manager.log(name=name, value=entry['value'], entry_type=entry['type'], iteration=trainer.iterations)
+            run_manager.log(name=name, **entry)
 
     # Checkpoint
     if epoch % checkpoint_every == 0:

@@ -1,4 +1,4 @@
-name: mib
+name: pytorch_and_friends
 channels:
   - pytorch
   - defaults
@@ -31,3 +31,4 @@ dependencies:
     - pytorch-revgrad==0.1.1
     - pyro-ppl==1.3.1
     - plotly==4.8.1
+    - envyaml==1.8.210417
