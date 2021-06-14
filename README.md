@@ -73,7 +73,7 @@ therefore all the parameters that needs to be explored can be added to the metho
 # Content of the models/VAE.py file
 
 class VariationalAutoencoder(Trainer):
-    def initalize(self, z_dim, encoder_layers, decoder_layers, beta, lr, batch_size, n_workers=0):
+    def initialize(self, z_dim, encoder_layers, decoder_layers, beta, lr, batch_size, n_workers=0, sigma=1):
         # The value of the z_dim, n_encoder_layers, n_decoder_layers, beta lr, batch_size and n_workers are defined 
         # in the configuration file or specified as additional arguments when running the train python file
         
@@ -90,15 +90,15 @@ the corresponding class defined in the `Architecture file` (see section `Archite
                                                      z_dim=z_dim, layers=encoder_layers)
         # initialize the encoder "Decoder(z_dim, layers, sigma)" defined in the architecture python file
         self.decoder = self.instantiate_architecture('Decoder', 
-                                                     z_dim=z_dim, layers=decoder_layers, sigma=0.1)
+                                                     z_dim=z_dim, layers=decoder_layers, sigma=sigma)
         # Initialize the Gaussian prior passing the number of dimensions
         self.prior = self.instantiate_architecture('Prior', 
                                                    z_dim=z_dim)
         
         # Initialize the optimizer passing the parameters of encoder, decoder and the specified learning rate
         self.opt = Adam([
-            {'params': encoder.parameters(), 'lr':lr},
-            {'params': decoder.parameters(), 'lr':lr},
+            {'params': self.encoder.parameters(), 'lr':lr},
+            {'params': self.decoder.parameters(), 'lr':lr},
         ])
 ```
 All the attributes (and architectures) that needs to be stored/restored can be specified by calling the 
@@ -116,7 +116,7 @@ used during training. The datasets defined in the `Dataset` configuration files 
 
 ```python
         # Instantiate a default pytorch DataLoader using the 'train' dataset defined in the dataset confituration file
-        self.train_loader = DataLoader(datasets['train'],
+        self.train_loader = DataLoader(self.datasets['train'],
                                        batch_size=batch_size, n_workers=n_workers, shuffle=True)
 ```
 
@@ -125,46 +125,43 @@ Each model needs to define a train step that will receive a batch of data from t
 ```python
     def train_step(self, data):
         # Note that the data is already moved to the device of the trainer and all the architectures are set to train mode
-        x, _ = data
+        x = data['x']
         
-        # Encode a batch of data
-        q_z_given_x = self.encoder(x)
-        
-        # Sample the representation using the re-parametrization trick
-        z = q_z_given_x.rsample()
-        
-        # Compute the reconstruction distribution
-        p_x_given_z = self.decoder(z)
-        
-        # The reconstruction loss is the expected negative log-likelihood of the input 
-        #  - E[log p(X=x|Z=z)]
-        rec_loss = - p_x_given_z.log_prob(x).mean()
-        
-        # The regularization loss is the KL-divergence between posterior and prior
-        # KL(q(Z|X=x)||p(Z)) = E[log q(Z=z|X=x) - log p(Z=z)]
-        reg_loss = q_z_given_x.log_prob(z) - self.prior().log_prob(z)
+        rec_loss, reg_loss = self.compute_loss_components(x)
+
+        # Add the two loss components to the log
+        # Note that only scalars are currently supported although custom logging can be implemented
+        # by extending the implemented methods
+        self.add_loss_item('Rec Loss', rec_loss.item())
+        self.add_loss_item('Reg Loss', reg_loss.item())
         
         loss = rec_loss + self.beta * reg_loss
 
         self.opt.zero_grad()
-        loss.backwards()
+        loss.backward()
         self.opt.step()
         
-    # Implementation of a reconstruct method for logging purposes
-    def reconstruct(self, x, sample_latents=False):
-        # If specified sample the latent distribution
-        if sample_latents:
-            z = self.encoder(x).sample()
-        # Otherwise use the mean of the posterios
-        else:
-            z = self.encoder(x).mean
-            
-        # Return the mean of p(X|Z=z)
-        x_rec = self.decoder(z).mean
-        return x_rec
+    def compute_loss_components(self, x):
+        # Encode a batch of data
+        q_z_given_x = self.encoder(x)
 
-######## End of VAE.py
+        # Sample the representation using the re-parametrization trick
+        z = q_z_given_x.rsample()
+
+        # Compute the reconstruction distribution
+        p_x_given_z = self.decoder(z)
+
+        # The reconstruction loss is the expected negative log-likelihood of the input
+        #  - E[log p(X=x|Z=z)]
+        rec_loss = - p_x_given_z.log_prob(x).mean()
+
+        # The regularization loss is the KL-divergence between posterior and prior
+        # KL(q(Z|X=x)||p(Z)) = E[log q(Z=z|X=x) - log p(Z=z)]
+        reg_loss = (q_z_given_x.log_prob(z) - self.prior().log_prob(z)).mean()
+
+        return rec_loss, reg_loss
 ```
+
 Different quantities can be easily added to the log by calling the `self.add_loss_item(name, value)`.
 The values will be added to the corresponding tensorboard log. The logging frequency can be reduce by setting the 
 `log_loss_every` variable (see section `Running the experiments`).
@@ -174,6 +171,7 @@ The values will be added to the corresponding tensorboard log. The logging frequ
         # by extending the implemented methods
         self.add_loss_item('Rec Loss', rec_loss.item())
         self.add_loss_item('Reg Loss', reg_loss.item())
+
 ```
 The following methods can be extended if required:
 - `on_start()`: method called only once after initialization
@@ -226,15 +224,30 @@ strings, list and dictionaries as parameters so that the dataset can be describe
 ```python
 # Content of examples/modules/data/MNIST.py
 
-class MNISTWrapper(MNIST):
-    def __init__(self, **params):
-        # Dataset transforms are objects, this wrapper does bypass the issue
-        transforms = ToTensor()
-        super(MNISTWrapper, self).__init__(**params, transforms=transforms)
+MNIST_TRAIN_EXAMPLES = 50000 # Size of the training set (the rest is used for validation)
+
+class MNISTWrapper(Dataset):
+    def __init__(self, root, split, download=False):
+        # We add an extra argument 'split' to the signature to allow for the creation of a validation set
+        assert split in ['train', 'valid', 'train+valid', 'test']
+        
+        # Add the ToTensor() transform to convert PIL images into torch tensors
+        dataset = torchvision.datasets.MNIST(
+            root=root,
+            train=split in ['train', 'valid', 'train+valid'],
+            transform=ToTensor(), download=download)
+
+        if split == 'train':
+            dataset = Subset(dataset, range(MNIST_TRAIN_EXAMPLES))
+        elif split == 'valid':
+            dataset = Subset(dataset, range(MNIST_TRAIN_EXAMPLES, len(dataset)))
+        elif not (split == 'test') and not (split == 'train+valid'):
+            raise Exception('The possible splits are "train", "valid", "train+valid", "test"')
+
+        self.dataset = dataset
 
     def __getitem__(self, item):
-        x, y = super(MNIST, self).__getitem__(item)
-        # Convert into a dictionary for convenience
+        x, y = self.dataset[item]
         return {'x': x, 'y': y}
 ```
 Unless a wrapper is required as in the example reported above to conver PIL images to tensors, torchvision classes 
@@ -248,48 +261,57 @@ Each evaluator has access to all the dataset definitions and the trainer object 
 The `initialize(**params)` method is used for the initialization of the evaluator and receives the parameters form the
 evaluation configuration file.
 ```python
-# Code from modules/eval/image_eval.py
+# Code from modules/eval/elbo.py
 
-class ReconstructionEvaluation(Evaluation):
-    def initialize(self, evaluate_on, n_pictures=10, sample_images=False, sample_latents=False):
-        # Consider the dataset labeled with the specified name (names are defined in the dataset configuration file).
-        self.dataset = self.datasets[evaluate_on]
-        
-        self.n_pictures = n_pictures
-        self.sample_images = sample_images
-        self.sample_latents = sample_latents
-        
-        # Check that the model has a definition of a method to reconstrut the inputs
-        if not hasattr(self.trainer, 'reconstruct'):
-            raise Exception('The trainer must implement a reconstruct(x) method with `x` as a picture')
-        
-            
+class ELBOEvaluation(Evaluation):
+    def initialize(self, 
+                   evaluate_on,         # name of the dataset on which the metric is evaluated
+                   n_samples=2048,      # number of evaluations to compute the expectation
+                   resample_x=False,    # use the same x over time if false, otherwise shuffle randomly
+                   batch_size=256       # batch size used for evaluation
+                   ):
+        # Make a data_loader for the specified dataset (names are defined in the dataset configuration file).
+        # with a default batch size of 256 
+        self.data_loader = DataLoader(self.datasets[evaluate_on], shuffle=resample_x, batch_size=batch_size)
+
+        self.n_samples = n_samples
+        self.batch_size = batch_size
+
+        # Check that the model has a definition of the function used to compute training and evaluation errors
+        if not hasattr(self.trainer, 'compute_loss_components'):
+            raise Exception('The trainer must have a function `compute_loss_components` that returns reconstruction and regularization errror')
+
     def evaluate(self):
-        # If the images are not sampled dynamically, pick the first n_pictures from the dataset
-        if not self.sample_images:
-            x = torch.cat([dataset[id]['x'].unsqueeze(0) for id in range(self.n_pictures)])
-        # Otherwise pick random ones
-        else:
-            ids = np.random.choice(len(self.dataset), self.n_pictures)
-            x = torch.cat([dataset[id]['x'].unsqueeze(0) for id in ids])
+        evaluations = 0.
+        elbo = 0.
         
-        # Move the images to the correct device
-        x = x.to(trainer.get_device())
+        # Consider the device on which the model is located
+        device = self.trainer.get_device()
+
+        # Enable evaluation mode
+        self.trainer.eval()
         
-        # Compute the reconstructions
-        x_rec = trainer.reconstruct(x).to('cpu')
-        
-        # Concatenate originals and reconstructions
-        x_all = torch.cat([x, x_rec], 2)
-        
-        # Return a dictionary used for logging
+        # Disable gradient computation
+        with torch.no_grad():
+            for data in self.data_loader:
+                # Move the data to the corresponding device
+                x = data['x'].to(device)
+                
+                # Compute the two loss components
+                rec_loss, reg_loss = self.trainer.compute_loss_components(x)
+                elbo += rec_loss.sum() + reg_loss.sum()
+                
+                evaluations += self.batch_size
+                if evaluations >= self.n_samples:
+                    break
+
         return {
-            'type': 'figure',                   # Type of the logged object, to be interpreted by the logger
-            'value': make_grid(x_all, nrow=1),  # Grid of images to log
-            'iteration': trainer.iterations     # Iteration count at the point of logging
+            'type': 'scalar',  # Type of the logged object, to be interpreted by the logger
+            'value': elbo/evaluations,  # expectation to log
+            'iteration': self.trainer.iterations  # Iteration count at the point of logging
         }
     
-# The definition of the ReconstructionError class in analogous and reported in the modules/eval/rec_error.py file 
+# The definition of the ImageReconstructionEvaluation class in analogous and reported in the modules/eval/rec_error.py file 
 # ...
 ```
 The frequency at which each evaluation is produced can be also specified from the evaluation configuration file.
@@ -306,9 +328,11 @@ on different machines.
 The dataset configuration file contains the description of the class and parameters for the definition of the datasets
 that are used during training and evaluation (validation and test).
 The file describes a dictionary in which each key represent a different dataset (e.g. `train` and `test`) with the
-respective parameters
+respective parameters.
+
+We define a configuration for the dataset used during validation and hyper-parameters search
 ```yaml
-# Content of configurations/data/MNIST.yml
+# Content of configurations/data/MNIST_valid.yml
 
 # Define a dataset that will be identified with the key 'train'
 train:
@@ -317,20 +341,42 @@ train:
   # List of parameters that will be passed to the MNISTWrapper constructor
   params:
     # Note that the value of the environment variable DATA_ROOT will be replacing the corresponding token
-    root: $DATA_ROOT/datasets/MNIST
+    root: $DATA_ROOT
     split: train
     download: True
+    
+# We test a disjoint validation set which will be refered to as 'test'
+test:
+  class: MNISTWrapper
+  params:
+    root: $DATA_ROOT
+    split: valid
+    download: True
+        
+# Other splits or datasets can be defined here with arbitrary keys.
+```
+Analogously, we can define a configuration for the final training (after the hyper-parameter search) in which the model
+is trained on train+validation set and tested on the test set
+```yaml
+# Content of configurations/data/MNIST_final.yml
 
-# Analogous definition of the 'test' set
+train:
+  class: MNISTWrapper
+  params:
+    root: $DATA_ROOT/datasets/MNIST
+    split: train+valid # Train the model on validation + train set
+    download: True
+    
 test:
   class: MNISTWrapper
   params:
     root: $DATA_ROOT/datasets/MNIST
-    split: test
-    download: True
-
-# Other splits or datasets can be defined here with arbitrary keys.
+    split: test # Test on the test set
+    download: True        
 ```
+At training time we can easily specify which one of the two configurations is used by specifying the respective
+configuration file (see section `Running a model`).
+
 Note that datasets that are not referred during training or evaluation will not be instantiated to avoid
 unnecessary memory consumption, while datasets that are referred (with `self.datasets[<key>]` in the Trainer or Evaluation
 modules) need to be described in the configuration file.
@@ -343,11 +389,24 @@ which specifies the frequency (in epochs) at which the evaluation function will 
 ```yaml
 # Configuration in configurations/eval/VAE_simple.yml
 
-# Name that will be used in the tensorboard/wandb log
-TrainImageReconstructions:
-  # Reference to the ReconstructionEvaluation class defined above
-  class: ReconstructionEvaluation
+# The key will be used as a name in the tensorboard/wandb log
+TrainReconstructionsError:
+  class: ELBOEvaluation         # We log the expected negative variational lower bound
   # Parameters of the initialize(**params) method of the ReconstructionEvaluation class
+  params:
+    evaluate_on: train          # On the training set
+
+# Analogously, we define an evaluator for the ELBO of 'test' pictures
+# (coming either from the validation or test set depending on the specified dataset configuration)
+TestReconstructionsError:
+  class: ELBOEvaluation         # The same metric is computed on the test dataset
+  params:
+    evaluate_on: test
+
+# We also log the image reconstruction on train and test dataset using the ReconstructionEvaluation 
+# defined in modules/eval/image_eval.py
+TrainImageReconstructions:
+  class: ReconstructionEvaluation
   params:
     evaluate_on: train
     n_pictures: 10
@@ -355,29 +414,18 @@ TrainImageReconstructions:
     # Frequency of evaluation (in epochs) if not specified, the default value is 1
     evaluate_every: 2
 
-# Analogously, we define an evaluator for the reconstruction of test pictures
 TestImageReconstructions:
   class: ReconstructionEvaluation
   params:
-    # Here we change only the reference to the dataset used for evaluation ('test' in the dataset configuration file) 
     evaluate_on: test
     n_pictures: 10
     sample_images: False
     evaluate_every: 2
-
-# We also log the expected reconstruction error on train
-TrainReconstructionsError:
-  class: ReconstructionEvaluation
-  params:
-    evaluate_on: train
-
-# And test set
-TestReconstructionsError:
-  class: ReconstructionEvaluation
-  params:
-    evaluate_on: test
-
 ```
+
+Analogously we can write an evaluation description file for the final evaluation (model trained on train+evaluation and
+tested on test) just by defining a second evaluation file (see `configurations/eval/VAE_simple_final.yml)
+
 
 #### Model Configuration
 Each model congiguration file includes a `class` descriptor that refers to a `Trainer` definition
@@ -453,13 +501,13 @@ command:
 - ${interpreter}
 - ${program}
 # Flags for the train.py script as explained above
-- --data_conf=configurations/data/MNIST.yml
-- --eval_conf=definitions/eval/VAE_simple.yml
+- --data_conf=configurations/data/MNIST_valid.yml     # Note that we are using the data configuration for validation
+- --eval_conf=definitions/eval/VAE_simple_valid.yml
 - --model_conf=configurations/models/VAE.yml
 - --arch_impl=modules/architectures/simple_MNIST.py
-- --epochs=100
-- --seed=42
-method: grid
+- --epochs=10                                         # Train for 10 epochs
+- --seed=42                                           # Manual seed
+method: random
 # The wandb framework allows to optimize for a specified metric.
 # The scalar metrics defined in the evaluation configuration file can be referenced here
 metric:
@@ -472,10 +520,14 @@ parameters:
   model.params.beta:
     min: 0
     max: 10
-# We can also specify single values that differ from the defaults specified in the configuration file
+# We can also specify specific values (see wandb documenation)
   model.params.z_dim:
     values:
+      - 16
       - 32
+      - 64
+      - 128
+      - 256
 program: train.py
 ```
 
@@ -485,9 +537,9 @@ wandb sweep <sweep_file>
 ```
 
 ### Running sweep agents
-The command will return a sweep_id that can be used to start the corresponding agents
+The command will return a `sweep_id` that can be used to start the corresponding agents. Note that the `sweep_id`
 ```
-wandg agent <sweep_id>
+wandg agent <wandb_user/wandb_project/sweep_id>
 ```
 
 Note that conveniently the agents can be launched from different machines at the same time on the same sweep.
@@ -530,11 +582,12 @@ export CUDA_CACHE_PATH="$TMPDIR"/.cuda_cache/
 export CUDA_CACHE_DISABLE=0
 export WANDB_USER=<YOUR_WANDB_USERNAME>
 export WANDB_PROJECT=<YOUR_WANDB_PROJECT>
+export EXPERIMENTS_ROOT=<YOUR_EXPERIMENT_ROOT>
 export N_WORKERS=16
 export DEVICE=cuda
 
-# Path to the datasets root
-export DATA_ROOT=/hddstore/datasets
+export DATA_ROOT=<YOUR_DATA_ROOT> # /hddstore/datasets 
+
 
 # here I use temp to save the backups since they are uploaded and deleted afterwards anyway
 mkdir /tmp/experiments
@@ -547,7 +600,7 @@ echo Starting
 # Make sure you are in the project directory before trying to run the agent
 cd <PATH_TO_THE_PROJECT_ROOT>
 
-echo Starting agent $SWEEP_ID
+echo Starting agent $WANDB_USER/$WANDB_PROJECT/$SWEEP_ID
 wandb agent $SWEEP_ID
 wait
 

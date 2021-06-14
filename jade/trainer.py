@@ -5,14 +5,12 @@ import numpy as np
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 import torch.optim as optim_module
-import utils.schedulers as scheduler_module
 from jade.instance_manager import make_instance
 
 
 ##########################
 # Generic training class #
 ##########################
-
 
 class Trainer(nn.Module):
     def __init__(self, datasets, arch_module, log_loss_every=100, writer=None, seed=None, verbose=False, **params):
@@ -89,7 +87,7 @@ class Trainer(nn.Module):
 
             # Move the data to the appropriate device
             device = self.get_device()
-            if hasattr(data, items):
+            if hasattr(data, 'items'):
                 for name, value in data.items():
                     data[name] = value.to(device)
             elif isinstance(data, tuple):
@@ -128,7 +126,7 @@ class Trainer(nn.Module):
     def _log_loss(self):
         # Log the expected value of the items in loss_items
         for key, values in self.loss_items.items():
-            self.writer.log(name=key, value=np.mean(values), entry_type='scalar', iteration=self.iterations)
+            self.writer.log(name=key, value=np.mean(values), type='scalar', iteration=self.iterations)
             self.loss_items[key] = []
 
     def save(self, model_path):

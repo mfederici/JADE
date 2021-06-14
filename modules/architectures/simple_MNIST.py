@@ -26,7 +26,7 @@ class Encoder(nn.Module):
         super(Encoder, self).__init__()
 
         # Create a stack of layers with ReLU activations as specified
-        nn_layers = make_stack([N_INPUT] + layers)
+        nn_layers = make_stack([N_INPUTS] + layers)
 
         self.net = nn.Sequential(
             Flatten(),  # Layer to flatten the input

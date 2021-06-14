@@ -1,5 +1,6 @@
 def make_instance(class_name, modules, params=None, verbose=False):
     class_found = False
+
     if params is None:
         params = {}
 
@@ -17,9 +18,11 @@ def make_instance(class_name, modules, params=None, verbose=False):
         print('Instantiating class %s from %s' %
               (class_name, module.__name__))
 
+
     instance = Class(**params)
 
     return instance
+
 
 class InstanceManager:
     def __init__(self, descriptions, modules,  verbose=False, **extra_params):
@@ -45,7 +48,10 @@ class InstanceManager:
 
         params.update(self.extra_params)
 
-        self.loaded[item] = make_instance(class_name, params)
+        self.loaded[item] = make_instance(class_name=class_name,
+                                          modules=self.modules,
+                                          params=params,
+                                          verbose=self.verbose)
 
     def __getitem__(self, item):
         if not (item in self.loaded):

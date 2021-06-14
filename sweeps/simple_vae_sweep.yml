@@ -4,27 +4,33 @@ command:
 - ${interpreter}
 - ${program}
 # Flags for the train.py script as explained above
-- --data_conf=configurations/data/MNIST.yml
-- --eval_conf=definitions/eval/VAE_simple.yml
+- --data_conf=configurations/data/MNIST_valid.yml
+- --eval_conf=configurations/eval/VAE_simple.yml
 - --model_conf=configurations/models/VAE.yml
 - --arch_impl=modules/architectures/simple_MNIST.py
-- --epochs=100
+- --epochs=10
 - --seed=42
-method: grid
+method: bayes
 # The wandb framework allows to optimize for a specified metric.
 # The scalar metrics defined in the evaluation configuration file can be referenced here
 metric:
   goal: minimize
-  name: TestReconstructionError # Metric defined in the evaluation configuration file
+  name: TestELBO # Metric defined in the evaluation configuration file
 parameters:
 # Model parameters can be accessed by using the operator '.' to access the members of dictionaries
 # to access the parameters 'beta' in 'params' of a model (see the model configuration file) we use the syntax
 # model.params.beta as shown below
   model.params.beta:
-    min: 0
-    max: 10
-# We can also specify single values that differ from the defaults specified in the configuration file
+    # We sample the parameter beta between 0 and 2 using a log-uniform distribution (from e^-10 to e^1)
+    distribution: log_uniform
+    min: -10
+    max: 1
+# We can also specify specific values (see wandb documenation)
   model.params.z_dim:
     values:
+      - 16
       - 32
+      - 64
+      - 128
+      - 256
 program: train.py

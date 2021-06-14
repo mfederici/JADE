@@ -1,13 +1,38 @@
 import os
 from envyaml import EnvYAML
+import yaml
 import importlib
 
 from jade.instance_manager import InstanceManager, make_instance
 
 import torchvision.datasets as torchvision_dataset_module
-from examples.modules import models as model_module, eval as eval_module
-import data as dataset_module
-import data.transforms.dataset as dataset_transform_module
+
+def module_from_file(name, path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def load_modules(root_dir):
+    model_modules = []
+    for module_path in root_dir:
+        for root, subFolder, files in os.walk(module_path):
+            for item in files:
+                if item.endswith(".py"):
+                    print(root, item)
+                    file_path = os.path.join(root, item)
+                    module = module_from_file(file_path.split('.')[0].replace('/', '.'), file_path)
+                    model_modules.append(module)
+        return model_modules
+
+
+def read_and_resolve(yaml_file):
+    with open(yaml_file, 'r') as f:
+        keys = yaml.safe_load(f).keys()
+
+    d = EnvYAML(yaml_file)
+    return {k: d[k] for k in keys}
 
 
 class RunManager:
@@ -20,16 +45,24 @@ class RunManager:
         self.run_dir = run_dir
         self.resume = resume
         self.experiments_root = experiments_root
-        self.data_root = data_root
         self.arch_filepath = arch_filepath
+
+        # TODO: accept as extra arguments
+        model_paths = ['modules/models']
+        dataset_paths = ['modules/data']
+        eval_paths = ['modules/eval']
+
+        self.model_modules = load_modules(model_paths)
+        self.dataset_modules = load_modules(dataset_paths)
+        self.eval_modules = load_modules(eval_paths)
         # os.makedirs(self.run_dir, exist_ok=True)
 
     @ staticmethod
     def load_config(desc):
         return {
-            'model': EnvYAML(desc['model_file']),
-            'data': EnvYAML(desc['data_file']),
-            'eval': EnvYAML(desc['eval_file'])
+            'model': read_and_resolve(desc['model_file']),
+            'data': read_and_resolve(desc['data_file']),
+            'eval': read_and_resolve(desc['eval_file'])
         }
 
     def resume_run(self, run_id):
@@ -43,35 +76,34 @@ class RunManager:
 
     def make_instances(self):
         dataset_manager = InstanceManager(descriptions=self.config['data'],
-                                         modules=[torchvision_dataset_module,
-                                                  dataset_module],
-                                         data_root=self.data_root,
+                                         modules=[torchvision_dataset_module] + self.dataset_modules,
                                          verbose=self.verbose)
 
-        arch_spec = importlib.util.spec_from_file_location(self.arch_filepath.split('.')[-2].split('/')[-1], self.arch_filepath)
-        arch_module = importlib.util.module_from_spec(arch_spec)
-        arch_spec.loader.exec_module(arch_module)
+        arch_module = module_from_file(self.arch_filepath.split('.')[-2].split('/')[-1], self.arch_filepath)
 
-        trainer_params = self.config['model']['params']
-        trainer_params['writer'] = self
-        trainer_params['datasets'] = dataset_manager
-        trainer_params['arch_module'] = arch_module
-        trainer_params['verbose'] = self.verbose
+        model_params = self.config['model']['params']
+        model_params['writer'] = self
+        model_params['datasets'] = dataset_manager
+        model_params['arch_module'] = arch_module
+        trainer = make_instance(class_name=self.config['model']['class'],
+                                     modules=self.model_modules,
+                                     verbose=self.verbose,
+                                     params=model_params)
 
-        trainer = InstanceManager(class_name=self.config['model']['class'],
-                                modules=[model_module],
-                                verbose=self.verbose,
-                                params=trainer_params)
 
         # Load the evaluators
-        evaluators = {name:
-            self._make_instance(
+        evaluators = {}
+
+        for name, desc in self.config['eval'].items():
+            eval_params = desc['params']
+            eval_params['datasets'] = dataset_manager
+            eval_params['trainer'] = trainer
+            evaluators[name] = make_instance(
                 class_name=desc['class'],
-                modules=[eval_module],
-                datasets=dataset_manager,
-                trainer=trainer,
-                **desc['params'])
-            for name, desc in self.config['eval'].items()}
+                modules=self.eval_modules,
+                params=eval_params
+            )
+
 
         # Resume the training if specified
         if self.resume:

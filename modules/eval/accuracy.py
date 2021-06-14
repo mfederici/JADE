@@ -1,4 +1,4 @@
-from examples.eval import Evaluation
+from jade.eval import Evaluation
 import torch
 from torch.utils.data import DataLoader
 import numpy as np

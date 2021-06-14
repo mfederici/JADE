@@ -1,13 +1,13 @@
 train:
   class: MNISTWrapper
   params:
-    root: $DATA_ROOT/datasets/MNIST
+    root: $DATA_ROOT
     split: train
     download: True
 
 test:
   class: MNISTWrapper
   params:
-    root: $DATA_ROOT/datasets/MNIST
+    root: $DATA_ROOT
     split: test
     download: True

@@ -1,4 +1,4 @@
-from core.trainer import Trainer
+from jade.trainer import Trainer
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 
@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 
 
 class VIBTrainer(Trainer):
-    def initalize(self,  z_dim, encoder_layers, classifier_layers, beta, lr, batch_size, num_workers=0):
+    def initialize(self,  z_dim, encoder_layers, classifier_layers, beta, lr, batch_size, num_workers=0):
         self.beta = beta
 
         # Instantiating the architectures

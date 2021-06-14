@@ -18,6 +18,8 @@ parser.add_argument('--arch_impl', type=str, default=None,
                     help="Path to the .py file containing the architecture descriptions.")
 parser.add_argument("--run_name", type=str, default=None,
                     help="Unique name associated to the experiment")
+parser.add_argument("--data-root", type=str, default=None,
+                    help="Path to the dataset root.")
 parser.add_argument("--experiments-root", type=str, default="experiments",
                     help="Root of the experiment directory. Checkpoints will be stored in sub-directories corresponding"
                          " to their respective run id.")
@@ -71,7 +73,6 @@ run_manager = WANDBRunManager(run_name=run_name, desc={'data_file': data_file,
                                                        'eval_file': eval_file},
                               arch_filepath=arch_file,
                               experiments_root=experiments_root,
-                              data_root=data_root,
                               verbose=verbose, upload_checkpoints=upload_checkpoints)
 
 experiment_dir = run_manager.run_dir
