@@ -25,6 +25,7 @@ class Trainer(nn.Module):
 
         self.iterations = 0
         self.epochs = 0
+        self.training_done = False
 
         if seed:
             torch.manual_seed(seed)
@@ -75,6 +76,9 @@ class Trainer(nn.Module):
             self.first_iteration = False
             self.on_start()
 
+        if self.training_done:
+            return
+
         for data in tqdm(self.train_loader):
 
             # Log the values in loss_items every log_loss_every iterations
@@ -98,11 +102,16 @@ class Trainer(nn.Module):
 
             self.train_step(data)
             self.on_iteration_end()
+            if self.training_done:
+                return
 
         self.on_epoch_end()
 
     def on_iteration_end(self):
         self.iterations += 1
+
+    def end_training(self):
+        self.training_done = True
 
     def on_epoch_end(self):
         self.epochs += 1

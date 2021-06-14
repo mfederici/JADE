@@ -1,0 +1,38 @@
+class: VariationalAutoencoderTrainer
+params:
+  #################
+  # Architectures #
+  #################
+
+  # Encoder
+  encoder_layers:
+    -1024
+    -256
+
+  # Decoder
+  decoder_layers:
+    - 256
+    - 1024
+
+  ###########################
+  # Optimization parameters #
+  ###########################
+
+  # Learning Rate
+  lr: 0.0001
+
+  # Size of the training batch
+  batch_size: 256
+
+  # Read the number of workers from the environment variable
+  num_workers: ${NUM_WORKERS}
+
+  ##########################
+  # Other model parameters #
+  ##########################
+
+  # regularization strength
+  beta: 0.5
+
+  # Number of latent dimensions
+  z_dim: 64

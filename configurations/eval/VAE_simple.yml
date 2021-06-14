@@ -1,0 +1,18 @@
+TrainReconstructions:
+  class: ReconstructionEvaluation
+  # Parameters of the initialize(**params) method of the ReconstructionEvaluation class
+  params:
+    evaluate_on: train
+    n_pictures: 10
+    sample_images: False
+    # Frequency of evaluation (in epochs) if not specified, the default value is 1
+    evaluate_every: 2
+
+TestReconstructions:
+  class: ReconstructionEvaluation
+  params:
+    # Here we change only the reference to the dataset used for evaluation ('test' in the dataset configuration file)
+    evaluate_on: test
+    n_pictures: 10
+    sample_images: False
+    evaluate_every: 2

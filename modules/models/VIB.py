@@ -29,7 +29,7 @@ class VIBTrainer(Trainer):
         self.add_attribute_to_store('optim')
 
         # Instantiate the data Loader
-        self.train_loader = DataLoader(dataset=self.get_dataset('train'),
+        self.train_loader = DataLoader(dataset=self.datasets['train'],
                                        batch_size=batch_size, shuffle=True, num_workers=num_workers)
 
     def train_step(self, data):

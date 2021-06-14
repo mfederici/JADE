@@ -57,6 +57,11 @@ in 6 steps, which are discussed in detail in the following sections:
 ## Models and Algorithms
 Each new Model and algorithm must extend the `core.Trainer` class and define the architecture initialization and training.
 The models need to override the default `initialize(**params)` and `train_step(data)` as discussed in the following sections.
+The framework is designed to make sure each model implementation is agnostic of the dataset and architectures to separate
+the logic of the algorithm from its implementation details.
+
+Place the implementations of your models in the `modules/models` folder.
+
 
 ### Initialization
 All arguments of the `initialize(**params)` method can be directly specified in the corresponding configuration file (see section `Parameters confituration/Model and architectures`),
@@ -106,12 +111,12 @@ All the attributes (and architectures) that needs to be stored/restored can be s
 ```
 
 The attribute `self.train_loader` also needs to be instantiated within the `initialize` method to specify the data loader
-used during training. The datasets defined in the `Dataset` configuration files are accessible by calling the 
-`self.get_dataset(dataset_name)` method (see section `Parameters confituration/Dataset`)
+used during training. The datasets defined in the `Dataset` configuration files are available by accessing the 
+`self.datasets[dataset_name]` attribute (see section `Parameters confituration/Dataset`)
 
 ```python
         # Instantiate a default pytorch DataLoader using the 'train' dataset defined in the dataset confituration file
-        self.train_loader = DataLoader(self.get_dataset('train'),
+        self.train_loader = DataLoader(datasets['train'],
                                        batch_size=batch_size, n_workers=n_workers, shuffle=True)
 ```
 
@@ -176,6 +181,9 @@ The following methods can be extended if required:
 this is overwritten
 - `on_epoch_end()`: method called once at the end of each training epoch. Don't forget to increment the epoch count if 
 this is overwritten
+  
+Each trainer also has a `end_training()` method that can be called within the training procedure or by any evaluator to
+terminate the training procedure.
 
 ### Architectures
 The different architectures that are instantiated in the Trainer described in the previous section
@@ -207,6 +215,10 @@ class Encoder(nn.Module):
 ```
 Note that the parameters can be passed when calling the `instantiate_architecture` in the model definition.
 
+*IMPORTANT:* while models and datasets are automatically imported by the framework, the architecture file are passed when
+sunning the training scipt. This is because the same model (e.g. `Encoder`) can have completely different implementations
+for different datasets.
+
 ### Dataset
 The default torchvision datasets are supported by the framework.
 We recommend to create a simple Wrapper to make sure the Dataset object accepts only simple arguments such as float,
@@ -236,9 +248,9 @@ Each evaluator has access to all the dataset definitions and the trainer object 
 The `initialize(**params)` method is used for the initialization of the evaluator and receives the parameters form the
 evaluation configuration file.
 ```python
-# Code from examples/modules/eval/image_eval.py
+# Code from modules/eval/image_eval.py
 
-class ReconstructionLogger(Evaluation):
+class ReconstructionEvaluation(Evaluation):
     def initialize(self, evaluate_on, n_pictures=10, sample_images=False, sample_latents=False):
         # Consider the dataset labeled with the specified name (names are defined in the dataset configuration file).
         self.dataset = self.datasets[evaluate_on]
@@ -250,13 +262,6 @@ class ReconstructionLogger(Evaluation):
         # Check that the model has a definition of a method to reconstrut the inputs
         if not hasattr(self.trainer, 'reconstruct'):
             raise Exception('The trainer must implement a reconstruct(x) method with `x` as a picture')
-        
-    def sample_new_images(self):
-        # sample the required number of pictures randomly
-        ids = np.random.choice(len(self.dataset), self.n_pictures)
-        images_batch = torch.cat([dataset[id]['x'].unsqueeze(0) for id in ids])
-        
-        return images_batch
         
             
     def evaluate(self):
@@ -280,9 +285,12 @@ class ReconstructionLogger(Evaluation):
         # Return a dictionary used for logging
         return {
             'type': 'figure',                   # Type of the logged object, to be interpreted by the logger
-            'value': x_all,                     # Value to log
+            'value': make_grid(x_all, nrow=1),  # Grid of images to log
             'iteration': trainer.iterations     # Iteration count at the point of logging
         }
+    
+# The definition of the ReconstructionError class in analogous and reported in the modules/eval/rec_error.py file 
+# ...
 ```
 The frequency at which each evaluation is produced can be also specified from the evaluation configuration file.
 At the moment only support for scalars and figures has been added, but the interface can be easily adapted to fit any
@@ -290,20 +298,266 @@ other data-type which is supported by tensorboard/wandb.
 
 ### Parameters configuration
 The value of all the parameters for model training, dataset specification and evaluation needs to be included into 3 
-respective configuration files.
+respective `.yml` configuration files. Note that in each `.yaml` configuration file it is possible to refer to enviroment
+variables with the syntax `$VARIABLE_NAME` (or `${VARIABLE_NAME}`). This allows to easily specify the location of datasets and devices to use
+on different machines.
 
+#### Dataset Configuration
+The dataset configuration file contains the description of the class and parameters for the definition of the datasets
+that are used during training and evaluation (validation and test).
+The file describes a dictionary in which each key represent a different dataset (e.g. `train` and `test`) with the
+respective parameters
+```yaml
+# Content of configurations/data/MNIST.yml
 
-### Environment variables
-if 'DEVICE' in os.environ:
-    device = os.environ['DEVICE']
+# Define a dataset that will be identified with the key 'train'
+train:
+  # Class that will be instantiated (see the MNIST wrapper defined in the section above)
+  class: MNISTWrapper
+  # List of parameters that will be passed to the MNISTWrapper constructor
+  params:
+    # Note that the value of the environment variable DATA_ROOT will be replacing the corresponding token
+    root: $DATA_ROOT/datasets/MNIST
+    split: train
+    download: True
 
-num_workers = args.num_workers
-if 'N_WORKERS' in os.environ:
-    num_workers = int(os.environ['N_WORKERS'])
+# Analogous definition of the 'test' set
+test:
+  class: MNISTWrapper
+  params:
+    root: $DATA_ROOT/datasets/MNIST
+    split: test
+    download: True
 
-if 'DATA_ROOT' in os.environ:
-    data_root = os.environ['DATA_ROOT']
+# Other splits or datasets can be defined here with arbitrary keys.
+```
+Note that datasets that are not referred during training or evaluation will not be instantiated to avoid
+unnecessary memory consumption, while datasets that are referred (with `self.datasets[<key>]` in the Trainer or Evaluation
+modules) need to be described in the configuration file.
 
-if 'EXPERIMENTS_ROOT' in os.environ:
-    experiments_root = os.environ['EXPERIMENTS_ROOT']
+#### Evaluation Configuration
+Analogously to the `dataset` file, the evaluation description `.yml` file contains a dictionary of evaluation metrics that
+are considered during training.
+Each evaluator will have the `evaluate_every` parameters other than the ones defined in the `initialize(**params)` method,
+which specifies the frequency (in epochs) at which the evaluation function will be called.
+```yaml
+# Configuration in configurations/eval/VAE_simple.yml
 
+# Name that will be used in the tensorboard/wandb log
+TrainImageReconstructions:
+  # Reference to the ReconstructionEvaluation class defined above
+  class: ReconstructionEvaluation
+  # Parameters of the initialize(**params) method of the ReconstructionEvaluation class
+  params:
+    evaluate_on: train
+    n_pictures: 10
+    sample_images: False
+    # Frequency of evaluation (in epochs) if not specified, the default value is 1
+    evaluate_every: 2
+
+# Analogously, we define an evaluator for the reconstruction of test pictures
+TestImageReconstructions:
+  class: ReconstructionEvaluation
+  params:
+    # Here we change only the reference to the dataset used for evaluation ('test' in the dataset configuration file) 
+    evaluate_on: test
+    n_pictures: 10
+    sample_images: False
+    evaluate_every: 2
+
+# We also log the expected reconstruction error on train
+TrainReconstructionsError:
+  class: ReconstructionEvaluation
+  params:
+    evaluate_on: train
+
+# And test set
+TestReconstructionsError:
+  class: ReconstructionEvaluation
+  params:
+    evaluate_on: test
+
+```
+
+#### Model Configuration
+Each model congiguration file includes a `class` descriptor that refers to a `Trainer` definition
+and the description of its parameters:
+```yaml
+# Configuration in configurations/models/VAE.yml
+
+class: VariationalAutoencoderTrainer
+params:
+  #################
+  # Architectures #
+  #################
+
+  # Encoder
+  encoder_layers:
+    -1024
+    -256
+
+  # Decoder
+  decoder_layers:
+    - 256
+    - 1024
+
+  ###########################
+  # Optimization parameters #
+  ###########################
+
+  # Learning Rate
+  lr: 0.0001
+
+  # Size of the training batch
+  batch_size: 256
+
+  # Read the number of workers from the environment variable
+  num_workers: ${NUM_WORKERS}
+
+  ##########################
+  # Other model parameters #
+  ##########################
+  
+  # regularization strength
+  beta: 0.5
+  
+  # Number of latent dimensions
+  z_dim: 64
+```
+
+## Running a model
+
+In order to run a model launch the script `train.py` specifying the following flags
+
+- `--data_conf`: path to the data configuration `.yml` file
+- `--eval_conf`: path to the data configuration `.yml` file
+- `--model_conf`: path to the model configuration `.yml` file
+- `--arch_impl`: path to the architecture implementation `.py` file
+
+Additional flags can be used to specify the device on which to run the model, maximum number of training epochs,
+random seeds and model checkpoint frequency. For more information use the `--help` flag.
+
+The flags '--device' and '--experiments-root' referring to the device on which the model is trained and the directory
+in with the trained models and backups are stored can be also specified by setting the environment variables `DEVICE` 
+and `EXPERIMENTS_ROOT` respectively.
+
+## Creating a sweep
+The whole JADE framework has been designed to facilitate parameters sweeps using the [wandb library](https://docs.wandb.ai/guides/sweeps/).
+When writing a wandb sweep file, the parameters in the model, data and evaluation configurations can be easily accessed:
+```yaml
+# File in sweeps/simple_vae_sweep.yml
+
+#Example of a sweep for the beta parameter of the Variational Autoencoder model 
+command:
+- ${env}
+- ${interpreter}
+- ${program}
+# Flags for the train.py script as explained above
+- --data_conf=configurations/data/MNIST.yml
+- --eval_conf=definitions/eval/VAE_simple.yml
+- --model_conf=configurations/models/VAE.yml
+- --arch_impl=modules/architectures/simple_MNIST.py
+- --epochs=100
+- --seed=42
+method: grid
+# The wandb framework allows to optimize for a specified metric.
+# The scalar metrics defined in the evaluation configuration file can be referenced here
+metric:
+  goal: minimize
+  name: TestReconstructionError # Metric defined in the evaluation configuration file
+parameters:
+# Model parameters can be accessed by using the operator '.' to access the members of dictionaries
+# to access the parameters 'beta' in 'params' of a model (see the model configuration file) we use the syntax
+# model.params.beta as shown below
+  model.params.beta:
+    min: 0
+    max: 10
+# We can also specify single values that differ from the defaults specified in the configuration file
+  model.params.z_dim:
+    values:
+      - 32
+program: train.py
+```
+
+Once the sweep `.yml` file has been defined, run the corresponding wandb command to create a sweep
+```
+wandb sweep <sweep_file>
+```
+
+### Running sweep agents
+The command will return a sweep_id that can be used to start the corresponding agents
+```
+wandg agent <sweep_id>
+```
+
+Note that conveniently the agents can be launched from different machines at the same time on the same sweep.
+For each machine running an agent make sure that:
+1) the code version and environment are consistent and updated
+2) wandb has been initialized with the `wandb init` command
+3) all the environment variables defined in the `.yml` files have been defined together with `WAND_USER` 
+   and `WANDB_PROJECT`
+
+#### Example of deployment for SLURM cluster
+While the sweep declaration can be submitted from a local machine, running the agent usually requires
+a certain amount of coumputational resources.
+
+Here we report the procedure to deploy and run the agents on a cluster using SLURM for scheduling.
+0) install conda on your cluster node. This will make it easier to deal with dependencies
+1) make sure to download the code at the most recent version. If you are using git, you can simply run a `git clone` or 
+   `git pull` to retrieve the most updated version of the code
+2) install and activate the appropriate conda environment (`conda env create -f environment.yml` + 
+   `conda activate pytorch-and-friends`)
+3) make sure wandb is initialized with `wandb init`
+4) create a .sh file for SLURM. here we report an example
+```shell
+#!/bin/bash
+# Resource allocation (see SLURM docs)
+#SBATCH --gres=gpu:1  
+#SBATCH --mem=10G
+#SBATCH --cpus-per-task=16
+#SBATCH --time 10:00:00
+
+# Other flags to set for SLURM (see docs)
+#SBATCH --ntasks=1
+#SBATCH --priority=TOP
+#SBATCH --job-name=Example
+#SBATCH -D <path_to_your_home_directory>
+#SBATCH --output=log.txt
+#SBATCH --verbose
+
+# Setting the env_variables
+export CUDA_CACHE_PATH="$TMPDIR"/.cuda_cache/
+export CUDA_CACHE_DISABLE=0
+export WANDB_USER=<YOUR_WANDB_USERNAME>
+export WANDB_PROJECT=<YOUR_WANDB_PROJECT>
+export N_WORKERS=16
+export DEVICE=cuda
+
+# Path to the datasets root
+export DATA_ROOT=/hddstore/datasets
+
+# here I use temp to save the backups since they are uploaded and deleted afterwards anyway
+mkdir /tmp/experiments
+export EXPERIMENTS_ROOT=/tmp/experiments 
+
+#Generate cuda stats to check cuda is found
+nvidia-smi
+echo Starting
+
+# Make sure you are in the project directory before trying to run the agent
+cd <PATH_TO_THE_PROJECT_ROOT>
+
+echo Starting agent $SWEEP_ID
+wandb agent $SWEEP_ID
+wait
+
+# Remove all the files for the model backups since wandb is uploading them anyway
+# You can change the experiments directory if you want to keep local versions
+rm -r /tmp/experiments
+```
+
+5) Submit the SLURM job `sbatch <your_SLURM_file.sh> --export=SWEEP_ID=$SWEEP_ID <YOUR_SWEEP_ID>`
+
+The console output and updated results for your agents can be found on the wandb website.
+
+## Downloading and loading trained models

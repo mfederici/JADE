@@ -8,7 +8,7 @@ from torch.utils.data import DataLoader
 ###################################
 
 
-class VariationalAutoencoder(Trainer):
+class VariationalAutoencoderTrainer(Trainer):
     def initalize(self, z_dim, encoder_layers, decoder_layers, beta, lr, batch_size, num_workers=0):
         # The value of the z_dim, n_encoder_layers, n_decoder_layers, beta lr, batch_size and n_workers are defined
         # in the configuration file or specified as additional arguments when running the train python file
@@ -38,7 +38,7 @@ class VariationalAutoencoder(Trainer):
         self.add_attribute_to_store('opt')
 
         # Instantiate the data Loader
-        self.train_loader = DataLoader(dataset=self.get_dataset('train'),
+        self.train_loader = DataLoader(dataset=datasets['train'],
                                        batch_size=batch_size, shuffle=True, num_workers=num_workers)
 
     def train_step(self, data):

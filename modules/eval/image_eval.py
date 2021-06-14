@@ -1,4 +1,6 @@
 from jade.eval import Evaluation
+from torchvision.utils import make_grid
+
 
 class ReconstructionLogger(Evaluation):
     def initialize(self, evaluate_on, n_pictures=10, sample_images=False, sample_latents=False):
@@ -41,6 +43,6 @@ class ReconstructionLogger(Evaluation):
         # Return a dictionary used for logging
         return {
             'type': 'figure',  # Type of the logged object, to be interpreted by the logger
-            'value': x_all,  # Value to log
+            'value': make_grid(x_all, nrow=1),  # Value to log
             'iteration': trainer.iterations  # Iteration count at the point of logging
         }

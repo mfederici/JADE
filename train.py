@@ -8,26 +8,22 @@ import numpy as np
 from jade.run_manager.wandb import WANDBRunManager
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--data_file", type=str, default=None,
+parser.add_argument("--data_conf", type=str, default=None,
                     help="Path to the .yml file containing the dataset description.")
-parser.add_argument("--model_file", type=str, default=None,
+parser.add_argument("--model_conf", type=str, default=None,
                     help="Path to the .yml file containing the model description.")
-parser.add_argument("--eval_file", type=str, default=None,
+parser.add_argument("--eval_conf", type=str, default=None,
                     help="Path to the .yml file containing the evaluation description.")
-parser.add_argument('--arch_pyfile', type=str, default=None,
+parser.add_argument('--arch_impl', type=str, default=None,
                     help="Path to the .py file containing the architecture descriptions.")
 parser.add_argument("--run_name", type=str, default=None,
                     help="Unique name associated to the experiment")
 parser.add_argument("--experiments-root", type=str, default="experiments",
                     help="Root of the experiment directory. Checkpoints will be stored in sub-directories corresponding"
                          " to their respective run id.")
-parser.add_argument("--data-root", type=str, default=".",
-                    help="Root directory for the datasets")
 parser.add_argument("--device", type=str, default="cuda",
                     help="Device on which the experiment is executed (as for tensor.device). Specify 'cpu' to "
                          "force execution on CPU.")
-parser.add_argument("--num-workers", type=int, default=0,
-                    help="Number of CPU threads used during the data loading procedure.")
 # Change checkpoint frequency
 parser.add_argument("--checkpoint-every", type=int, default=500, help="Frequency of model checkpointing (in epochs).")
 parser.add_argument("--backup-every", type=int, default=100, help="Frequency of model backups (in epochs).")
@@ -38,10 +34,10 @@ args = parser.parse_args()
 
 logging = True
 
-data_file = args.data_file
-model_file = args.model_file
-eval_file = args.eval_file
-arch_file = args.arch_pyfile
+data_file = args.data_conf
+model_file = args.model_conf
+eval_file = args.eval_conf
+arch_file = args.arch_impl
 
 run_name = args.run_name
 
@@ -74,8 +70,8 @@ run_manager = WANDBRunManager(run_name=run_name, desc={'data_file': data_file,
                                                        'model_file': model_file,
                                                        'eval_file': eval_file},
                               arch_filepath=arch_file,
-                              num_workers=num_workers,
-                              experiments_root=experiments_root, data_root=data_root,
+                              experiments_root=experiments_root,
+                              data_root=data_root,
                               verbose=verbose, upload_checkpoints=upload_checkpoints)
 
 experiment_dir = run_manager.run_dir
@@ -102,6 +98,9 @@ for epoch in tqdm(range(epochs)):
 
     # Epoch train
     trainer.train_epoch()
+    if trainer.training_done:
+        print('Training has been terminated')
+        break
 
 # Save the model at the end of the run
 run_manager.make_backup(trainer)
