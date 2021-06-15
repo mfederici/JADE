@@ -214,7 +214,7 @@ class Encoder(nn.Module):
 Note that the parameters can be passed when calling the `instantiate_architecture` in the model definition.
 
 *IMPORTANT:* while models and datasets are automatically imported by the framework, the architecture file are passed when
-sunning the training scipt. This is because the same model (e.g. `Encoder`) can have completely different implementations
+running the training scipt. This allows the same architecture (e.g. `Encoder`) to have completely different implementations
 for different datasets.
 
 ### Dataset
@@ -228,11 +228,11 @@ MNIST_TRAIN_EXAMPLES = 50000 # Size of the training set (the rest is used for va
 
 class MNISTWrapper(Dataset):
     def __init__(self, root, split, download=False):
-        # We add an extra argument 'split' to the signature to allow for the creation of a validation set
+        # We add an extra argument 'split' to the signature to create a the validation set
         assert split in ['train', 'valid', 'train+valid', 'test']
         
         # Add the ToTensor() transform to convert PIL images into torch tensors
-        dataset = torchvision.datasets.MNIST(
+        dataset = MNIST(
             root=root,
             train=split in ['train', 'valid', 'train+valid'],
             transform=ToTensor(), download=download)
