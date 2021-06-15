@@ -39,7 +39,7 @@ class ReconstructionEvaluation(Evaluation):
         x_rec = self.trainer.reconstruct(x).to('cpu')
 
         # Concatenate originals and reconstructions
-        x_all = torch.cat([x, x_rec], 2)
+        x_all = torch.cat([x.to('cpu'), x_rec], 2)
 
         # Return a dictionary used for logging
         return {
