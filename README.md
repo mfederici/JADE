@@ -609,7 +609,7 @@ wait
 rm -r /tmp/experiments
 ```
 
-5) Submit the SLURM job `sbatch <your_SLURM_file.sh> --export=SWEEP_ID=$SWEEP_ID <YOUR_SWEEP_ID>`
+5) Submit the SLURM job `sbatch --export=SWEEP_ID=<YOUR_SWEEP_ID> <YOUR_SLURM_FILE.sh>`
 
 The console output and updated results for your agents can be found on the wandb website.
 

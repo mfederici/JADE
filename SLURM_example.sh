@@ -13,9 +13,14 @@
 #SBATCH --output=log.txt
 #SBATCH --verbose
 
-# Setting the env_variables
+# Cuda variables
+export CUDA_HOME=/usr/local/cuda-10.0
+export PATH=${CUDA_HOME}/bin:${PATH}
+export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:$LD_LIBRARY_PATH
 export CUDA_CACHE_PATH="$TMPDIR"/.cuda_cache/
 export CUDA_CACHE_DISABLE=0
+
+# Setting the env_variables
 export WANDB_USER=<YOUR_WANDB_USERNAME>
 export WANDB_PROJECT=<YOUR_WANDB_PROJECT>
 export EXPERIMENTS_ROOT=<YOUR_EXPERIMENT_ROOT>
@@ -35,6 +40,9 @@ echo Starting
 
 # Make sure you are in the project directory before trying to run the agent
 cd <PATH_TO_THE_PROJECT_ROOT>
+
+# Activate conda
+conda activate pytorch_and_friends
 
 # Run the agent
 echo Starting agent $WANDB_USER/$WANDB_PROJECT/$SWEEP_ID
