@@ -6,6 +6,8 @@ class AccuracyEvaluation(DatasetEvaluation):
     def initialize(self, predict_params=None, **params):
         super(AccuracyEvaluation, self).initialize(**params)
 
+        if predict_params is None:
+            predict_params = dict()
         self.predict_params = predict_params
 
         if not hasattr(self.trainer, 'predict'):
