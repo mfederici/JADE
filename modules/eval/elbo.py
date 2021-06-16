@@ -17,5 +17,5 @@ class ErrorComponentsEvaluation(DatasetEvaluation):
 
 class ELBOEvaluation(ErrorComponentsEvaluation):
     def evaluate_batch(self, data):
-        rec_loss, reg_loss = self.trainer.compute_loss_components(data)
-        return {'ELBO': -(rec_loss + reg_loss)}
+        loss_components = self.trainer.compute_loss_components(data)
+        return {'ELBO': -(loss_components['rec_loss'] + loss_components['reg_loss'])}
