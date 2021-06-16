@@ -125,7 +125,7 @@ class WANDBRunManager(RunManager):
             wandb.log({name: value}, step=iteration)
         elif type == 'scalars':
             for sub_name, v in value.items():
-                wandb.log({'%s/%s' % (name, sub_name): value}, step=iteration)
+                wandb.log({'%s/%s' % (name, sub_name): v}, step=iteration)
         elif type == 'figure':
             wandb.log({name: wandb.Image(value)}, step=iteration)
             plt.close(value)
