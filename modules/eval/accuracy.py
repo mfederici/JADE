@@ -16,7 +16,7 @@ class AccuracyEvaluation(DatasetEvaluation):
     def evaluate_batch(self, data):
         x = data['x']
         y = data['y'].squeeze().long()
-        y_given_x = trainer.predict(x, **self.predict_params)
+        y_given_x = self.trainer.predict(x, **self.predict_params)
 
         y_pred = torch.argmax(y_given_x.p, 1).squeeze().long()
 
