@@ -32,7 +32,7 @@ class DatasetEvaluation(Evaluation):
                 if isinstance(data, dict):
                     for key in data:
                         data[key] = data[key].to(device)
-                        if hasattr(data, 'shape'):
+                        if hasattr(data[key], 'shape'):
                             batch_len = data[key].shape[0]
                 elif isinstance(data, list) or isinstance(data, tuple):
                     data_ = []
