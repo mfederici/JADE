@@ -40,7 +40,7 @@ class VIBTrainer(Trainer):
         self.add_loss_item('Reg Loss', loss_components['reg_loss'].item())
 
         self.opt.zero_grad()
-        loss.backwards()
+        loss.backward()
         self.opt.step()
 
     def compute_loss_components(self, data):
