@@ -36,7 +36,7 @@ def read_and_resolve(yaml_file):
 
 
 class RunManager:
-    def __init__(self, run_id, run_name, arch_filepath, experiments_root, config, run_dir, resume, seed, verbose=False):
+    def __init__(self, run_id, run_name, arch_filepath, experiments_root, config, run_dir, resume, verbose=False):
 
         self.verbose = verbose
         self.run_name = run_name
@@ -46,7 +46,6 @@ class RunManager:
         self.resume = resume
         self.experiments_root = experiments_root
         self.arch_filepath = arch_filepath
-        self.seed = seed
 
         # TODO: accept as extra arguments
         model_paths = ['modules/models']
@@ -58,12 +57,13 @@ class RunManager:
         self.eval_modules = load_modules(eval_paths)
         # os.makedirs(self.run_dir, exist_ok=True)
 
-    def load_config(self, desc):
+    @ staticmethod
+    def load_config(desc):
         return {
             'model': read_and_resolve(desc['model_file']),
             'data': read_and_resolve(desc['data_file']),
             'eval': read_and_resolve(desc['eval_file']),
-            'seed': self.seed
+            'seed': desc['seed']
         }
 
     def resume_run(self, run_id):

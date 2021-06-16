@@ -65,8 +65,8 @@ verbose = True
 
 run_manager = WANDBRunManager(run_name=run_name, desc={'data_file': data_file,
                                                        'model_file': model_file,
-                                                       'eval_file': eval_file},
-                              seed=seed,
+                                                       'eval_file': eval_file,
+                                                       'seed': seed},
                               arch_filepath=arch_file,
                               experiments_root=experiments_root,
                               verbose=verbose, upload_checkpoints=upload_checkpoints)
