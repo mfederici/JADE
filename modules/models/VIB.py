@@ -19,7 +19,7 @@ class VIBTrainer(Trainer):
         # Definition of the optimizer
         self.optim = Adam([
             {'params': self.encoder.parameters(), 'lr': lr},
-            {'params': self.label_classifier_params.parameters(), 'lr': lr},
+            {'params': self.label_classifier.parameters(), 'lr': lr},
         ])
 
         # Specify the attributes to store and load
