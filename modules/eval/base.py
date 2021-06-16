@@ -32,7 +32,7 @@ class DatasetEvaluation(Evaluation):
                 for key in data:
                     data[key] = data[key].to(device)
 
-                new_values = self.trainer.evaluate_batch(data)
+                new_values = self.evaluate_batch(data)
                 for k, v in new_values.items():
                     if k in values:
                         values[k] += v
