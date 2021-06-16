@@ -53,7 +53,7 @@ class VIBTrainer(Trainer):
         p_y_z = self.label_classifier(z)
 
         rec_loss = -p_y_z.log_prob(y).mean()
-        reg_loss = (q_z_x.log_prob(z) - self.prior.log_prob(z)).mean()
+        reg_loss = (q_z_x.log_prob(z) - self.prior().log_prob(z)).mean()
 
         return {'rec_loss': rec_loss, 'reg_loss': reg_loss}
 
