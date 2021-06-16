@@ -20,6 +20,6 @@ class AccuracyEvaluation(DatasetEvaluation):
         y = data['y'].squeeze().long()
         y_given_x = self.trainer.predict(x, **self.predict_params)
 
-        y_pred = torch.argmax(y_given_x.p, 1).squeeze().long()
+        y_pred = torch.argmax(y_given_x.probs, 1).squeeze().long()
 
         return {'Accuracy': (y == y_pred).sum().item()}
