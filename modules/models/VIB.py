@@ -17,7 +17,7 @@ class VIBTrainer(Trainer):
         self.prior = self.instantiate_architecture('Prior', z_dim=z_dim)
 
         # Definition of the optimizer
-        self.optim = Adam([
+        self.opt = Adam([
             {'params': self.encoder.parameters(), 'lr': lr},
             {'params': self.label_classifier.parameters(), 'lr': lr},
         ])
@@ -25,7 +25,7 @@ class VIBTrainer(Trainer):
         # Specify the attributes to store and load
         self.add_attribute_to_store('encoder')
         self.add_attribute_to_store('label_classifier')
-        self.add_attribute_to_store('optim')
+        self.add_attribute_to_store('opt')
 
         # Instantiate the data Loader
         self.train_loader = DataLoader(dataset=self.datasets['train'],
