@@ -74,11 +74,11 @@ class Decoder(nn.Module):
 
 
 class LabelClassifier(nn.Module):
-    def __init__(self, layers):
+    def __init__(self, z_dim, layers):
         super(LabelClassifier, self).__init__()
 
         # Create a stack of layers with ReLU activations as specified
-        nn_layers = make_stack(layers)
+        nn_layers = make_stack([z_dim] + layers)
 
         self.net = nn.Sequential(
             *nn_layers,  # The previously created stack
