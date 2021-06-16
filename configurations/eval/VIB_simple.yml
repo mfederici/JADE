@@ -7,7 +7,7 @@ TrainAccuracy(Mean):
   class: AccuracyEvaluation
   params:
     evaluate_on: train
-    evaluation_params:
+    predict_params:
       sample: False
 
 TestAccuracy(Sampled):
@@ -19,7 +19,7 @@ TestAccuracy(Mean):
   class: AccuracyEvaluation
   params:
     evaluate_on: test
-    evaluation_params:
+    predict_params:
       sample: False
 
 TrainErrorComponents:
