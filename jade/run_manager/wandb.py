@@ -123,14 +123,14 @@ class WANDBRunManager(RunManager):
     def log(self, name, value, type, iteration):
         if type == 'scalar':
             wandb.log({name: value}, step=iteration)
-        if type == 'scalars':
+        elif type == 'scalars':
             for sub_name, v in value.items():
                 wandb.log({'%s/%s' % (name, sub_name): value}, step=iteration)
         elif type == 'figure':
             wandb.log({name: wandb.Image(value)}, step=iteration)
             plt.close(value)
         else:
-            raise Exception('Type %s is not recognized by WandBLogWriter' % entry_type)
+            raise Exception('Type %s is not recognized by WandBLogWriter' % type)
 
     def make_checkpoint(self, trainer):
         super(WANDBRunManager, self).make_checkpoint(trainer)
