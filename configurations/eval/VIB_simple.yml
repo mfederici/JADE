@@ -1,0 +1,33 @@
+TrainAccuracy(Sampled):
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: train
+
+TrainAccuracy(Mean):
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: train
+    evaluation_params:
+      sample: False
+
+TestAccuracy(Sampled):
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: test
+
+TestAccuracy(Mean):
+  class: AccuracyEvaluation
+  params:
+    evaluate_on: test
+    evaluation_params:
+      sample: False
+
+TrainErrorComponents:
+  class: ErrorComponentsEvaluation
+  params:
+    evaluate_on: train
+
+TestErrorComponents:
+  class: ErrorComponentsEvaluation
+  params:
+    evaluate_on: test

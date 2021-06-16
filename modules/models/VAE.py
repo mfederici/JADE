@@ -42,23 +42,23 @@ class VariationalAutoencoderTrainer(Trainer):
                                        batch_size=batch_size, shuffle=True, num_workers=num_workers)
 
     def train_step(self, data):
-        x = data['x']
-
-        rec_loss, reg_loss = self.compute_loss_components(x)
+        loss_components = self.compute_loss_components(data)
 
         # Add the two loss components to the log
         # Note that only scalars are currently supported although custom logging can be implemented
         # by extending the implemented methods
-        self.add_loss_item('Rec Loss', rec_loss.item())
-        self.add_loss_item('Reg Loss', reg_loss.item())
+        self.add_loss_item('Rec Loss', loss_components['rec_loss'].item())
+        self.add_loss_item('Reg Loss', loss_components['reg_loss'].item())
 
-        loss = rec_loss + self.beta * reg_loss
+        loss = loss_components['rec_loss'] + self.beta * loss_components['reg_loss']
 
         self.opt.zero_grad()
         loss.backward()
         self.opt.step()
 
-    def compute_loss_components(self, x):
+    def compute_loss_components(self, data):
+        x = data['x']
+
         # Encode a batch of data
         q_z_given_x = self.encoder(x)
 
@@ -76,13 +76,13 @@ class VariationalAutoencoderTrainer(Trainer):
         # KL(q(Z|X=x)||p(Z)) = E[log q(Z=z|X=x) - log p(Z=z)]
         reg_loss = (q_z_given_x.log_prob(z) - self.prior().log_prob(z)).mean()
 
-        return rec_loss, reg_loss
+        return {'rec_loss': rec_loss, 'reg_loss': reg_loss}
 
     def reconstruct(self, x, sample_latents=False):
         # If specified sample the latent distribution
         if sample_latents:
             z = self.encoder(x).sample()
-        # Otherwise use the mean of the posterios
+        # Otherwise use the mean of the posterior
         else:
             z = self.encoder(x).mean
 

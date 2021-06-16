@@ -15,11 +15,7 @@ params:
   # Label classifier
   classifier_layers:
     - 256
-    - 1024
-
-  # Prior
-  prior:
-    dist: Normal
+    - 128
 
   ###########################
   # Optimization parameters #

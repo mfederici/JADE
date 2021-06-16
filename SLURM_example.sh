@@ -1,15 +1,18 @@
 #!/bin/bash
-# Resource allocation (see SLURM docs)
+
+# SLURM flags (see https://slurm.schedmd.com/sbatch.html)
+
+# Resource allocation
 #SBATCH --gres=gpu:1
 #SBATCH --mem=10G
 #SBATCH --cpus-per-task=16
 #SBATCH --time 10:00:00
-
-# Other flags to set for SLURM (see docs)
 #SBATCH --ntasks=1
+
+# Other parameters
 #SBATCH --priority=TOP
-#SBATCH --job-name=JADE-example
-#SBATCH -D <path_to_your_home_directory>
+#SBATCH --job-name=<JOB_NAME>
+#SBATCH -D <YOUR_HOME_DIRECTORY>
 #SBATCH --output=log.txt
 #SBATCH --verbose
 
@@ -21,16 +24,19 @@ export CUDA_CACHE_PATH="$TMPDIR"/.cuda_cache/
 export CUDA_CACHE_DISABLE=0
 
 # Setting the env_variables
-export WANDB_USER=<YOUR_WANDB_USERNAME>
-export WANDB_PROJECT=<YOUR_WANDB_PROJECT>
-export EXPERIMENTS_ROOT=<YOUR_EXPERIMENT_ROOT>
-export N_WORKERS=16
+
+# Weights and biases username and password
+export WANDB_USER=<WANDB_USERNAME>
+export WANDB_PROJECT=<WANDB_PROJECT>
+
+# Parameters for number of cores for data-loading and device on which the model is placed
+export NUM_WORKERS=16
 export DEVICE=cuda
 
 # Pointing to the directory in which the dataset is stored
-export DATA_ROOT=<YOUR_DATA_ROOT> # /hddstore/datasets
+export DATA_ROOT=<DATASET_ROOT> #(e.g. /hddstore/datasets)
 
-# here I use temp to save the backups since they are uploaded and deleted afterwards anyway
+# We use temp to save the backups since they are uploaded and deleted afterwards
 mkdir /tmp/experiments
 export EXPERIMENTS_ROOT=/tmp/experiments
 
@@ -38,11 +44,15 @@ export EXPERIMENTS_ROOT=/tmp/experiments
 nvidia-smi
 echo Starting
 
-# Make sure you are in the project directory before trying to run the agent
-cd <PATH_TO_THE_PROJECT_ROOT>
+# Make sure you are in the project directory before trying to run the agent (the one containing the train.py file)
+cd <PROJECT_DIRECTORY>
 
-# Activate conda
-conda activate pytorch_and_friends
+# Use python from the pytorch_and_friends environment
+export PATH=$HOME/anaconda3/envs/pytorch_and_friends/bin/:$PATH
+
+# Check that python and wandb are accessible
+which python
+which wandb
 
 # Run the agent
 echo Starting agent $WANDB_USER/$WANDB_PROJECT/$SWEEP_ID

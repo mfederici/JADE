@@ -59,11 +59,6 @@ if 'EXPERIMENTS_ROOT' in os.environ:
 
 seed = args.seed
 
-# Set random seed
-torch.backends.cudnn.deterministic = True
-torch.backends.cudnn.benchmark = False
-torch.manual_seed(seed)
-np.random.seed(seed)
 
 upload_checkpoints = True
 verbose = True
@@ -71,11 +66,19 @@ verbose = True
 run_manager = WANDBRunManager(run_name=run_name, desc={'data_file': data_file,
                                                        'model_file': model_file,
                                                        'eval_file': eval_file},
+                              seed=seed,
                               arch_filepath=arch_file,
                               experiments_root=experiments_root,
                               verbose=verbose, upload_checkpoints=upload_checkpoints)
 
 experiment_dir = run_manager.run_dir
+
+seed = run_manager.config['seed']
+# Set random seed
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
+torch.manual_seed(seed)
+np.random.seed(seed)
 
 trainer, evaluators = run_manager.make_instances()
 # Moving the models to the specified device

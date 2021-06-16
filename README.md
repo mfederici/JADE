@@ -495,41 +495,42 @@ When writing a wandb sweep file, the parameters in the model, data and evaluatio
 ```yaml
 # File in sweeps/simple_vae_sweep.yml
 
-#Example of a sweep for the beta parameter of the Variational Autoencoder model 
+# Example of a sweep for the beta parameter and latent size of the Variational Autoencoder model
 command:
 - ${env}
 - ${interpreter}
 - ${program}
 # Flags for the train.py script as explained above
-- --data_conf=configurations/data/MNIST_valid.yml     # Note that we are using the data configuration for validation
-- --eval_conf=definitions/eval/VAE_simple_valid.yml
+- --data_conf=configurations/data/MNIST_valid.yml
+- --eval_conf=configurations/eval/VAE_simple.yml
 - --model_conf=configurations/models/VAE.yml
 - --arch_impl=modules/architectures/simple_MNIST.py
-- --epochs=10                                         # Train for 10 epochs
-- --seed=42                                           # Manual seed
+- --epochs=10
+- --seed=42
 method: random
-# The wandb framework allows to optimize for a specified metric.
-# The scalar metrics defined in the evaluation configuration file can be referenced here
-metric:
-  goal: minimize
-  name: TestReconstructionError # Metric defined in the evaluation configuration file
 parameters:
-# Model parameters can be accessed by using the operator '.' to access the members of dictionaries
+# Model parameters can be accessed b${env}y using the operator '.' to access the members of dictionaries
 # to access the parameters 'beta' in 'params' of a model (see the model configuration file) we use the syntax
 # model.params.beta as shown below
   model.params.beta:
-    min: 0
-    max: 10
-# We can also specify specific values (see wandb documenation)
-  model.params.z_dim:
+    # We sample the parameter beta between e^-10 and e^1 using a log-uniform distribution
+    distribution: log_uniform
+    min: -10
+    max: 1
+# We can also specify a value (or list of values) directly. This is going to override the default specified 
+# in the model configuration file
+  model.z_dim:
     values:
-      - 16
       - 32
-      - 64
-      - 128
-      - 256
 program: train.py
 ```
+The parameters defined in the model configuration file can be accessed using `model.params.<PARAMETER_NAME>`.
+Analogously, the parameters regarding data and evaluation configuration can be accessed using `params.<PARAMETER_NAME>` 
+and `eval.<EVAL_NAME>.params.<PARAMETER_NAME>`respectively.
+
+Another example of a sweep configuration file for the bayesian hyper-parameter search on a
+Variational Information Bottleneck can be found in `sweeps/simple_vib_sweep.yml`.
+
 
 Once the sweep `.yml` file has been defined, run the corresponding wandb command to create a sweep
 ```
@@ -557,49 +558,67 @@ Here we report the procedure to deploy and run the agents on a cluster using SLU
 0) install conda on your cluster node. This will make it easier to deal with dependencies
 1) make sure to download the code at the most recent version. If you are using git, you can simply run a `git clone` or 
    `git pull` to retrieve the most updated version of the code
-2) install and activate the appropriate conda environment (`conda env create -f environment.yml` + 
-   `conda activate pytorch-and-friends`)
-3) make sure wandb is initialized with `wandb init`
-4) create a .sh file for SLURM. here we report an example
+2) install the conda environment `conda env create -f environment.yml`
+3) make sure wandb is accessible and initialized with `wandb init`
+4) create a .sbatch file for SLURM (see the documentation [here](https://slurm.schedmd.com/sbatch.html) ). here we report an example
 ```shell
 #!/bin/bash
-# Resource allocation (see SLURM docs)
-#SBATCH --gres=gpu:1  
+
+# SLURM flags (see https://slurm.schedmd.com/sbatch.html)
+
+# Resource allocation
+#SBATCH --gres=gpu:1
 #SBATCH --mem=10G
 #SBATCH --cpus-per-task=16
 #SBATCH --time 10:00:00
-
-# Other flags to set for SLURM (see docs)
 #SBATCH --ntasks=1
+
+# Other parameters
 #SBATCH --priority=TOP
-#SBATCH --job-name=Example
-#SBATCH -D <path_to_your_home_directory>
+#SBATCH --job-name=<JOB_NAME>
+#SBATCH -D <YOUR_HOME_DIRECTORY>
 #SBATCH --output=log.txt
 #SBATCH --verbose
 
-# Setting the env_variables
+# Cuda variables
+export CUDA_HOME=/usr/local/cuda-10.0
+export PATH=${CUDA_HOME}/bin:${PATH}
+export LD_LIBRARY_PATH=${CUDA_HOME}/lib64:$LD_LIBRARY_PATH
 export CUDA_CACHE_PATH="$TMPDIR"/.cuda_cache/
 export CUDA_CACHE_DISABLE=0
-export WANDB_USER=<YOUR_WANDB_USERNAME>
-export WANDB_PROJECT=<YOUR_WANDB_PROJECT>
-export EXPERIMENTS_ROOT=<YOUR_EXPERIMENT_ROOT>
-export N_WORKERS=16
+
+# Setting the environment variables
+
+# Weights and biases username and password
+export WANDB_USER=<WANDB_USERNAME>
+export WANDB_PROJECT=<WANDB_PROJECT>
+
+# Parameters for number of cores for data-loading and device on which the model is placed
+export NUM_WORKERS=16
 export DEVICE=cuda
 
-export DATA_ROOT=<YOUR_DATA_ROOT> # /hddstore/datasets 
+# Pointing to the directory in which the dataset is stored
+export DATA_ROOT=<DATASET_ROOT> #(e.g. /hddstore/datasets)
 
-
-# here I use temp to save the backups since they are uploaded and deleted afterwards anyway
+# We use temp to save the backups since they are uploaded and deleted afterwards
 mkdir /tmp/experiments
-export EXPERIMENTS_ROOT=/tmp/experiments 
+export EXPERIMENTS_ROOT=/tmp/experiments
 
 #Generate cuda stats to check cuda is found
 nvidia-smi
 echo Starting
 
-# Make sure you are in the project directory before trying to run the agent
-cd <PATH_TO_THE_PROJECT_ROOT>
+# Make sure you are in the project directory before trying to run the agent (the one containing the train.py file)
+cd <PROJECT_DIRECTORY>
 
+# Use python from the pytorch_and_friends environment
+export PATH=$HOME/anaconda3/envs/pytorch_and_friends/bin/:$PATH
+
+# Check that python and wandb are accessible
+which python
+which wandb
+
+# Run the agent
 echo Starting agent $WANDB_USER/$WANDB_PROJECT/$SWEEP_ID
 wandb agent $SWEEP_ID
 wait
@@ -607,6 +626,7 @@ wait
 # Remove all the files for the model backups since wandb is uploading them anyway
 # You can change the experiments directory if you want to keep local versions
 rm -r /tmp/experiments
+
 ```
 
 5) Submit the SLURM job `sbatch --export=SWEEP_ID=<YOUR_SWEEP_ID> <YOUR_SLURM_FILE.sh>`

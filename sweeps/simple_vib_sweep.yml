@@ -3,24 +3,25 @@ command:
 - ${env}
 - ${interpreter}
 - ${program}
-# Flags for the train.py script as explained above
+# Note that we are using the same data and architecture files as in the VAE case
 - --data_conf=configurations/data/MNIST_valid.yml
-- --eval_conf=configurations/eval/VAE_simple.yml
-- --model_conf=configurations/models/VAE.yml
+- --eval_conf=configurations/eval/VIB_simple.yml
+- --model_conf=configurations/models/VIB.yml
 - --arch_impl=modules/architectures/simple_MNIST.py
 - --epochs=10
-- --seed=42
-method: random
+method: bayes
+# The wandb framework allows to optimize for a specified metric using bayesian optimization.
+metric:
+  goal: maximize
+  name: TestAccuracy # Metric defined in the evaluation configuration file (this is the validation accuracy)
 parameters:
 # Model parameters can be accessed by using the operator '.' to access the members of dictionaries
 # to access the parameters 'beta' in 'params' of a model (see the model configuration file) we use the syntax
 # model.params.beta as shown below
   model.params.beta:
-    # We sample the parameter beta between 0 and 2 using a log-uniform distribution (from e^-10 to e^1)
     distribution: log_uniform
     min: -10
-    max: 1
-# We can also specify specific values (see wandb documenation)
+    max: 2
   model.params.z_dim:
     values:
       - 16
@@ -28,4 +29,10 @@ parameters:
       - 64
       - 128
       - 256
+  # Note that the seed (or seeds) can be specified also directly here instead of using a flag as shown in the VAE case
+  seed:
+    values:
+      - 42
 program: train.py
+
+
