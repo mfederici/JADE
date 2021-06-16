@@ -1,21 +1,21 @@
-TrainAccuracy(Sampled):
+TrainAccuracy/sampled:
   class: AccuracyEvaluation
   params:
     evaluate_on: train
 
-TrainAccuracy(Mean):
+TrainAccuracy/mean:
   class: AccuracyEvaluation
   params:
     evaluate_on: train
     predict_params:
       sample: False
 
-TestAccuracy(Sampled):
+TestAccuracy/sampled:
   class: AccuracyEvaluation
   params:
     evaluate_on: test
 
-TestAccuracy(Mean):
+TestAccuracy/mean:
   class: AccuracyEvaluation
   params:
     evaluate_on: test

@@ -22,4 +22,4 @@ class AccuracyEvaluation(DatasetEvaluation):
 
         y_pred = torch.argmax(y_given_x.probs, 1).squeeze().long()
 
-        return {'Accuracy': (y == y_pred).sum().item()}
+        return {'Accuracy': (y == y_pred).mean().item()}
