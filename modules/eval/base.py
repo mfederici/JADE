@@ -48,9 +48,9 @@ class DatasetEvaluation(Evaluation):
                 new_values = self.evaluate_batch(data)
                 for k, v in new_values.items():
                     if k in values:
-                        values[k] += v
+                        values[k] += v * batch_len
                     else:
-                        values[k] = v
+                        values[k] = v * batch_len
 
                 evaluations += batch_len
                 if evaluations >= self.n_samples:
