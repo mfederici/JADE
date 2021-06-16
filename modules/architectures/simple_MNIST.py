@@ -83,7 +83,7 @@ class LabelClassifier(nn.Module):
         self.net = nn.Sequential(
             *nn_layers,  # The previously created stack
             nn.ReLU(True),  # A ReLU activation
-            StochasticLinear(layers[-1], N_LABELS, 'Categotical')  # A layer that returns a Categorical distribution
+            StochasticLinear(layers[-1], N_LABELS, 'Categorical')  # A layer that returns a Categorical distribution
         )
 
     def forward(self, x):
