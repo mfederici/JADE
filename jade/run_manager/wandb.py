@@ -6,7 +6,6 @@ import torch
 
 SPLIT_TOKEN = '.'
 
-
 # utilities to flatten and re-inflate the configuration for wandb
 def _flatten_config(config, prefix, flat_config):
     for key, value in config.items():
@@ -62,7 +61,7 @@ class WANDBRunManager(RunManager):
         else:
             config = self.load_config(desc)
 
-        flat_config = flatten_config(config)  # wandb can't process nested dictionaries
+        flat_config = flatten_config(config) # wandb can't process nested dictionaries
         resume = resume and run_exists
 
         if init:
@@ -88,7 +87,7 @@ class WANDBRunManager(RunManager):
             success = True
         except:
             success = False
-        return successname
+        return success
 
     def resume_run(self, run_id):
         run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, run_id))
@@ -107,7 +106,7 @@ class WANDBRunManager(RunManager):
         if self.verbose:
             print("Resuming Training")
 
-        trainer.load('/tmp/%s' % model)
+        trainer.load('/tmp/%s'%model)
         if self.verbose:
             print("Resuming Training from iteration %d" % trainer.iterations)
 
