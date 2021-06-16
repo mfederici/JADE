@@ -29,8 +29,21 @@ class DatasetEvaluation(Evaluation):
         self.trainer.eval()
         with torch.no_grad():
             for data in data_loader:
-                for key in data:
-                    data[key] = data[key].to(device)
+                if isinstance(data, dict):
+                    for key in data:
+                        data[key] = data[key].to(device)
+                        if hasattr(data, 'shape'):
+                            batch_len = data[key].shape[0]
+                elif isinstance(data, list) or isinstance(data, tuple):
+                    data_ = []
+                    for d in data:
+                        data_.append(d.to(device))
+                        if hasattr(d, 'shape'):
+                            batch_len = d.shape[0]
+                    if isinstance(data, tuple):
+                        data = tuple(data_)
+                    else:
+                        data = data_
 
                 new_values = self.evaluate_batch(data)
                 for k, v in new_values.items():
@@ -39,7 +52,7 @@ class DatasetEvaluation(Evaluation):
                     else:
                         values[k] = v
 
-                evaluations += x.shape[0]
+                evaluations += batch_len
                 if evaluations >= self.n_samples:
                     break
 
