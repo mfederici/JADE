@@ -4,7 +4,7 @@ import torch
 
 class AccuracyEvaluation(DatasetEvaluation):
     def initialize(self, predict_params=None, **params):
-        super(AccuracyEvaluation, self).__init__(**params)
+        super(AccuracyEvaluation, self).initialize(**params)
 
         self.predict_params = predict_params
 
