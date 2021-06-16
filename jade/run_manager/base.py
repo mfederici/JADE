@@ -58,8 +58,7 @@ class RunManager:
         self.eval_modules = load_modules(eval_paths)
         # os.makedirs(self.run_dir, exist_ok=True)
 
-    @ staticmethod
-    def load_config(desc):
+    def load_config(self, desc):
         return {
             'model': read_and_resolve(desc['model_file']),
             'data': read_and_resolve(desc['data_file']),
