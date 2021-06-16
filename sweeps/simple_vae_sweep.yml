@@ -1,4 +1,4 @@
-# Example of a sweep for the beta parameter of the Variational Autoencoder model
+# Example of a sweep for the beta parameter and latent size of the Variational Autoencoder model
 command:
 - ${env}
 - ${interpreter}
@@ -12,20 +12,17 @@ command:
 - --seed=42
 method: random
 parameters:
-# Model parameters can be accessed by using the operator '.' to access the members of dictionaries
+# Model parameters can be accessed b${env}y using the operator '.' to access the members of dictionaries
 # to access the parameters 'beta' in 'params' of a model (see the model configuration file) we use the syntax
 # model.params.beta as shown below
   model.params.beta:
-    # We sample the parameter beta between 0 and 2 using a log-uniform distribution (from e^-10 to e^1)
+    # We sample the parameter beta between e^-10 and e^1 using a log-uniform distribution
     distribution: log_uniform
     min: -10
     max: 1
-# We can also specify specific values (see wandb documenation)
-  model.params.z_dim:
+# We can also specify a value (or list of values) directly. This is going to override the default specified
+# in the model configuration file
+  model.z_dim:
     values:
-      - 16
       - 32
-      - 64
-      - 128
-      - 256
 program: train.py

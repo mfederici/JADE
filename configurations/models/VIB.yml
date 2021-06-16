@@ -8,14 +8,10 @@ params:
   #################
 
   # Encoder
-  encoder_layers:
-    -1024
-    -256
+  encoder_layers: [1024, 256]
 
   # Label classifier
-  classifier_layers:
-    - 256
-    - 128
+  classifier_layers: [256, 128]
 
   ###########################
   # Optimization parameters #
