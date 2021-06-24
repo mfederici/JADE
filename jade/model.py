@@ -85,8 +85,8 @@ class Model(nn.Module):
         # Save the model and increment the checkpoint count
         return state_dict
 
-    def load(self, path):
-        items_to_load = torch.load(path, map_location=torch.device('cpu'))['model']
+    def load(self, path, device='cpu'):
+        items_to_load = torch.load(path, map_location=device)['model']
         self.load_state_dict(items_to_load)
 
     def load_state_dict(self, state_dict, strict=True):

@@ -143,40 +143,35 @@ class WANDBRunManager(RunManager):
 
         return os.path.join(file_path, checkpoint_file)
 
-    def load_checkpoint(self, trainer, checkpoint_file):
+    def load_checkpoint(self, trainer, checkpoint_file, device='cpu'):
         file_path = self.download_checkpoint(checkpoint_file)
 
         if self.verbose:
             print("Resuming Training")
 
-        trainer.load(file_path)
+        trainer.load(file_path, device=device)
         if self.verbose:
             print("Resuming Training from iteration %d" % trainer.model.iterations)
 
         return trainer
 
-    def load_model(self, model, checkpoint_file):
+    def load_model(self, model, checkpoint_file, device='cpu'):
         file_path = self.download_checkpoint(checkpoint_file)
 
         if self.verbose:
             print("Resuming Training")
 
-        model.load(file_path)
+        model.load(file_path, device=device)
         if self.verbose:
             print("Resuming Training from iteration %d" % model.iterations)
 
         return model
 
-    def load_last_trainer(self, trainer):
-        return self.load_checkpoint(trainer, BACKUP_NAME)
+    def load_last_trainer(self, trainer, device='cpu'):
+        return self.load_checkpoint(trainer, BACKUP_NAME, device=device)
 
-    def load_last_model(self, model):
-        return self.load_model(model, BACKUP_NAME)
-
-    def make_instances(self):
-        trainer, evaluators = super(WANDBRunManager, self).make_instances()
-        # wandb.watch(trainer)
-        return trainer, evaluators
+    def load_last_model(self, model, device='cpu'):
+        return self.load_model(model, BACKUP_NAME, device=device)
 
     def log(self, name, value, type, iteration):
         if type == 'scalar':

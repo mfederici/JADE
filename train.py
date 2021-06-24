@@ -112,7 +112,7 @@ run_manager = WANDBRunManager(run_name=run_name, config=config,
 
 experiment_dir = run_manager.run_dir
 
-trainer, evaluators = run_manager.make_instances()
+trainer, evaluators = run_manager.make_instances(device=device)
 
 # Moving the models to the specified device
 trainer.to(device)

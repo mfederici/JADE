@@ -52,6 +52,7 @@ class RunManager:
 
         # Resolve config
         config = resolve_variables(config, run_dir)
+        print(config)
 
         self.verbose = verbose
         self.run_name = run_name
@@ -100,10 +101,10 @@ class RunManager:
     def run_exists(self, run_id):
         raise NotImplementedError()
     
-    def load_last_trainer(self, trainer):
+    def load_last_trainer(self, trainer, device='cpu'):
         raise NotImplementedError()
 
-    def load_last_model(self, model):
+    def load_last_model(self, model, device='cpu'):
         raise NotImplementedError()
 
     def instantiate_datasets(self):
@@ -112,7 +113,7 @@ class RunManager:
                                           verbose=self.verbose)
         return dataset_manager
 
-    def instantiate_model(self, resume=False):
+    def instantiate_model(self, resume=False, device='cpu'):
         model_params = self.config['model']['params']
         model_params['writer'] = self
         model_params['arch_modules'] = self.arch_modules
@@ -123,11 +124,12 @@ class RunManager:
 
         # Resume the training if specified
         if resume:
-            model = self.load_last_model(model)
-
+            model = self.load_last_model(model, device=device)
+        else:
+            model = model.to(device)
         return model
 
-    def instantiate_trainer(self, model, datasets, resume=False):
+    def instantiate_trainer(self, model, datasets, resume=False, device='cpu'):
         trainer_params = self.config['trainer']['params']
         trainer_params['writer'] = self
         trainer_params['model'] = model
@@ -139,7 +141,9 @@ class RunManager:
 
         # Resume the training if specified
         if resume:
-            trainer = self.load_last_trainer(trainer)
+            trainer = self.load_last_trainer(trainer, device=device)
+        else:
+            trainer = trainer.to(device)
 
         return trainer
 
@@ -158,10 +162,10 @@ class RunManager:
             )
         return evaluators
 
-    def make_instances(self):
+    def make_instances(self, device='cpu'):
         dataset_manager = self.instantiate_datasets()
-        model = self.instantiate_model()
-        trainer = self.instantiate_trainer(model=model, datasets=dataset_manager, resume=self.resume)
+        model = self.instantiate_model(device=device)
+        trainer = self.instantiate_trainer(model=model, datasets=dataset_manager, resume=self.resume, device=device)
         evaluators = self.instantiate_evaluators(model=model, dataset_manager=dataset_manager)
 
         return trainer, evaluators

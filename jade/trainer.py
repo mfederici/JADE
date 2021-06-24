@@ -92,8 +92,8 @@ class Trainer:
                     'optimizers': {name: opt.state_dict() for name, opt in self.optimizers.items()},
                     'attributes': save_dict}, path)
 
-    def load(self, path):
-        items_to_load = torch.load(path, map_location=self.model.get_device())
+    def load(self, path, device='cpu'):
+        items_to_load = torch.load(path, map_location=device)
 
         self.model.load_state_dict(items_to_load['model'])
 
