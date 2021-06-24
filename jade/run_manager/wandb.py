@@ -87,7 +87,7 @@ class WANDBRunManager(RunManager):
             run_dir = wandb.run.dir
 
             if resume:
-                self.download_code(run_dir)
+                self.download_code(run_dir, run_id)
                 code_dir = os.path.join(run_dir, CODE_DIR)
 
             if not os.path.isdir(code_dir):
