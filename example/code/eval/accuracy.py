@@ -1,4 +1,4 @@
-from modules.eval.base import DatasetEvaluation
+from example.code.eval.base import DatasetEvaluation
 import torch
 
 
@@ -10,7 +10,7 @@ class AccuracyEvaluation(DatasetEvaluation):
             predict_params = dict()
         self.predict_params = predict_params
 
-        if not hasattr(self.trainer, 'predict'):
+        if not hasattr(self.model, 'predict'):
             raise Exception(
                 'The trainer must implement a predict(x, **predict_params) method to use the Accuracy evaluation metric.'\
                 'The predict function must return a discrete distribution object.')
@@ -18,7 +18,7 @@ class AccuracyEvaluation(DatasetEvaluation):
     def evaluate_batch(self, data):
         x = data['x']
         y = data['y'].squeeze().long()
-        y_given_x = self.trainer.predict(x, **self.predict_params)
+        y_given_x = self.model.predict(x, **self.predict_params)
 
         y_pred = torch.argmax(y_given_x.probs, 1).squeeze().long()
 

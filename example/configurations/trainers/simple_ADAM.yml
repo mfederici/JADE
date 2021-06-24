@@ -1,0 +1,26 @@
+trainer:
+  class: BatchTrainer
+  params:
+    ###########################
+    # Data Loading parameters #
+    ###########################
+    # Name of the dataset on which to train on (as defined in the data YAML file)
+    train_on: train
+
+    # Size of the training batch
+    batch_size: 256
+
+    # Read the number of workers from the environment variable
+    num_workers: ${NUM_WORKERS}
+
+    #########################
+    # Optimizers parameters #
+    #########################
+    optimizers:
+      # Name of the optimizer
+      default:
+        # Class of the optimizer (from torch.optim)
+        class: Adam
+        params:
+          # Learning Rate
+          lr: 0.0001

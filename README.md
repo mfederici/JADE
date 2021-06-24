@@ -222,7 +222,7 @@ The default torchvision datasets are supported by the framework.
 We recommend to create a simple Wrapper to make sure the Dataset object accepts only simple arguments such as float,
 strings, list and dictionaries as parameters so that the dataset can be described with a simple yaml configuration file.
 ```python
-# Content of examples/modules/data/MNIST.py
+# Content of examples/example/data/MNIST.py
 
 MNIST_TRAIN_EXAMPLES = 50000 # Size of the training set (the rest is used for validation)
 
@@ -261,7 +261,7 @@ Each evaluator has access to all the dataset definitions and the trainer object 
 The `initialize(**params)` method is used for the initialization of the evaluator and receives the parameters form the
 evaluation configuration file.
 ```python
-# Code from modules/eval/elbo.py
+# Code from example/eval/elbo.py
 
 class ELBOEvaluation(Evaluation):
     def initialize(self, 
@@ -311,7 +311,7 @@ class ELBOEvaluation(Evaluation):
             'iteration': self.trainer.iterations  # Iteration count at the point of logging
         }
     
-# The definition of the ImageReconstructionEvaluation class in analogous and reported in the modules/eval/rec_error.py file 
+# The definition of the ImageReconstructionEvaluation class in analogous and reported in the example/eval/rec_error.py file 
 # ...
 ```
 The frequency at which each evaluation is produced can be also specified from the evaluation configuration file.
@@ -404,7 +404,7 @@ TestReconstructionsError:
     evaluate_on: test
 
 # We also log the image reconstruction on train and test dataset using the ReconstructionEvaluation 
-# defined in modules/eval/image_eval.py
+# defined in example/eval/image_eval.py
 TrainImageReconstructions:
   class: ReconstructionEvaluation
   params:
@@ -504,7 +504,7 @@ command:
 - --data_conf=configurations/data/MNIST_valid.yml
 - --eval_conf=configurations/eval/VAE_simple.yml
 - --model_conf=configurations/models/VAE.yml
-- --arch_impl=modules/architectures/simple_MNIST.py
+- --arch_impl=example/architectures/simple_MNIST.py
 - --epochs=10
 - --seed=42
 method: random

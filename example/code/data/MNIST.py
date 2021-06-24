@@ -1,6 +1,6 @@
 from torchvision.datasets import MNIST
 from torchvision.transforms import ToTensor
-from torch.utils.data import ConcatDataset, Dataset, Subset
+from torch.utils.data import Dataset, Subset
 
 MNIST_TRAIN_EXAMPLES = 50000
 

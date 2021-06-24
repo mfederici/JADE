@@ -1,0 +1,61 @@
+model:
+  class: VariationalAutoencoder
+  params:
+    encoder_layers: [ 1024, 256 ]
+    decoder_layers: [ 256, 1024 ]
+    beta: 0.5
+    z_dim: 64
+
+trainer:
+  class: BatchTrainer
+  params:
+    train_on: train
+    batch_size: 256
+    num_workers: ${NUM_WORKERS}
+    optimizers:
+      default:
+        class: Adam
+        params:
+          lr: 0.0001
+
+data:
+  train:
+    class: MNISTWrapper
+    params:
+      root: $DATA_ROOT
+      split: train
+      download: True
+
+  test:
+    class: MNISTWrapper
+    params:
+      root: $DATA_ROOT
+      split: valid
+      download: True
+
+eval:
+  ImageReconstructions/Train:
+    class: ReconstructionEvaluation
+    params:
+      evaluate_on: train
+      n_pictures: 10
+      sample_images: False
+      evaluate_every: 2
+
+  ImageReconstructions/Test:
+    class: ReconstructionEvaluation
+    params:
+      evaluate_on: test
+      n_pictures: 10
+      sample_images: False
+      evaluate_every: 2
+
+  ELBO/Train:
+    class: ELBOEvaluation
+    params:
+      evaluate_on: train
+
+  ELBO/Test:
+    class: ELBOEvaluation
+    params:
+      evaluate_on: test

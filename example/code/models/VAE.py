@@ -1,15 +1,15 @@
-from jade.trainer import Trainer
+from jade.model import Model
 from torch.optim import Adam
 from torch.utils.data import DataLoader
 
 
-###################################
-# Variational Autoencoder Trainer #
-###################################
+###########################
+# Variational Autoencoder #
+###########################
 
 
-class VariationalAutoencoderTrainer(Trainer):
-    def initialize(self, z_dim, encoder_layers, decoder_layers, beta, lr, batch_size, num_workers=0, sigma=1):
+class VariationalAutoencoder(Model):
+    def initialize(self, z_dim, encoder_layers, decoder_layers, beta, sigma=1):
         # The value of the z_dim, n_encoder_layers, n_decoder_layers, beta lr, batch_size and n_workers are defined
         # in the configuration file or specified as additional arguments when running the train python file
 
@@ -17,44 +17,44 @@ class VariationalAutoencoderTrainer(Trainer):
         self.beta = beta
 
         # initialize the encoder "Encoder(z_dim, layers)" defined in the architecture python file
-        self.encoder = self.instantiate_architecture('Encoder',
-                                                     z_dim=z_dim, layers=encoder_layers)
+        self.encoder = self.instantiate_architecture(
+            class_name='Encoder',                       # Name of the class to instantiate (from the architectures file)
+            z_dim=z_dim, layers=encoder_layers          # Extra parameters passed to the constructor
+        )
+
         # initialize the encoder "Decoder(z_dim, layers, sigma)" defined in the architecture python file
-        self.decoder = self.instantiate_architecture('Decoder',
-                                                     z_dim=z_dim, layers=decoder_layers, sigma=sigma)
+        self.decoder = self.instantiate_architecture(
+            class_name='Decoder',
+            z_dim=z_dim, layers=decoder_layers, sigma=sigma
+        )
+
         # Initialize the Gaussian prior passing the number of dimensions
-        self.prior = self.instantiate_architecture('Prior',
-                                                   z_dim=z_dim)
+        self.prior = self.instantiate_architecture(
+            class_name='Prior',
+            z_dim=z_dim
+        )
 
-        # Initialize the optimizer passing the parameters of encoder, decoder and the specified learning rate
-        self.opt = Adam([
-            {'params': self.encoder.parameters(), 'lr': lr},
-            {'params': self.decoder.parameters(), 'lr': lr},
-        ])
+        # Optimize encoder and decoder using the optimizer named 'opt', which must be defined
+        # in the training configuration file
+        self.optimize(attribute_name='encoder', optimizer_name='default')
+        self.optimize(attribute_name='decoder', optimizer_name='default')
 
-        # Store the parameters of encoder, decoder and optimizer
-        self.add_attribute_to_store('encoder')
-        self.add_attribute_to_store('decoder')
-        self.add_attribute_to_store('opt')
+        # Attributes that need to be saved (and reloaded), but not optimized
+        # can be added using self.add_attribute_to_store(attribute_name)
 
-        # Instantiate the data Loader
-        self.train_loader = DataLoader(dataset=self.datasets['train'],
-                                       batch_size=batch_size, shuffle=True, num_workers=num_workers)
-
-    def train_step(self, data):
+    def compute_loss(self, data):
         loss_components = self.compute_loss_components(data)
+
+        loss = loss_components['rec_loss'] + self.beta * loss_components['reg_loss']
 
         # Add the two loss components to the log
         # Note that only scalars are currently supported although custom logging can be implemented
         # by extending the implemented methods
-        self.add_loss_item('Rec Loss', loss_components['rec_loss'].item())
-        self.add_loss_item('Reg Loss', loss_components['reg_loss'].item())
+        self.add_loss_item('TrainLog/ReconstructionLoss', loss_components['rec_loss'].item())
+        self.add_loss_item('TrainLog/RegularizationLoss', loss_components['reg_loss'].item())
+        self.add_loss_item('TrainLog/Loss', loss.item())
 
-        loss = loss_components['rec_loss'] + self.beta * loss_components['reg_loss']
-
-        self.opt.zero_grad()
-        loss.backward()
-        self.opt.step()
+        return loss
 
     def compute_loss_components(self, data):
         x = data['x']

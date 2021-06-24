@@ -7,7 +7,7 @@ command:
 - --data_conf=configurations/data/MNIST_valid.yml
 - --eval_conf=configurations/eval/VIB_simple.yml
 - --model_conf=configurations/models/VIB.yml
-- --arch_impl=modules/architectures/simple_MNIST.py
+- --arch_impl=architectures/simple_MNIST.py
 - --epochs=10
 method: bayes
 # The wandb framework allows to optimize for a specified metric using bayesian optimization.

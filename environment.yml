@@ -1,4 +1,4 @@
-name: pytorch_and_friends
+name: jade
 channels:
   - pytorch
   - defaults

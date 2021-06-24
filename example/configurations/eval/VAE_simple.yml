@@ -1,0 +1,26 @@
+eval:
+  ImageReconstructions/Train:
+    class: ReconstructionEvaluation
+    params:
+      evaluate_on: train
+      n_pictures: 10
+      sample_images: False
+      evaluate_every: 2
+
+  ImageReconstructions/Test:
+    class: ReconstructionEvaluation
+    params:
+      evaluate_on: test
+      n_pictures: 10
+      sample_images: False
+      evaluate_every: 2
+
+  ELBO/Train:
+    class: ELBOEvaluation
+    params:
+      evaluate_on: train
+
+  ELBO/Test:
+    class: ELBOEvaluation
+    params:
+      evaluate_on: test

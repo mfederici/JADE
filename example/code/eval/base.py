@@ -24,9 +24,9 @@ class DatasetEvaluation(Evaluation):
 
         values = {}
         evaluations = 0.
-        device = self.trainer.get_device()
+        device = self.model.get_device()
 
-        self.trainer.eval()
+        self.model.eval()
         with torch.no_grad():
             for data in data_loader:
                 if isinstance(data, dict):
@@ -63,11 +63,11 @@ class DatasetEvaluation(Evaluation):
             return {
                 'type': 'scalar',  # Type of the logged object, to be interpreted by the logger
                 'value': value,
-                'iteration': self.trainer.iterations  # Iteration count at the point of logging
+                'iteration': self.model.iterations  # Iteration count at the point of logging
             }
         else:
             return {
                 'type': 'scalars',  # Type of the logged object, to be interpreted by the logger
                 'value': values,
-                'iteration': self.trainer.iterations  # Iteration count at the point of logging
+                'iteration': self.model.iterations  # Iteration count at the point of logging
             }

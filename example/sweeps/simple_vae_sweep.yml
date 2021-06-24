@@ -7,7 +7,7 @@ command:
 - --data_conf=configurations/data/MNIST_valid.yml
 - --eval_conf=configurations/eval/VAE_simple.yml
 - --model_conf=configurations/models/VAE.yml
-- --arch_impl=modules/architectures/simple_MNIST.py
+- --arch_impl=architectures/simple_MNIST.py
 - --epochs=10
 - --seed=42
 method: random

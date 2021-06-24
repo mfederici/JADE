@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
-from torch.nn.functional import softplus
-from jade.utils.nn import Flatten, StochasticLinear, StochasticLinear2D, Reshape, OneHot
+from example.code.utils.nn import Flatten, StochasticLinear, Reshape
 from torch.distributions import Normal, Independent
 
 
@@ -74,16 +73,37 @@ class Decoder(nn.Module):
 
 
 class LabelClassifier(nn.Module):
-    def __init__(self, z_dim, layers):
+    def __init__(self, z_dim):
         super(LabelClassifier, self).__init__()
 
         # Create a stack of layers with ReLU activations as specified
-        nn_layers = make_stack([z_dim] + layers)
+        nn_layers = make_stack([z_dim] + [64, 32])
 
         self.net = nn.Sequential(
             *nn_layers,  # The previously created stack
             nn.ReLU(True),  # A ReLU activation
-            StochasticLinear(layers[-1], N_LABELS, 'Categorical')  # A layer that returns a Categorical distribution
+            StochasticLinear(32, N_LABELS, 'Categorical')  # A layer that returns a Categorical distribution
+        )
+
+    def forward(self, x):
+        # Note that the encoder returns a Categorical distribution and not a vector
+        return self.net(x)
+
+# Definition of an alternative implementation for the label classifier.
+# Note that this has been created only for exemplifying how different architectures implementation can be speficied
+# but in principle it is possible to achieve the same result (with cleaner code) by passing the depth of the network
+# as an hyper-parameter in the constructor arguments.
+class DeepLabelClassifier(nn.Module):
+    def __init__(self, z_dim):
+        super(DeepLabelClassifier, self).__init__()
+
+        # Create a stack of layers with ReLU activations as specified
+        nn_layers = make_stack([z_dim] + [1024, 512, 256, 128])
+
+        self.net = nn.Sequential(
+            *nn_layers,  # The previously created stack
+            nn.ReLU(True),  # A ReLU activation
+            StochasticLinear(128, N_LABELS, 'Categorical')  # A layer that returns a Categorical distribution
         )
 
     def forward(self, x):

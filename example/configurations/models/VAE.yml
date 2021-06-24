@@ -1,0 +1,22 @@
+model:
+  class: VariationalAutoencoder
+  params:
+    #################
+    # Architectures #
+    #################
+
+    # Encoder
+    encoder_layers: [1024, 256]
+
+    # Decoder
+    decoder_layers: [256, 1024]
+
+    ##########################
+    # Other model parameters #
+    ##########################
+
+    # regularization strength
+    beta: 0.5
+
+    # Number of latent dimensions
+    z_dim: 64

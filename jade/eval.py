@@ -1,6 +1,6 @@
 class Evaluation:
-    def __init__(self, trainer, datasets, evaluate_every=1, **params):
-        self.trainer = trainer
+    def __init__(self, model, datasets, evaluate_every=1, **params):
+        self.model = model
         self.datasets = datasets
         self.evaluate_every = evaluate_every
 

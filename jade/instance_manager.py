@@ -16,8 +16,7 @@ def make_instance(class_name, modules, params=None, verbose=False):
 
     if verbose:
         print('Instantiating class %s from %s' %
-              (class_name, module.__name__))
-
+              (class_name, module.__file__))
 
     instance = Class(**params)
 

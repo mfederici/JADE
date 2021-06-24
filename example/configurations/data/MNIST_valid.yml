@@ -1,0 +1,14 @@
+data:
+  train:
+    class: MNISTWrapper
+    params:
+      root: $DATA_ROOT
+      split: train
+      download: True
+
+  test:
+    class: MNISTWrapper
+    params:
+      root: $DATA_ROOT
+      split: valid
+      download: True

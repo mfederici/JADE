@@ -1,6 +1,8 @@
-from jade.eval import Evaluation
-from torchvision.utils import make_grid
 import torch
+import numpy as np
+from torchvision.utils import make_grid
+
+from jade.eval import Evaluation
 
 
 class ReconstructionEvaluation(Evaluation):
@@ -13,13 +15,13 @@ class ReconstructionEvaluation(Evaluation):
         self.sample_latents = sample_latents
 
         # Check that the model has a definition of a method to reconstrut the inputs
-        if not hasattr(self.trainer, 'reconstruct'):
+        if not hasattr(self.model, 'reconstruct'):
             raise Exception('The trainer must implement a reconstruct(x) method with `x` as a picture')
 
     def sample_new_images(self):
         # sample the required number of pictures randomly
         ids = np.random.choice(len(self.dataset), self.n_pictures)
-        images_batch = torch.cat([dataset[id]['x'].unsqueeze(0) for id in ids])
+        images_batch = torch.cat([self.dataset[id]['x'].unsqueeze(0) for id in ids])
 
         return images_batch
 
@@ -33,10 +35,10 @@ class ReconstructionEvaluation(Evaluation):
             x = torch.cat([self.dataset[id]['x'].unsqueeze(0) for id in ids])
 
         # Move the images to the correct device
-        x = x.to(self.trainer.get_device())
+        x = x.to(self.model.get_device())
 
         # Compute the reconstructions
-        x_rec = self.trainer.reconstruct(x).to('cpu')
+        x_rec = self.model.reconstruct(x).to('cpu')
 
         # Concatenate originals and reconstructions
         x_all = torch.cat([x.to('cpu'), x_rec], 2)
@@ -45,5 +47,5 @@ class ReconstructionEvaluation(Evaluation):
         return {
             'type': 'figure',  # Type of the logged object, to be interpreted by the logger
             'value': make_grid(x_all, nrow=self.n_pictures),  # Value to log
-            'iteration': self.trainer.iterations  # Iteration count at the point of logging
+            'iteration': self.model.iterations  # Iteration count at the point of logging
         }
