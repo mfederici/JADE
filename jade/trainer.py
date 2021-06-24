@@ -93,7 +93,7 @@ class Trainer:
                     'attributes': save_dict}, path)
 
     def load(self, path):
-        items_to_load = torch.load(path, map_location=torch.device('cpu'))
+        items_to_load = torch.load(path, map_location=self.model.get_device())
 
         self.model.load_state_dict(items_to_load['model'])
 
