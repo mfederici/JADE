@@ -1,6 +1,8 @@
+print(dir())
+
 import torch
 import torch.nn as nn
-from ..utils.nn import Flatten, StochasticLinear, Reshape
+from utils.nn import Flatten, StochasticLinear, Reshape
 from torch.distributions import Normal, Independent
 
 

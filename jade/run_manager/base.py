@@ -1,5 +1,7 @@
 import os
 import importlib
+import sys
+
 import torch
 import numpy as np
 
@@ -10,8 +12,10 @@ import torchvision.datasets as torchvision_dataset_module
 
 BACKUP_NAME = 'last_checkpoint.pt'
 
+
 def module_from_file(path):
     name = path.split('.')[0].replace('/', '.')
+    print('Importing %s with name %s' % (path, name))
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -47,6 +51,8 @@ class RunManager:
 
         self.resume = resume
         self.experiments_root = experiments_root
+
+        sys.path.append(code_dir)
 
         # TODO: accept as extra arguments
         model_paths = [os.path.join(code_dir, 'models')]

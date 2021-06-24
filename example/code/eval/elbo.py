@@ -1,4 +1,4 @@
-from .base import DatasetEvaluation
+from jade.eval import DatasetEvaluation
 
 
 class ErrorComponentsEvaluation(DatasetEvaluation):
