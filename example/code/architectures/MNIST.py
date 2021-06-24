@@ -1,5 +1,3 @@
-print(dir())
-
 import torch
 import torch.nn as nn
 from utils.nn import Flatten, StochasticLinear, Reshape
