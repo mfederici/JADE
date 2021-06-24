@@ -10,12 +10,15 @@ import jade.trainer as base_trainer_module
 
 import torchvision.datasets as torchvision_dataset_module
 
+import yaml
+from envyaml import EnvYAML
+
+
 BACKUP_NAME = 'last_checkpoint.pt'
 
 
 def module_from_file(path):
-    name = path.split('.')[0].replace('/', '.')
-    print('Importing %s with name %s' % (path, name))
+    name = path.replace('/', '.')
     spec = importlib.util.spec_from_file_location(name, path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -35,11 +38,20 @@ def load_modules(root_dir):
         return model_modules
 
 
+def resolve_variables(config,  experiments_root):
+    config_file = os.path.join(experiments_root, "config.yml")
+    with open(config_file, "w") as file:
+        yaml.dump(config, file)
 
+    d = EnvYAML(yaml_file=config_file)
+    return {k: d[k] for k in config}
 
 
 class RunManager:
     def __init__(self, run_id, run_name, experiments_root, config, run_dir, resume, verbose=False, code_dir='example'):
+
+        # Resolve config
+        config = resolve_variables(config, run_dir)
 
         self.verbose = verbose
         self.run_name = run_name

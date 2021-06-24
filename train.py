@@ -3,6 +3,7 @@ import argparse
 from tqdm import tqdm
 from envyaml import EnvYAML
 import yaml
+from dotenv import dotenv_values
 
 from jade.run_manager.wandb import WANDBRunManager
 
@@ -25,10 +26,12 @@ parser.add_argument("--run_id", type=str, default=None, help='Wandb run id for r
 # Change checkpoint frequency
 parser.add_argument("--checkpoint-every", type=int, default=500, help="Frequency of model checkpointing (in epochs).")
 parser.add_argument("--backup-every", type=int, default=100, help="Frequency of model backups (in epochs).")
-parser.add_argument("--epochs", type=int, default=1000, help="Total number of training epochs")
+parser.add_argument("--epochs", type=int, default=100, help="Total number of training epochs")
 parser.add_argument("--overwrite", type=str, default="", nargs='+',
                     help='Parameters to of configuration files to overwrite.'
                     'use the dot "." operator to accessed nested arguments (e.g. --override model.z_dim=0.001 )')
+parser.add_argument('--env-file', type=str, default='.env',
+                    help='File containing the definition of the environment variables')
 
 args = parser.parse_args()
 code_dir = args.code_dir
@@ -43,6 +46,11 @@ epochs = args.epochs
 experiments_root = args.experiments_root
 
 overwrite = args.overwrite
+env_file = args.env_file
+
+env = dotenv_values(env_file)
+for k, v in env.items():
+    os.environ[k] = v
 
 device = args.device
 if 'DEVICE' in os.environ:
@@ -58,13 +66,12 @@ if len(args.config) > 0:
     config = {}
     for filename in args.config:
         with open(filename, 'r') as f:
-            keys = yaml.safe_load(f).keys()
-        d = EnvYAML(filename)
-        for k in keys:
-            if '.' in keys:
+            d = yaml.safe_load(f)
+        for k in d:
+            if '.' in d:
                 raise Exception('The special character \'.\' can not be used in the definition of %s' % k)
             if k in config:
-                raise Exception('Duplicate entry for %s' % k)
+                print('Warning: Duplicate entry for %s, the value %s is overwritten by %s' % (k, str(config[k]), (d[k])))
             else:
                 config[k] = d[k]
 
