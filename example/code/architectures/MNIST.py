@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from example.code.utils.nn import Flatten, StochasticLinear, Reshape
+from ..utils.nn import Flatten, StochasticLinear, Reshape
 from torch.distributions import Normal, Independent
 
 

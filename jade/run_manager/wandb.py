@@ -124,6 +124,8 @@ class WANDBRunManager(RunManager):
         for file in run.files():
             if file.name.endswith('.py'):
                 file.download(os.path.join(path, run_id, CODE_DIR), replace=True)
+                if self.verbose:
+                    print('Downloading the code for %s' % file.name)
 
     def read_config(self, run_id):
         run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, run_id))

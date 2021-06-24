@@ -1,4 +1,4 @@
-from example.code.eval.base import DatasetEvaluation
+from .base import DatasetEvaluation
 
 
 class ErrorComponentsEvaluation(DatasetEvaluation):

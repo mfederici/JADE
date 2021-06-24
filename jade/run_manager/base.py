@@ -55,8 +55,6 @@ class RunManager:
         arch_paths = [os.path.join(code_dir, 'architectures')]
         trainer_paths = [os.path.join(code_dir, 'trainers')]
 
-        print('##############')
-
         self.model_modules = load_modules(model_paths)
         self.dataset_modules = load_modules(dataset_paths)
         self.eval_modules = load_modules(eval_paths)
