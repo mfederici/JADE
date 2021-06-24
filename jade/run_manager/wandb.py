@@ -70,7 +70,7 @@ class WANDBRunManager(RunManager):
 
         if run_exists:
             config = self.read_config(run_id)
-            self.download_code(os.path.join(experiments_root), run_id)
+
             code_dir = os.path.join(experiments_root, run_id, CODE_DIR)
 
         flat_config = flatten_config(config) # wandb can't process nested dictionaries
@@ -85,6 +85,10 @@ class WANDBRunManager(RunManager):
 
             run_id = wandb.run.id
             run_dir = wandb.run.dir
+
+            if resume:
+                self.download_code(run_dir)
+                code_dir = os.path.join(run_dir, CODE_DIR)
 
             if not os.path.isdir(code_dir):
                 raise Exception('The specified code directory "%s" does not exist' % code_dir)
@@ -123,7 +127,7 @@ class WANDBRunManager(RunManager):
 
         for file in run.files():
             if file.name.endswith('.py'):
-                file.download(os.path.join(path, run_id, CODE_DIR), replace=True)
+                file.download(os.path.join(path, CODE_DIR), replace=True)
                 if self.verbose:
                     print('Downloading the code for %s' % file.name)
 

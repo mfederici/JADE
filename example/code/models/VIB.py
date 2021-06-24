@@ -51,5 +51,3 @@ class VariationalInformationBottleneck(Model):
             z = q_z_x.mean
 
         return self.label_classifier(z)
-
-
