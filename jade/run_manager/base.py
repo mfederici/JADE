@@ -126,7 +126,7 @@ class RunManager:
         if resume:
             model = self.load_last_model(model, device=device)
         else:
-            model = model.to(device)
+            model.to(device)
         return model
 
     def instantiate_trainer(self, model, datasets, resume=False, device='cpu'):
@@ -143,7 +143,7 @@ class RunManager:
         if resume:
             trainer = self.load_last_trainer(trainer, device=device)
         else:
-            trainer = trainer.to(device)
+            trainer.to(device)
 
         return trainer
 

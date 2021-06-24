@@ -48,7 +48,7 @@ echo Starting
 cd <PROJECT_DIRECTORY>
 
 # Use python from the pytorch_and_friends environment
-export PATH=$HOME/anaconda3/envs/pytorch_and_friends/bin/:$PATH
+export PATH=$HOME/anaconda3/envs/jade/bin/:$PATH
 
 # Check that python and wandb are accessible
 which python

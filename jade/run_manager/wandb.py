@@ -44,7 +44,7 @@ class WANDBRunManager(RunManager):
                  upload_checkpoints=True, init=True,  code_dir=DEFAULT_CODE_ROOT_NAME, username=None, project=None, **params):
         self.verbose = verbose
 
-        if not (run_id is None) and self.verbose:
+        if not (run_id is None) and self.verbose and not (config is None) :
                 print('Warning: the specified configuration will be overrided by the one of the specified run_id')
 
 
@@ -70,7 +70,7 @@ class WANDBRunManager(RunManager):
 
         if run_exists:
             config = self.read_config(run_id)
-
+            self.download_code(os.path.join(experiments_root), run_id)
             code_dir = os.path.join(experiments_root, run_id, CODE_DIR)
 
         flat_config = flatten_config(config) # wandb can't process nested dictionaries
@@ -85,10 +85,6 @@ class WANDBRunManager(RunManager):
 
             run_id = wandb.run.id
             run_dir = wandb.run.dir
-
-            if resume:
-                self.download_code(run_dir, run_id)
-                code_dir = os.path.join(run_dir, CODE_DIR)
 
             if not os.path.isdir(code_dir):
                 raise Exception('The specified code directory "%s" does not exist' % code_dir)
