@@ -1,22 +1,12 @@
 import torch
 import torch.nn as nn
-from utils.nn import Flatten, StochasticLinear, Reshape
+from utils import Flatten, StochasticLinear, Reshape, make_stack
 from torch.distributions import Normal, Independent
 
 
 INPUT_SHAPE = [1, 28, 28]
 N_INPUTS = 28*28
 N_LABELS = 10
-
-# Create simple layer stacks with relu activations
-def make_stack(layers):
-    nn_layers = []
-    for i in range(len(layers)-1):
-        nn_layers.append(nn.Linear(layers[i], layers[i+1]))
-        if i<len(layers)-2:
-            nn_layers.append(nn.ReLU(True))
-
-    return nn_layers
 
 
 # Model for q(Z|X)
@@ -54,7 +44,7 @@ class Prior(nn.Module):
 
 # Model for p(X|Z)
 class Decoder(nn.Module):
-    def __init__(self, z_dim, layers, sigma):
+    def __init__(self, z_dim, layers, sigma=1):
         super(Decoder, self).__init__()
 
         # Create a stack of layers with ReLU activations as specified

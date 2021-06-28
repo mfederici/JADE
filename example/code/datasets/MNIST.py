@@ -6,13 +6,13 @@ MNIST_TRAIN_EXAMPLES = 50000
 
 
 class MNISTWrapper(Dataset):
-    def __init__(self, root, split, download=False):
+    def __init__(self, root, split, **params):
         assert split in ['train', 'valid', 'train+valid', 'test']
 
         dataset = MNIST(
             root=root,
             train=split in ['train', 'valid', 'train+valid'],
-            transform=ToTensor(), download=download)
+            transform=ToTensor(), **params)
 
         if split == 'train':
             dataset = Subset(dataset, range(MNIST_TRAIN_EXAMPLES))

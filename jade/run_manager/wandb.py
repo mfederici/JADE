@@ -10,6 +10,7 @@ SPLIT_TOKEN = '.'
 DEFAULT_CODE_ROOT_NAME = 'modules'
 CODE_DIR = 'code'
 
+
 # utilities to flatten and re-inflate the configuration for wandb
 def _flatten_config(config, prefix, flat_config):
     for key, value in config.items():
@@ -41,16 +42,16 @@ def inflate_config(flat_config):
 
 class WANDBRunManager(RunManager):
     def __init__(self, config=None, experiments_root='.', run_name=None, run_id=None, run_dir=None, verbose=False,
-                 upload_checkpoints=True, init=True,  code_dir=DEFAULT_CODE_ROOT_NAME, username=None, project=None, **params):
+                 upload_checkpoints=True, init=True, code_dir=DEFAULT_CODE_ROOT_NAME, username=None, project=None,
+                 **params):
         self.verbose = verbose
 
-        if not (run_id is None) and self.verbose and not (config is None) :
-                print('Warning: the specified configuration will be overrided by the one of the specified run_id')
-
+        if not (run_id is None) and self.verbose and not (config is None):
+            print('Warning: the specified configuration will be overrided by the one of the specified run_id')
 
         if 'WANDB_PROJECT' in os.environ and project is None:
             self.PROJECT = os.environ['WANDB_PROJECT']
-        elif not(project is None):
+        elif not (project is None):
             self.PROJECT = project
         else:
             raise Exception(
@@ -73,7 +74,7 @@ class WANDBRunManager(RunManager):
             self.download_code(os.path.join(experiments_root), run_id)
             code_dir = os.path.join(experiments_root, run_id, CODE_DIR)
 
-        flat_config = flatten_config(config) # wandb can't process nested dictionaries
+        flat_config = flatten_config(config)  # wandb can't process nested dictionaries
         resume = run_exists
 
         if init:
@@ -98,11 +99,12 @@ class WANDBRunManager(RunManager):
                                 print('Storing %s' % os.path.join(path, name))
                                 wandb.save(os.path.join(path, name), base_path=code_dir)
 
+            arch_filename = config['architectures'] + '.py'
 
         super(WANDBRunManager, self).__init__(run_name=run_name, run_id=run_id, run_dir=run_dir,
                                               config=config, resume=resume, verbose=verbose,
                                               experiments_root=experiments_root,
-                                              code_dir=code_dir, **params)
+                                              code_dir=code_dir, arch_filename=arch_filename, **params)
 
     def run_exists(self, run_id):
         if run_id is None:
@@ -123,7 +125,7 @@ class WANDBRunManager(RunManager):
 
         for file in run.files():
             if file.name.endswith('.py'):
-                file.download(os.path.join(path, CODE_DIR), replace=True)
+                file.download(os.path.join(path, run_id, CODE_DIR), replace=True)
                 if self.verbose:
                     print('Downloading the code for %s' % file.name)
 

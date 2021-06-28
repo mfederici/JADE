@@ -13,9 +13,16 @@ import torchvision.datasets as torchvision_dataset_module
 import yaml
 from envyaml import EnvYAML
 
+import json
 
 BACKUP_NAME = 'last_checkpoint.pt'
-
+DATASET_DIR = DATASET_KEY ='datasets'
+MODELS_DIR = 'models'
+MODEL_KEY = 'model'
+ARCH_DIR = ARCH_KEY = 'architectures'
+EVAL_DIR = EVAL_KEY = 'evaluation'
+TRAINER_DIR = 'trainers'
+TRAINER_KEY = 'trainer'
 
 def module_from_file(path):
     name = path.replace('/', '.')
@@ -48,11 +55,13 @@ def resolve_variables(config,  experiments_root):
 
 
 class RunManager:
-    def __init__(self, run_id, run_name, experiments_root, config, run_dir, resume, verbose=False, code_dir='example'):
+    def __init__(self, run_id, run_name, experiments_root, config, run_dir, resume, verbose=False, code_dir='example',
+                 arch_filename=None):
 
         # Resolve config
         config = resolve_variables(config, run_dir)
-        print(config)
+        print(json.dumps(config, sort_keys=True, indent=4))
+
 
         self.verbose = verbose
         self.run_name = run_name
@@ -68,16 +77,20 @@ class RunManager:
         sys.path.append(code_dir)
 
         # TODO: accept as extra arguments
-        model_paths = [os.path.join(code_dir, 'models')]
-        dataset_paths = [os.path.join(code_dir, 'data')]
-        eval_paths = [os.path.join(code_dir, 'eval')]
-        arch_paths = [os.path.join(code_dir, 'architectures')]
-        trainer_paths = [os.path.join(code_dir, 'trainers')]
+        model_paths = [os.path.join(code_dir, MODELS_DIR)]
+        dataset_paths = [os.path.join(code_dir, DATASET_DIR)]
+        eval_paths = [os.path.join(code_dir, EVAL_DIR)]
+        if arch_filename is None:
+            arch_paths = [os.path.join(code_dir, ARCH_DIR)]
+            self.arch_modules = load_modules(arch_paths)
+
+        else:
+            self.arch_modules = [module_from_file(os.path.join(code_dir, ARCH_DIR, arch_filename))]
+        trainer_paths = [os.path.join(code_dir, TRAINER_DIR)]
 
         self.model_modules = load_modules(model_paths)
         self.dataset_modules = load_modules(dataset_paths)
         self.eval_modules = load_modules(eval_paths)
-        self.arch_modules = load_modules(arch_paths)
         self.trainers_modules = load_modules(trainer_paths)+[base_trainer_module]
         # os.makedirs(self.run_dir, exist_ok=True)
 
@@ -108,16 +121,16 @@ class RunManager:
         raise NotImplementedError()
 
     def instantiate_datasets(self):
-        dataset_manager = InstanceManager(descriptions=self.config['data'],
+        dataset_manager = InstanceManager(descriptions=self.config[DATASET_KEY],
                                           modules=[torchvision_dataset_module] + self.dataset_modules,
                                           verbose=self.verbose)
         return dataset_manager
 
     def instantiate_model(self, resume=False, device='cpu'):
-        model_params = self.config['model']['params']
+        model_params = self.config[MODEL_KEY]['params']
         model_params['writer'] = self
         model_params['arch_modules'] = self.arch_modules
-        model = make_instance(class_name=self.config['model']['class'],
+        model = make_instance(class_name=self.config[MODEL_KEY]['class'],
                               modules=self.model_modules,
                               verbose=self.verbose,
                               params=model_params)
@@ -130,11 +143,11 @@ class RunManager:
         return model
 
     def instantiate_trainer(self, model, datasets, resume=False, device='cpu'):
-        trainer_params = self.config['trainer']['params']
+        trainer_params = self.config[TRAINER_KEY]['params']
         trainer_params['writer'] = self
         trainer_params['model'] = model
         trainer_params['datasets'] = datasets
-        trainer = make_instance(class_name=self.config['trainer']['class'],
+        trainer = make_instance(class_name=self.config[TRAINER_KEY]['class'],
                                 modules=self.trainers_modules,
                                 verbose=self.verbose,
                                 params=trainer_params)
@@ -151,7 +164,7 @@ class RunManager:
         # Load the evaluators
         evaluators = {}
 
-        for name, desc in self.config['eval'].items():
+        for name, desc in self.config[EVAL_KEY].items():
             eval_params = desc['params']
             eval_params['datasets'] = dataset_manager
             eval_params['model'] = model

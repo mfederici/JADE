@@ -1,0 +1,28 @@
+# Example of a sweep for the beta parameter of the Variational Autoencoder model
+command:
+- ${env}
+- ${interpreter}
+- ${program}
+# Note that we are using the same data and architecture files as in the VAE case
+- --config example/configurations/data/CelebA_landmarks.yml example/configurations/eval/VIB_regression_valid.yml example/configurations/models/CelebA_VAE.yml example/configurations/trainers/simple_ADAM.yml
+- --arch_impl=architectures/simple_MNIST.py
+- --code-dir=./example/code
+- --overwrite trainer.params.batch_size=64
+- --epochs=20
+- --seed=42
+method: bayes
+# The wandb framework allows to optimize for a specified metric using bayesian optimization.
+metric:
+  goal: minimize
+  name: ErrorComponents/Test/rec_loss # Metric defined in the evaluation configuration file (this is the validation accuracy)
+parameters:
+# Model parameters can be accessed by using the operator '.' to access the members of dictionaries
+# to access the parameters 'beta' in 'params' of a model (see the model configuration file) we use the syntax
+# model.params.beta as shown below
+  model.params.beta:
+    distribution: log_uniform
+    min: -20
+    max: 2
+program: train.py
+
+

@@ -1,28 +1,33 @@
-# Framework description
+# JADE: Just Another DEep learning framework
 
-JADE is a simple framework designed to easily implement deep learning models and log results and architectures using Weights and Biases.
+Tired of writing the training code over and over, maintaining inconsistent versions of your code and model checkpoints or you 
+just to want to write code that can be easily read used by other researchers?
 
-The main design principle consists in separating the definition of the following elements:
-- `Dataset`: the data source. All pytorch datasets are supported by default, custom datasets can be easily added to the framework.
-- `Trainer`: the training algorithm and which components need to be stored. 
-- `Architecture`: the specific structure of the models used in the experiment.
-- `Evaluation`:  the metrics to be computed regularly during training
+Then what you need is **Just Another DEep learning** (JADE) framework.
 
-The interaction between the aforementioned components is visualized in the following scheme:
+JADE is a simple framework based on [Weights and Biases](https://wandb.ai/) and the [PyTorch](https://pytorch.org/) libraries
+designed to:
+1) Clearly **separate** the Model loss and logic from the Architectures, Dataset, Training procedure and Evaluation metrics,
+   improving readability and re-usability of the code.
+2) Easily specify and tune **hyper-parameters** from configuration files
+3) Facilitate **deployment** on different (distributed) hardware. A deployment guide for clusters with [SLURM]() scheduling 
+   can be found [in the example]().
 
+Each JADE project consists the specification of 4 main components:
+* **data**: definition of the datasets used for training and evaluation.
+* **architectures**: definition of the neural network architectures used by the **model**
+* **models**: definition of model(s) and respective loss function(s). Each model as access and can instantiate the 
+  different **architectures**.
+* **trainers**: definition of the training loop. Each trainer has access to the specified **data** and **model**.
+* **evaluators**: definition of the evaluation metrics. Each evaluation metric has access to the **model** and **data**
+
+The dependency between the various components is summarized in the following picture:
 ![](figures/JADE.png)
 
-Each component can be defined by writing the code in the respective `modules/` folder.
-More details on the framework usage can be found in the **Usage** section
-
 # Installation
-The conda and pip dependencies required to run our code are specified in the `environment.yml` environment file and can be installed by running
-```shell script
-conda env create -f environment.yml
-```
-Activate the environment
-```shell script
-conda activate pytorch_and_friends
+JADE can be installed using pip:
+```shell
+pip install jade
 ```
 
 ## Weights and Bias setup
@@ -32,29 +37,85 @@ wandb init
 ```
 and enter your username and password as required.
 
-Set two environment variables 
-```shell script
-export WANDB_USER='<your_username>'
-export WANDB_PROJECT='<your_project_name>'
-```
-before running your scripts.
 
 # Usage
 
-The JADE library allows to implement and run models on multiple datasets and hyper-parameters configurations.
-The framework is designed so that new models, datasets and evaluation metrics and hyper-parameters can be added with 
-minimal changes to the code by explicitly separating the different components. The implementation of a new model is done
-in 6 steps, which are discussed in detail in the following sections:
+The implementation of a new model consists of 3 steps, which are discussed in detail in the following sections:
+1) [Definition](#definition)
+```
+├── architectures   
+│   ├── MNIST.py     
+│   └── CIFAR10.py
+├── datasets
+│   ├── MNIST.py     
+│   └── CIFAR10.py
+├── evaluation
+│   ├── accuracy.py
+│   └── ELBO.py
+├── models                   
+│   └── VAE.py
+└── trainers
+```
+2) [Configuration](#configuration)
+3) [Running](#running)
 
-1) Define the training algorithm. The implementation must extend the `core.trainer.Trainer` class.
-  More details can be found in the section `Models and Algorithms`
-2) Write the definition of the required neural networks architectures (section `Architectures`)
-3) Create the dataset definition if not already supported by pytorch (section `Dataset`).
-4) Define the evaluation metrics by extending the `Evaluation` class (section `Evaluation`)
+## Definition
+1) Definition the model. The implementation must extend the `jade.Model` class.
+  More details can be found in the section [Model definition](#model-definiton). 
+   Each model definition must be included
+   in a `models/` folder. Note that each model should be designed to be independent of architectures and data.
+
+```python
+import jade
+
+
+class MyModel(jade.Model):
+    def initialize(self, **model_and_arch_params):
+        # Initialization of the architectures and hyper-parameters
+    
+    def compute_loss(self, data_batch):
+        # Loss computation
+```
+
+2) Definition of the required (neural networks) architectures (section [Architectures](#architectures)). 
+   Architecures must be included in a `/architecures` folder. Different implementation could correspond to different 
+   modeling strategies or different datasets.
+```python
+import torch.nn as nn
+
+class MyArchitecture(nn.Module):
+    def __init__(self, **arch_params):
+        # Model code here
+```
+    
+3) Definition the datasets (only if not already supported by PyTorch, section [Dataset](#dataset). Each definition needs
+   to be included in a `datasets/` folder.
+```python
+from torch.utils.data import Dataset
+
+class MyDataset(Dataset):
+    def __init__(self, **dataset_params):
+        # Dataset code here
+```
+4) Definition of the evaluation metrics. Each metric must extend the `jade.Evaluation` class 
+   (section [Evaluation](#evaluation))). The output ov the evaluation metrics is logged directly on wandb. Evaluation 
+   metrics must be included in the `\evaluation` folder.
+
+```python
+import jade
+
+
+class MyEvaluation(jade.Evaluation):
+    def initialize(self, **eval_params):
+        # Initialization of the evaluation metrics
+    
+    def evaluate(self):
+        # Evaluation code here
+```
 5) Write the model configuration, dataset and evaluation .yaml file to specify the respective hyperparameters. (section `Parameters confituration`)
 6) Run the model or define a sweep file for testing hyper-parameter ranges (section `Running the experiments`).
 
-## Models and Algorithms
+### Model Definition
 Each new Model and algorithm must extend the `core.Trainer` class and define the architecture initialization and training.
 The models need to override the default `initialize(**params)` and `train_step(data)` as discussed in the following sections.
 The framework is designed to make sure each model implementation is agnostic of the dataset and architectures to separate
@@ -318,7 +379,7 @@ The frequency at which each evaluation is produced can be also specified from th
 At the moment only support for scalars and figures has been added, but the interface can be easily adapted to fit any
 other data-type which is supported by tensorboard/wandb.
 
-### Parameters configuration
+## Configuration
 The value of all the parameters for model training, dataset specification and evaluation needs to be included into 3 
 respective `.yml` configuration files. Note that in each `.yaml` configuration file it is possible to refer to enviroment
 variables with the syntax `$VARIABLE_NAME` (or `${VARIABLE_NAME}`). This allows to easily specify the location of datasets and devices to use
@@ -473,7 +534,7 @@ params:
   z_dim: 64
 ```
 
-## Running a model
+## Running
 
 In order to run a model launch the script `train.py` specifying the following flags
 
@@ -634,3 +695,8 @@ rm -r /tmp/experiments
 The console output and updated results for your agents can be found on the wandb website.
 
 ## Downloading and loading trained models
+
+
+
+
+

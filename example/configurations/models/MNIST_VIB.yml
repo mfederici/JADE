@@ -1,20 +1,25 @@
+architectures: MNIST
 model:
   class: VariationalInformationBottleneck
   params:
-    # Number of latent dimensions
-    z_dim: 64
-
     #################
     # Architectures #
     #################
 
     # Encoder
-    encoder_layers: [1024, 256]
+    encoder:
+      class: 'Encoder'          # example in which we pass the class name as a parameter
+      params:
+        layers: [1024, 256]
 
     # Label classifier
-    classifier_class: 'LabelClassifier'  # example in which we pass the class name as a parameter
+    classifier:
+      class: 'LabelClassifier'
 
     ##########################
     # Other model parameters #
     ##########################
     beta: 0.05
+
+    # Number of latent dimensions
+    z_dim: 64

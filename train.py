@@ -1,7 +1,6 @@
 import os
 import argparse
 from tqdm import tqdm
-from envyaml import EnvYAML
 import yaml
 from dotenv import dotenv_values
 
@@ -95,7 +94,7 @@ if len(args.config) > 0:
 
         last_d[key.split('.')[-1]] = value
         if verbose:
-            print('%s\n\tOriginal value: %s\n\t Overwritten value: %s' % (key, str(d), str(value)))
+            print('%s\n\tOriginal value: %s\n\tOverwritten value: %s' % (key, str(d), str(value)))
 
 else:
     config = None

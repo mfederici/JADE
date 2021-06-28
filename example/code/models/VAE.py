@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 
 
 class VariationalAutoencoder(Model):
-    def initialize(self, z_dim, encoder_layers, decoder_layers, beta, sigma=1):
+    def initialize(self, z_dim, encoder_params, decoder_params, beta):
         # The value of the z_dim, n_encoder_layers, n_decoder_layers, beta lr, batch_size and n_workers are defined
         # in the configuration file or specified as additional arguments when running the train python file
 
@@ -19,13 +19,15 @@ class VariationalAutoencoder(Model):
         # initialize the encoder "Encoder(z_dim, layers)" defined in the architecture python file
         self.encoder = self.instantiate_architecture(
             class_name='Encoder',                       # Name of the class to instantiate (from the architectures file)
-            z_dim=z_dim, layers=encoder_layers          # Extra parameters passed to the constructor
+            z_dim=z_dim,
+            **encoder_params                            # Extra parameters passed to the constructor
         )
 
         # initialize the encoder "Decoder(z_dim, layers, sigma)" defined in the architecture python file
         self.decoder = self.instantiate_architecture(
             class_name='Decoder',
-            z_dim=z_dim, layers=decoder_layers, sigma=sigma
+            z_dim=z_dim,
+            **decoder_params
         )
 
         # Initialize the Gaussian prior passing the number of dimensions

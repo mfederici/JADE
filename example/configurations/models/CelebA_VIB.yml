@@ -1,0 +1,45 @@
+architectures: CelebA
+model:
+  class: VariationalInformationBottleneck
+  params:
+    #################
+    # Architectures #
+    #################
+
+    # Encoder
+    encoder:
+      class: 'Encoder'          # example in which we pass the class name as a parameter
+      params:
+        layers:
+        - in_channels: 3
+          out_channels: 64
+          kernel_size: 5
+          stride : 2
+        - in_channels: 64
+          out_channels: 128
+          kernel_size: 7
+          stride: 3
+        - in_channels: 128
+          out_channels: 256
+          kernel_size: 7
+          stride: 3
+        - in_channels: 256
+          out_channels: 256
+          kernel_size: 7
+          stride: 3
+        - in_channels: 256
+          out_channels: 256
+          kernel_size: 2
+          stride: 1
+
+    # Label classifier
+    classifier:
+      class: 'LandmarkPredictor'
+
+    ##########################
+    # Other model parameters #
+    ##########################
+    beta: 0.05
+
+    # Number of latent dimensions
+    z_dim: 64

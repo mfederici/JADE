@@ -1,0 +1,24 @@
+datasets:
+  train:
+    class: CelebAWrapper
+    params:
+      root: $DATA_ROOT
+      split: train
+      download: True
+      target_type: landmarks
+
+  valid:
+    class: CelebAWrapper
+    params:
+      root: $DATA_ROOT
+      split: valid
+      download: True
+      target_type: landmarks
+
+  test:
+    class: CelebAWrapper
+    params:
+      root: $DATA_ROOT
+      split: test
+      download: True
+      target_type: landmarks

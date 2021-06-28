@@ -1,3 +1,5 @@
+architectures: MNIST
+
 model:
   class: VariationalAutoencoder
   params:
@@ -6,10 +8,13 @@ model:
     #################
 
     # Encoder
-    encoder_layers: [1024, 256]
+    encoder_params:
+      layers: [1024, 256]
 
     # Decoder
-    decoder_layers: [256, 1024]
+    decoder_params:
+      layers: [256, 1024]
+      sigma: 1
 
     ##########################
     # Other model parameters #

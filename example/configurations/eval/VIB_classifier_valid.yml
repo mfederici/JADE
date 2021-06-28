@@ -1,0 +1,10 @@
+evaluation:
+  ErrorComponents/Train:
+    class: ErrorComponentsEvaluation
+    params:
+      evaluate_on: train
+
+  ErrorComponents/Test:
+    class: ErrorComponentsEvaluation
+    params:
+      evaluate_on: valid

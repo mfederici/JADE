@@ -1,4 +1,4 @@
-eval:
+evaluation:
   ImageReconstructions/Train:
     class: ReconstructionEvaluation
     params:
@@ -7,10 +7,10 @@ eval:
       sample_images: False
       evaluate_every: 2
 
-  ImageReconstructions/Test:
+  ImageReconstructions/Validation:
     class: ReconstructionEvaluation
     params:
-      evaluate_on: test
+      evaluate_on: valid
       n_pictures: 10
       sample_images: False
       evaluate_every: 2
@@ -20,7 +20,7 @@ eval:
     params:
       evaluate_on: train
 
-  ELBO/Test:
+  ELBO/Validation:
     class: ELBOEvaluation
     params:
-      evaluate_on: test
+      evaluate_on: valid

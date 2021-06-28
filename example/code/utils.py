@@ -5,6 +5,37 @@ from pyro.distributions import Delta
 from torch.nn.functional import softplus
 
 
+# Create simple layer stacks with relu activations
+def make_stack(layers):
+    nn_layers = []
+    for i in range(len(layers)-1):
+        nn_layers.append(nn.Linear(layers[i], layers[i+1]))
+        if i < len(layers)-2:
+            nn_layers.append(nn.ReLU(True))
+
+    return nn_layers
+
+
+def make_cnn_stack(layers):
+    cnn_layers = []
+    for i in range(len(layers)):
+        cnn_layers.append(nn.Conv2d(**layers[i]))
+        if i < len(layers)-2:
+            cnn_layers.append(nn.ReLU(True))
+
+    return cnn_layers
+
+
+def make_cnn_deconv_stack(layers):
+    cnn_layers = []
+    for i in range(len(layers)):
+        cnn_layers.append(nn.ConvTranspose2d(**layers[i]))
+        if i < len(layers)-2:
+            cnn_layers.append(nn.ReLU(True))
+
+    return cnn_layers
+
+
 class Flatten(nn.Module):
     def forward(self, input):
         return input.view(input.shape[0], -1)

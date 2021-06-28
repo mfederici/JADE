@@ -1,8 +1,10 @@
 model:
   class: VariationalAutoencoder
   params:
-    encoder_layers: [ 1024, 256 ]
-    decoder_layers: [ 256, 1024 ]
+    encoder_params:
+      layers: [ 1024, 256 ]
+    decoder_params:
+      layers: [ 256, 1024 ]
     beta: 0.5
     z_dim: 64
 
@@ -18,7 +20,9 @@ trainer:
         params:
           lr: 0.0001
 
-data:
+architectures: MNIST
+
+datasets:
   train:
     class: MNISTWrapper
     params:
@@ -33,7 +37,7 @@ data:
       split: valid
       download: True
 
-eval:
+evaluation:
   ImageReconstructions/Train:
     class: ReconstructionEvaluation
     params:
