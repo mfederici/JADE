@@ -7,7 +7,7 @@ from dotenv import dotenv_values
 from jade.run_manager.wandb import WANDBRunManager
 
 parser = argparse.ArgumentParser()
-parser.add_argument("--config", type=str, default="", nargs='+',
+parser.add_argument("--config", type=str, default="",
                     help='List of configuration .yml files containing the description of "model", "data", "trainer" '\
                          'and "evaluators".')
 parser.add_argument("--run_name", type=str, default=None,
@@ -61,9 +61,9 @@ if 'EXPERIMENTS_ROOT' in os.environ:
 upload_checkpoints = True
 verbose = True
 
-if len(args.config) > 0:
+if len(args.config.split(':')) > 0:
     config = {}
-    for filename in args.config:
+    for filename in args.config.split(':'):
         with open(filename, 'r') as f:
             d = yaml.safe_load(f)
         for k in d:
