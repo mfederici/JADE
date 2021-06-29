@@ -4,9 +4,9 @@ command:
 - ${interpreter}
 - ${program}
 # Note that we are using the same data and architecture files as in the VAE case
-- --config=example/configurations/data/CelebA_landmarks.yml:example/configurations/eval/VIB_regression_valid.yml:example/configurations/models/CelebA_VAE.yml:example/configurations/trainers/simple_ADAM.yml
+- --config=example/configurations/data/CelebA_landmarks.yml:example/configurations/eval/VIB_regression_valid.yml:example/configurations/models/CelebA_VIB.yml:example/configurations/trainers/simple_ADAM.yml
 - --code-dir=./example/code
-- --overwrite="trainer.params.batch_size=64"
+- --overwrite=trainer.params.batch_size=64
 - --epochs=20
 method: bayes
 # The wandb framework allows to optimize for a specified metric using bayesian optimization.
