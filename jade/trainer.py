@@ -1,4 +1,4 @@
-from tqdm import tqdm
+
 import torch
 import torch.nn as nn
 from torch.optim import Optimizer
@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 import torch.optim as optimizer_module
 
 from jade.model import Model
-from jade.utils import TimeInterval
+from jade.utils import TimeInterval, tqdm_wrap
 
 
 def iteration(f):
@@ -18,7 +18,7 @@ def iteration(f):
 
         trainer.model.iterations += 1
         if pbar is None:
-            pbar = tqdm(total=100)
+            pbar = tqdm_wrap(total=100)
         pbar.update(trainer._train_timer.percentage(trainer.model) - pbar.n)
 
         if trainer._train_timer.is_time(trainer.model):
@@ -157,7 +157,7 @@ class Trainer:
                     'optimizers': {name: opt.state_dict() for name, opt in self.optimizers.items()},
                     'attributes': save_dict}, path)
 
-        if self.verbose or True:
+        if self.verbose:
             print("Saving the model at %d iterations in %s" % (self.model.iterations, path))
 
     def load(self, path, device='cpu'):
@@ -219,7 +219,7 @@ class BatchTrainer(DatasetTrainer):
         if self.model.training_done:
             return
 
-        for data in tqdm(self.train_loader):
+        for data in tqdm_wrap(self.train_loader):
 
             device = self.get_device()
             # Move the data to the appropriate device

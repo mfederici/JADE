@@ -33,3 +33,4 @@ dependencies:
     - plotly==4.8.1
     - envyaml==1.8.210417
     - python-dotenv
+    - ipywidgets

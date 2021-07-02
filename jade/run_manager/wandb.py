@@ -1,52 +1,20 @@
 import wandb
 import os
-from shutil import copytree
-from jade.run_manager.base import RunManager, BACKUP_NAME
+from jade.run_manager.base import RunManager, BACKUP_NAME, CODE_DIR, flatten_config, inflate_config
 import matplotlib.pyplot as plt
-
-from shutil import copytree, rmtree
-import torch
-
-SPLIT_TOKEN = '.'
-DEFAULT_CODE_ROOT_NAME = 'modules'
-CODE_DIR = 'code'
-
-
-# utilities to flatten and re-inflate the configuration for wandb
-def _flatten_config(config, prefix, flat_config):
-    for key, value in config.items():
-        flat_key = SPLIT_TOKEN.join([prefix, key] if prefix else [key])
-        if isinstance(value, dict):
-            _flatten_config(value, flat_key, flat_config)
-        else:
-            flat_config[flat_key] = value
-
-
-def flatten_config(config):
-    flat_config = {}
-    _flatten_config(config, None, flat_config)
-    return flat_config
-
-
-def inflate_config(flat_config):
-    config = {}
-    for key, value in flat_config.items():
-        sub_config = config
-        keys = key.split(SPLIT_TOKEN)
-        for sub_key in keys[:-1]:
-            if not (sub_key in sub_config):
-                sub_config[sub_key] = dict()
-            sub_config = sub_config[sub_key]
-        sub_config[keys[-1]] = value
-    return config
 
 
 class WANDBRunManager(RunManager):
     def __init__(self, config=None, run_name=None, run_id=None, verbose=False,
-                 code_dir=DEFAULT_CODE_ROOT_NAME, username=None, project=None,
-                 wandb_dir=None,
-                 **params):
+                 code_dir=CODE_DIR, username=None, project=None,
+                 wandb_dir=None, wandb_verbose=False):
         self.verbose = verbose
+
+        if not wandb_verbose:
+            os.environ["WANDB_SILENT"] = "true"
+
+        if config is None and run_id is None:
+            raise Exception('Please specify an existing run_id or a configuration for a new run')
 
         if not (run_id is None) and self.verbose and not (config is None):
             print('Warning: the specified configuration will be overwritten by the one of the specified run_id')
@@ -72,41 +40,35 @@ class WANDBRunManager(RunManager):
         if verbose:
             print('Weights and Biases root directory: %s' % wandb_dir)
 
+        # Instantiate api
         self.api = wandb.Api()
         run_exists = self.run_exists(run_id)
 
+        # If the run exists read the configuration
         if run_exists:
             config = self.read_config(run_id)
 
+        # Initialize wandb with the flattened configuration
         flat_config = flatten_config(config)  # wandb can't process nested dictionaries
         resume = run_exists
-
         wandb.init(name=run_name, project=self.PROJECT, config=flat_config, dir=wandb_dir,
                    resume=resume, id=(run_id if run_exists else None), save_code=False)
 
+        # Use the wandb config as the new one
         flat_config = dict(wandb.config)
         config = inflate_config(flat_config)
 
+        # And save the run_object
         self.wandb_run = wandb.run
 
-        if not resume:
-            new_code_dir = os.path.join(self.wandb_run.dir, CODE_DIR)
-            # Copy the code
-            copytree(
-                code_dir, new_code_dir,
-                ignore=lambda _, names: {name for name in names if name.startswith('_')}
-            )
-
-            code_dir = new_code_dir
-        else:
+        # If resuming a run, download the run code and set it as the code directory
+        if resume:
             self.download_code(self.wandb_run.dir)
             code_dir = os.path.join(self.wandb_run.dir, CODE_DIR)
 
-        arch_filename = config['architectures'] + '.py'
-
         super(WANDBRunManager, self).__init__(run_name=run_name, run_id=run_id, run_dir=self.wandb_run.dir,
                                               config=config, resume=resume, verbose=verbose,
-                                              code_dir=code_dir, arch_filename=arch_filename, **params)
+                                              code_dir=code_dir)
 
     def run_exists(self, run_id):
         if run_id is None:
@@ -134,16 +96,18 @@ class WANDBRunManager(RunManager):
         run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, run_id))
         return inflate_config(run.config)
 
-    def download_checkpoint(self, checkpoint_file):
-        # Download the last model
+    def download_checkpoint(self, checkpoint_file, download_path=None):
         if self.verbose:
             print("Dowloading the checkpoint: %s" % checkpoint_file)
-        file_path = os.path.join(self.wandb_run.dir)
 
         run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, self.run_id))
-        run.file(checkpoint_file).download(file_path, replace=True)
 
-        return os.path.join(file_path, checkpoint_file)
+        if download_path is None:
+            download_path = os.path.join(self.wandb_run.dir)
+
+        run.file(checkpoint_file).download(download_path, replace=True)
+
+        return os.path.join(download_path, checkpoint_file)
 
     def load_checkpoint(self, trainer, checkpoint_file, device='cpu'):
         file_path = self.download_checkpoint(checkpoint_file)

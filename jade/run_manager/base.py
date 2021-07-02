@@ -1,4 +1,5 @@
 import os
+from shutil import copytree
 import importlib
 import sys
 
@@ -26,6 +27,39 @@ EVAL_DIR = EVAL_KEY = 'evaluation'
 TRAINER_DIR = 'trainers'
 TRAINER_KEY = 'trainer'
 CONFIG_FILENAME = 'jade_config.yml'
+CODE_DIR = 'code'
+
+SPLIT_TOKEN = '.'
+
+
+# utilities to flatten and re-inflate the configuration for wandb
+def _flatten_config(config, prefix, flat_config):
+    for key, value in config.items():
+        flat_key = SPLIT_TOKEN.join([prefix, key] if prefix else [key])
+        if isinstance(value, dict):
+            _flatten_config(value, flat_key, flat_config)
+        else:
+            flat_config[flat_key] = value
+
+
+def flatten_config(config):
+    flat_config = {}
+    _flatten_config(config, None, flat_config)
+    return flat_config
+
+
+def inflate_config(flat_config):
+    config = {}
+    for key, value in flat_config.items():
+        sub_config = config
+        keys = key.split(SPLIT_TOKEN)
+        for sub_key in keys[:-1]:
+            if not (sub_key in sub_config):
+                sub_config[sub_key] = dict()
+            sub_config = sub_config[sub_key]
+        sub_config[keys[-1]] = value
+    return config
+
 
 def module_from_file(path):
     name = path.replace('/', '.')
@@ -35,13 +69,14 @@ def module_from_file(path):
     return module
 
 
-def load_modules(root_dir):
+def load_modules(root_dir, verbose=False):
     model_modules = []
     for module_path in root_dir:
         for root, subFolder, files in os.walk(module_path):
             for item in files:
                 if item.endswith(".py"):
-                    print(root, item)
+                    if verbose:
+                        print('Loading: %s'%os.path.join(root, item))
                     file_path = os.path.join(root, item)
                     module = module_from_file(file_path)
                     model_modules.append(module)
@@ -58,21 +93,35 @@ def resolve_variables(config, run_dir):
 
 
 class RunManager:
-    def __init__(self, run_id, run_name, config, run_dir, resume, verbose=False, code_dir='example',
-                 arch_filename=None):
+    def __init__(self, run_id, config, run_dir, resume, run_name=None, verbose=False, code_dir='code'):
+        self.verbose = verbose
+        self.run_name = run_name
+        self.run_id = run_id
+        self.run_dir = run_dir
+
+        # Resolve config
+        config = resolve_variables(config, run_dir)
+        self.config = config
+
+        print('#####################')
+        print('# Run Configuration #')
+        print('#####################')
+        for key, value in flatten_config(config).items():
+            print('%s = %s' % (key, str(value)))
+        print('#####################')
 
         if not os.path.isdir(code_dir):
             raise Exception('The specified code directory "%s" does not exist' % code_dir)
 
-        # Resolve config
-        config = resolve_variables(config, run_dir)
-        print(json.dumps(config, sort_keys=True, indent=4))
+        if not resume:
+            new_code_dir = os.path.join(run_dir, CODE_DIR)
+            # Copy the code
+            copytree(
+                code_dir, new_code_dir,
+                ignore=lambda _, names: {name for name in names if name.startswith('_')}
+            )
+            code_dir = new_code_dir
 
-        self.verbose = verbose
-        self.run_name = run_name
-        self.run_id = run_id
-        self.config = config
-        self.run_dir = run_dir
         if verbose:
             print('Run Directory: %s' % run_dir)
 
@@ -80,23 +129,25 @@ class RunManager:
 
         sys.path.append(code_dir)
 
-        # TODO: accept as extra arguments
         model_paths = [os.path.join(code_dir, MODELS_DIR)]
         dataset_paths = [os.path.join(code_dir, DATASET_DIR)]
         eval_paths = [os.path.join(code_dir, EVAL_DIR)]
-        if arch_filename is None:
+
+        # Use the specified architecture file
+        arch_filename = config[ARCH_KEY] + '.py'
+        # TODO: check the file exists
+        if ARCH_KEY not in config:
             arch_paths = [os.path.join(code_dir, ARCH_DIR)]
-            self.arch_modules = load_modules(arch_paths)
+            self.arch_modules = load_modules(arch_paths, verbose=verbose)
 
         else:
             self.arch_modules = [module_from_file(os.path.join(code_dir, ARCH_DIR, arch_filename))]
         trainer_paths = [os.path.join(code_dir, TRAINER_DIR)]
 
-        self.model_modules = load_modules(model_paths)
-        self.dataset_modules = load_modules(dataset_paths)
-        self.eval_modules = load_modules(eval_paths)
-        self.trainers_modules = load_modules(trainer_paths)+[base_trainer_module]
-        # os.makedirs(self.run_dir, exist_ok=True)
+        self.model_modules = load_modules(model_paths, verbose=verbose)
+        self.dataset_modules = load_modules(dataset_paths, verbose=verbose)
+        self.eval_modules = load_modules(eval_paths, verbose=verbose)
+        self.trainers_modules = load_modules(trainer_paths, verbose=verbose)+[base_trainer_module]
 
         # Set random seed
         if 'seed' in config:
@@ -130,7 +181,7 @@ class RunManager:
                                           verbose=self.verbose)
         return dataset_manager
 
-    def instantiate_model(self, resume=False, device='cpu', checkpoint_file=None):
+    def instantiate_model(self, resume=True, device='cpu', checkpoint_file=None):
         model_params = self.config[MODEL_KEY]['params']
         model_params['arch_modules'] = self.arch_modules
         model = make_instance(class_name=self.config[MODEL_KEY]['class'],
@@ -186,9 +237,15 @@ class RunManager:
 
     def make_instances(self, device='cpu'):
         dataset_manager = self.instantiate_datasets()
-        model = self.instantiate_model(device=device)
+        model = self.instantiate_model(device=device, resume=False)
         evaluators = self.instantiate_evaluators(dataset_manager=dataset_manager)
-        trainer = self.instantiate_trainer(model=model, evaluators=evaluators, datasets=dataset_manager, resume=self.resume, device=device)
+        trainer = self.instantiate_trainer(
+            model=model,
+            evaluators=evaluators,
+            datasets=dataset_manager,
+            resume=self.resume,
+            device=device
+        )
 
         return trainer, evaluators
 
@@ -233,8 +290,3 @@ class RunManager:
         self.make_backup(trainer, force_upload=True)
 
         return trainer.model
-
-
-
-
-

@@ -39,6 +39,10 @@ def jade():
               type=click.BOOL,
               default=False,
               help='Verbose output')
+@click.option('--wandb-verbose',
+              type=click.BOOL,
+              default=False,
+              help='Verbose output for wandb')
 @click.option('--device',
               type=click.STRING,
               default=False,
@@ -51,7 +55,8 @@ def jade():
 @click.option('--experiments_root',
               type=click.Path(file_okay=False),
               help='Root directory in which the experiments are saved/loaded')
-def train(train_for, config_files, device='cpu', verbose=False, env_file='.env', overwrite='', experiments_root=None, code_dir='code', run_name=None):
+def train(train_for, config_files, device='cpu', verbose=False, env_file='.env', overwrite='', experiments_root=None,
+          code_dir='code', run_name=None, wandb_verbose=False):
     code_dir = code_dir.strip('"').strip('\'')
     env_file = env_file.name.strip('"').strip('\'')
     if not(run_name is None):
@@ -66,10 +71,12 @@ def train(train_for, config_files, device='cpu', verbose=False, env_file='.env',
     if 'DEVICE' in os.environ:
         device = os.environ['DEVICE']
 
-    run_manager = WANDBRunManager(run_name=run_name, config=config,
+    run_manager = WANDBRunManager(run_name=run_name,
+                                  config=config,
                                   wandb_dir=experiments_root,
                                   code_dir=code_dir,
-                                  verbose=verbose)
+                                  verbose=verbose,
+                                  wandb_verbose=wandb_verbose)
 
     run_manager.run(train_amount=train_for, device=device)
 
@@ -87,6 +94,10 @@ def train(train_for, config_files, device='cpu', verbose=False, env_file='.env',
               type=click.BOOL,
               default=False,
               help='Verbose output')
+@click.option('--wandb-verbose',
+              type=click.BOOL,
+              default=False,
+              help='Verbose output for wandb')
 @click.option('--device',
               type=click.STRING,
               default=False,
@@ -99,7 +110,12 @@ def train(train_for, config_files, device='cpu', verbose=False, env_file='.env',
 @click.option('--experiments_root',
               type=click.Path(file_okay=False),
               help='Root directory in which the experiments are saved/loaded')
-def resume(run_id, train_for, verbose=False, env_file='.env', experiments_root=None, device='cpu'):
+def resume(run_id, train_for, verbose=False, env_file='.env', experiments_root=None, device='cpu', wandb_verbose=False):
+    env_file = env_file.name.strip('"').strip('\'')
+    train_for = train_for.strip('"').strip('\'')
+
+    update_env(env_file)
+
     update_env(env_file)
 
     if 'DEVICE' in os.environ:
@@ -107,7 +123,8 @@ def resume(run_id, train_for, verbose=False, env_file='.env', experiments_root=N
 
     run_manager = WANDBRunManager(run_id=run_id,
                                   wandb_dir=experiments_root,
-                                  verbose=verbose)
+                                  verbose=verbose,
+                                  wandb_verbose=wandb_verbose)
 
     run_manager.run(train_amount=train_for, device=device)
 
