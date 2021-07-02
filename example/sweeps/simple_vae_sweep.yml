@@ -1,13 +1,15 @@
 # Example of a sweep for the beta parameter and latent size of the Variational Autoencoder model
 command:
+- ${env}
+- ${interpreter}
 - ${program}
-# Flags for the train.py script as explained above
-- --train-for "2 minutes"
-- --code-dir "example/code"
-- example/code example/configurations/data/MNIST.yml
-- example/configurations/eval/VAE_valid.yml
-- example/configurations/models/MNIST_VAE.yml
-  example/configurations/trainers/simple_ADAM.yml
+- train
+- --train-for="2 minutes" # Flags for the train.py script as explained above
+- --code-dir=example/code
+- "example/configurations/data/MNIST.yml"
+- "example/configurations/eval/VAE_valid.yml"
+- "example/configurations/models/MNIST_VAE.yml"
+- "example/configurations/trainers/simple_ADAM.yml"
 method: random
 parameters:
 # Model parameters can be accessed b${env}y using the operator '.' to access the members of dictionaries
@@ -23,4 +25,4 @@ parameters:
   model.z_dim:
     values:
       - 32
-program: ./jade.py
+program: jade.py

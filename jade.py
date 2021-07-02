@@ -52,12 +52,16 @@ def jade():
               type=click.Path(file_okay=False),
               help='Root directory in which the experiments are saved/loaded')
 def train(train_for, config_files, device='cpu', verbose=False, env_file='.env', overwrite='', experiments_root=None, code_dir='code', run_name=None):
+    code_dir = code_dir.strip('"').strip('\'')
+    env_file = env_file.name.strip('"').strip('\'')
+    if not(run_name is None):
+        run_name = run_name.strip('"').strip('\'')
+    train_for = train_for.strip('"').strip('\'')
+
     update_env(env_file)
 
     config = read_and_merge(config_files, verbose=verbose)
     update_config(config, overwrite)
-
-    print(config)
 
     if 'DEVICE' in os.environ:
         device = os.environ['DEVICE']
@@ -109,7 +113,7 @@ def resume(run_id, train_for, verbose=False, env_file='.env', experiments_root=N
 
 
 def update_env(env_file, verbose=False):
-    env = dotenv_values(env_file.name)
+    env = dotenv_values(env_file)
     for k, v in env.items():
         os.environ[k] = v
         if verbose:
