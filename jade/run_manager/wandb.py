@@ -1,5 +1,6 @@
 import wandb
 import os
+from shutil import copytree
 from jade.run_manager.base import RunManager, BACKUP_NAME
 import matplotlib.pyplot as plt
 
@@ -41,13 +42,14 @@ def inflate_config(flat_config):
 
 
 class WANDBRunManager(RunManager):
-    def __init__(self, config=None, experiments_root='.', run_name=None, run_id=None, run_dir=None, verbose=False,
-                 upload_checkpoints=True, init=True, code_dir=DEFAULT_CODE_ROOT_NAME, username=None, project=None,
+    def __init__(self, config=None, run_name=None, run_id=None, verbose=False,
+                 code_dir=DEFAULT_CODE_ROOT_NAME, username=None, project=None,
+                 wandb_dir=None,
                  **params):
         self.verbose = verbose
 
         if not (run_id is None) and self.verbose and not (config is None):
-            print('Warning: the specified configuration will be overrided by the one of the specified run_id')
+            print('Warning: the specified configuration will be overwritten by the one of the specified run_id')
 
         if 'WANDB_PROJECT' in os.environ and project is None:
             self.PROJECT = os.environ['WANDB_PROJECT']
@@ -64,46 +66,46 @@ class WANDBRunManager(RunManager):
         else:
             raise Exception('In order to use the wandb framework the environment variable WANDB_USER needs to be set')
 
-        self.api = wandb.Api()
-        self.upload_checkpoints = upload_checkpoints
+        if 'WANDB_DIR' in os.environ and wandb_dir is None:
+            wandb_dir = os.environ['WANDB_DIR']
 
+        if verbose:
+            print('Weights and Biases root directory: %s' % wandb_dir)
+
+        self.api = wandb.Api()
         run_exists = self.run_exists(run_id)
 
         if run_exists:
             config = self.read_config(run_id)
-            self.download_code(os.path.join(experiments_root), run_id)
-            code_dir = os.path.join(experiments_root, run_id, CODE_DIR)
 
         flat_config = flatten_config(config)  # wandb can't process nested dictionaries
         resume = run_exists
 
-        if init:
-            wandb.init(name=run_name, project=self.PROJECT, config=flat_config, dir=experiments_root,
-                       resume=resume, id=(run_id if run_exists else None), save_code=False)
+        wandb.init(name=run_name, project=self.PROJECT, config=flat_config, dir=wandb_dir,
+                   resume=resume, id=(run_id if run_exists else None), save_code=False)
 
-            flat_config = dict(wandb.config)
-            config = inflate_config(flat_config)
+        flat_config = dict(wandb.config)
+        config = inflate_config(flat_config)
 
-            run_id = wandb.run.id
-            run_dir = wandb.run.dir
+        self.wandb_run = wandb.run
 
-            if not os.path.isdir(code_dir):
-                raise Exception('The specified code directory "%s" does not exist' % code_dir)
+        if not resume:
+            new_code_dir = os.path.join(self.wandb_run.dir, CODE_DIR)
+            # Copy the code
+            copytree(
+                code_dir, new_code_dir,
+                ignore=lambda _, names: {name for name in names if name.startswith('_')}
+            )
 
-            # Upload the code
-            if not resume:
-                for path, subdirs, files in os.walk(code_dir):
-                    for name in files:
-                        if name.endswith('.py'):
-                            if self.verbose:
-                                print('Storing %s' % os.path.join(path, name))
-                                wandb.save(os.path.join(path, name), base_path=code_dir)
+            code_dir = new_code_dir
+        else:
+            self.download_code(self.wandb_run.dir)
+            code_dir = os.path.join(self.wandb_run.dir, CODE_DIR)
 
-            arch_filename = config['architectures'] + '.py'
+        arch_filename = config['architectures'] + '.py'
 
-        super(WANDBRunManager, self).__init__(run_name=run_name, run_id=run_id, run_dir=run_dir,
+        super(WANDBRunManager, self).__init__(run_name=run_name, run_id=run_id, run_dir=self.wandb_run.dir,
                                               config=config, resume=resume, verbose=verbose,
-                                              experiments_root=experiments_root,
                                               code_dir=code_dir, arch_filename=arch_filename, **params)
 
     def run_exists(self, run_id):
@@ -120,14 +122,13 @@ class WANDBRunManager(RunManager):
                 success = False
         return success
 
-    def download_code(self, path, run_id):
-        run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, run_id))
-
+    def download_code(self, download_dir):
+        run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, self.wandb_run.id))
         for file in run.files():
             if file.name.endswith('.py'):
-                file.download(os.path.join(path, run_id, CODE_DIR), replace=True)
+                file.download(download_dir, replace=True)
                 if self.verbose:
-                    print('Downloading the code for %s' % file.name)
+                    print('Downloading the code for %s in %s' % (file.name, download_dir))
 
     def read_config(self, run_id):
         run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, run_id))
@@ -136,9 +137,8 @@ class WANDBRunManager(RunManager):
     def download_checkpoint(self, checkpoint_file):
         # Download the last model
         if self.verbose:
-            print("Dowloading the last checkpoint: %s" % checkpoint_file)
-        file_path = os.path.join(self.experiments_root, self.run_id)
-        os.makedirs(file_path, exist_ok=True)
+            print("Dowloading the checkpoint: %s" % checkpoint_file)
+        file_path = os.path.join(self.wandb_run.dir)
 
         run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, self.run_id))
         run.file(checkpoint_file).download(file_path, replace=True)
@@ -187,12 +187,23 @@ class WANDBRunManager(RunManager):
         else:
             raise Exception('Type %s is not recognized by WandBLogWriter' % type)
 
-    def make_checkpoint(self, trainer):
+    def make_checkpoint(self, trainer, force_upload=False):
         super(WANDBRunManager, self).make_checkpoint(trainer)
-        if self.upload_checkpoints:
-            wandb.save('checkpoint_%d.pt' % trainer.model.iterations)
+        if force_upload:
+            checkpoint_filename = os.path.join(self.run_dir, 'checkpoint_%d.pt' % trainer.model.iterations)
+            wandb.save(checkpoint_filename, base_path=self.run_dir)
 
-    def make_backup(self, trainer):
+    def make_backup(self, trainer, force_upload=False):
         super(WANDBRunManager, self).make_backup(trainer)
-        if self.upload_checkpoints:
-            wandb.save(BACKUP_NAME)
+        if force_upload:
+            model_filename = os.path.join(self.run_dir, BACKUP_NAME)
+            wandb.save(model_filename, base_path=self.run_dir)
+
+    def checkpoint_list(self):
+        checkpoints = []
+        run = self.api.run('%s/%s/%s' % (self.USER, self.PROJECT, self.wandb_run.id))
+        for file in run.files():
+            if file.name.endswith('.pt'):
+                checkpoints.append(file.name)
+
+        return checkpoints

@@ -32,6 +32,9 @@ parser.add_argument("--overwrite", type=str, default="", nargs='+',
 parser.add_argument('--env-file', type=str, default='.env',
                     help='File containing the definition of the environment variables')
 
+# TODO implement way to use different code from the one store
+# TODO implement load checkpoint
+
 args = parser.parse_args()
 code_dir = args.code_dir
 
@@ -61,40 +64,41 @@ if 'EXPERIMENTS_ROOT' in os.environ:
 upload_checkpoints = True
 verbose = True
 
-if len(args.config.split(':')) > 0:
-    config = {}
-    for filename in args.config.split(':'):
-        with open(filename, 'r') as f:
-            d = yaml.safe_load(f)
-        for k in d:
-            if '.' in d:
-                raise Exception('The special character \'.\' can not be used in the definition of %s' % k)
-            if k in config:
-                print('Warning: Duplicate entry for %s, the value %s is overwritten by %s' % (k, str(config[k]), (d[k])))
-            else:
-                config[k] = d[k]
+if len(args.config) > 0:
+    if len(args.config.split(':')) > 0:
+        config = {}
+        for filename in args.config.split(':'):
+            with open(filename, 'r') as f:
+                d = yaml.safe_load(f)
+            for k in d:
+                if '.' in d:
+                    raise Exception('The special character \'.\' can not be used in the definition of %s' % k)
+                if k in config:
+                    print('Warning: Duplicate entry for %s, the value %s is overwritten by %s' % (k, str(config[k]), (d[k])))
+                else:
+                    config[k] = d[k]
 
-    # parse and update the configuration from the override argument
-    print('overwrite: %s' % str(overwrite))
-    for entry in overwrite:
-        key, value = entry.split('=')[0], entry.split('=')[1]
-        value = yaml.safe_load(value)
+        # parse and update the configuration from the override argument
+        print('overwrite: %s' % str(overwrite))
+        for entry in overwrite:
+            key, value = entry.split('=')[0], entry.split('=')[1]
+            value = yaml.safe_load(value)
 
-        d = config
-        last_d = d
-        for sub_key in key.split('.'):
-            if not (sub_key in d):
-                raise Exception(
-                    'The parameter %s in %s specified in the --overwrite flag is not defined in the configuration.\n'
-                    'The accessible keys are %s' %
-                    (sub_key, key, str(d.keys()))
-                )
+            d = config
             last_d = d
-            d = d[sub_key]
+            for sub_key in key.split('.'):
+                if not (sub_key in d):
+                    raise Exception(
+                        'The parameter %s in %s specified in the --overwrite flag is not defined in the configuration.\n'
+                        'The accessible keys are %s' %
+                        (sub_key, key, str(d.keys()))
+                    )
+                last_d = d
+                d = d[sub_key]
 
-        last_d[key.split('.')[-1]] = value
-        if verbose:
-            print('%s\n\tOriginal value: %s\n\tOverwritten value: %s' % (key, str(d), str(value)))
+            last_d[key.split('.')[-1]] = value
+            if verbose:
+                print('%s\n\tOriginal value: %s\n\tOverwritten value: %s' % (key, str(d), str(value)))
 
 else:
     config = None
@@ -104,39 +108,9 @@ else:
         )
 
 run_manager = WANDBRunManager(run_name=run_name, config=config,
-                              experiments_root=experiments_root,
+                              wandb_dir=experiments_root,
                               code_dir=code_dir,
                               verbose=verbose, upload_checkpoints=upload_checkpoints,
                               run_id=run_id)
 
-experiment_dir = run_manager.run_dir
-
-trainer, evaluators = run_manager.make_instances(device=device)
-
-# Moving the models to the specified device
-trainer.to(device)
-
-# Training loop
-for epoch in tqdm(range(epochs)):
-    # Evaluation
-    for name, evaluator in evaluators.items():
-        if epoch % evaluator.evaluate_every == 0:
-            entry = evaluator.evaluate()
-            run_manager.log(name=name, **entry)
-
-    # Checkpoint
-    if epoch % checkpoint_every == 0:
-        run_manager.make_checkpoint(trainer)
-
-    # Backup
-    if epoch % backup_every == 0:
-        run_manager.make_backup(trainer)
-
-    # Epoch train
-    trainer.train_epoch()
-    if trainer.model.training_done:
-        print('Training has finished')
-        break
-
-# Save the model at the end of the run
-run_manager.make_backup(trainer)
+run_manager.wandb_run(epochs=epochs, device=device)

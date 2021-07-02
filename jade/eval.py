@@ -1,19 +1,30 @@
 from torch.utils.data import DataLoader
 import torch
 
+from jade.utils import TimeInterval
 
+
+# TODO: add evaluate every in epochs
 class Evaluation:
-    def __init__(self, model, datasets, evaluate_every=1, **params):
-        self.model = model
+    def __init__(self, datasets, evaluate_every='1 epochs', verbose=False, **params):
         self.datasets = datasets
-        self.evaluate_every = evaluate_every
+        self.verbose = verbose
 
+        self.evaluation_timer = TimeInterval(evaluate_every)
         self.initialize(**params)
+
+    def evaluate_if_time(self, model):
+        if self.evaluation_timer.is_time(model):
+            log = self.evaluate(model)
+            self.evaluation_timer.update(model)
+        else:
+            log = None
+        return log
 
     def initialize(self, **params):
         raise NotImplemented()
 
-    def evaluate(self):
+    def evaluate(self, model):
         raise NotImplemented()
 
 
@@ -25,10 +36,10 @@ class DatasetEvaluation(Evaluation):
         self.batch_size = batch_size
         self.resample = resample
 
-    def evaluate_batch(self, data):
+    def evaluate_batch(self, data, model):
         raise NotImplemented()
 
-    def evaluate(self):
+    def evaluate(self, model):
         # Make a data_loader for the specified dataset (names are defined in the dataset configuration file).
         data_loader = DataLoader(
             self.dataset,
@@ -38,9 +49,9 @@ class DatasetEvaluation(Evaluation):
 
         values = {}
         evaluations = 0.
-        device = self.model.get_device()
+        device = model.get_device()
 
-        self.model.eval()
+        model.eval()
         with torch.no_grad():
             for data in data_loader:
                 if isinstance(data, dict):
@@ -59,7 +70,7 @@ class DatasetEvaluation(Evaluation):
                     else:
                         data = data_
 
-                new_values = self.evaluate_batch(data)
+                new_values = self.evaluate_batch(data, model)
                 for k, v in new_values.items():
                     if k in values:
                         values[k] += v * batch_len
@@ -76,12 +87,10 @@ class DatasetEvaluation(Evaluation):
                 value = values[k]
             return {
                 'type': 'scalar',  # Type of the logged object, to be interpreted by the logger
-                'value': value,
-                'iteration': self.model.iterations  # Iteration count at the point of logging
+                'value': value
             }
         else:
             return {
                 'type': 'scalars',  # Type of the logged object, to be interpreted by the logger
-                'value': values,
-                'iteration': self.model.iterations  # Iteration count at the point of logging
+                'value': values
             }

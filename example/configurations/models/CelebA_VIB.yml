@@ -33,7 +33,7 @@ model:
           stride: 1
 
     # Label classifier
-    classifier_class: 'LandmarkPredictor'
+    predictor_class: 'LandmarkPredictor'
 
     ##########################
     # Other model parameters #

@@ -1,3 +1,5 @@
+import inspect
+
 def make_instance(class_name, modules, params=None, verbose=False):
     class_found = False
 
@@ -17,9 +19,13 @@ def make_instance(class_name, modules, params=None, verbose=False):
     if verbose:
         print('Instantiating class %s from %s' %
               (class_name, module.__file__))
-
-
-    instance = Class(**params)
+    try:
+        instance = Class(**params)
+    except TypeError as e:
+        extra_param = str(e).split('got an unexpected keyword argument ')[1]
+        error_message = '%s does not have a parameter %s. The available parameters are %s' % \
+                        (Class.__name__, extra_param, inspect.signature(Class.__init__))
+        raise Exception(error_message)
 
     return instance
 
@@ -60,3 +66,6 @@ class InstanceManager:
 
     def get_config(self):
         return {k: self.descriptions[k] for k in self.loaded}
+
+    def __repr__(self):
+        return 'Instance Manager : %s' % str(self.descriptions)

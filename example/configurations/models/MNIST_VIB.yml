@@ -7,14 +7,10 @@ model:
     #################
 
     # Encoder
-    encoder:
-      class: 'Encoder'          # example in which we pass the class name as a parameter
-      params:
-        layers: [1024, 256]
+    encoder_layers: [1024, 256]
 
     # Label classifier
-    classifier:
-      class: 'LabelClassifier'
+    predictor_class: 'LabelClassifier'
 
     ##########################
     # Other model parameters #

@@ -1,7 +1,4 @@
 from jade.model import Model
-from torch.optim import Adam
-from torch.utils.data import DataLoader
-
 
 ###########################
 # Variational Autoencoder #

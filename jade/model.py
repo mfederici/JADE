@@ -1,9 +1,9 @@
-from tqdm import tqdm
+import inspect
 import torch
 import torch.nn as nn
 import numpy as np
-from torch.optim import Optimizer
 from jade.instance_manager import make_instance
+import time
 
 
 #######################
@@ -11,42 +11,59 @@ from jade.instance_manager import make_instance
 #######################
 
 class Model(nn.Module):
-    def __init__(self, arch_modules, writer=None, verbose=False, **params):
+    def __init__(self, arch_modules, verbose=False, **params):
         super(Model, self).__init__()
         self._arch_modules = arch_modules
 
         self.iterations = 0
         self.epochs = 0
+        self._seconds = 0
+        self.last_time = 0
 
-        self._attributes_to_store = {'iterations', 'epochs'}
+        self._attributes_to_store = {'iterations', 'epochs', '_seconds'}
         self._attributes_to_optimize = {}
 
         self.verbose = verbose
         self.training_done = False
-        self.writer = writer
         self.first_iteration = True
 
         self.loss_items = {}
 
-        self.initialize(**params)
+        try:
+            self.initialize(**params)
+        except TypeError as e:
+            extra_param = str(e).split('got an unexpected keyword argument ')[1]
+            error_message = '%s does not have a parameter %s. The available parameters are %s' % \
+                            (self.__class__.__name__, extra_param, inspect.signature(self.initialize))
+            raise Exception(error_message)
 
-        for component_name in dir(self):
-            component = getattr(self, component_name)
-            if isinstance(component, nn.Module):
-                store = False
-                for name, parameter_group in component.named_parameters():
-                    store = store or parameter_group.requires_grad
-                if store:
-                    self.add_attribute_to_store(component_name)
+    def __getattr__(self, item):
+        if item == 'seconds':
+            current_time = time.time()
+            self._seconds += current_time - self.last_time
+            self.last_time = current_time
+            return self._seconds
+        elif item == 'minutes':
+            return self.seconds / 60.
+        elif item == 'hours':
+            return self.minutes / 60.
+        elif item == 'days':
+            return self.hours / 24.
+        else:
+            return super(Model, self).__getattr__(item)
 
     def initialize(self, **params):
         raise NotImplemented()
+
+    def start_training(self):
+        self.last_time = time.time()
 
     def end_training(self):
         self.training_done = True
 
     def instantiate_architecture(self, class_name, **params):
         instance = make_instance(class_name=class_name, modules=self._arch_modules, params=params)
+
         return instance
 
     def optimize(self, attribute_name, optimizer_name):
@@ -91,7 +108,8 @@ class Model(nn.Module):
 
     def load_state_dict(self, state_dict, strict=True):
         for key, value in state_dict.items():
-            assert hasattr(self, key)
+            if not hasattr(self, key):
+                raise Exception('Missing attribute: %s' % key)
             attribute = getattr(self, key)
             # Otherwise just copy the value
             if hasattr(value, 'to'):
@@ -102,15 +120,6 @@ class Model(nn.Module):
             else:
                 setattr(self, key, value)
 
-    def on_start(self):
-        pass
-
-    def on_iteration_end(self):
-        self.iterations += 1
-
-    def on_epoch_end(self):
-        self.epochs += 1
-
     def add_loss_item(self, name, value):
         assert isinstance(name, str)
         assert isinstance(value, float) or isinstance(value, int)
@@ -120,11 +129,13 @@ class Model(nn.Module):
 
         self.loss_items[name].append(value)
 
-    def _log_loss(self):
+    def get_items_to_log(self):
         # Log the expected value of the items in loss_items
+        loss_items = {}
         for key, values in self.loss_items.items():
-            self.writer.log(name=key, value=np.mean(values), type='scalar', iteration=self.iterations)
+            loss_items[key] = np.mean(values)
             self.loss_items[key] = []
+        return loss_items
 
     def compute_loss(self, data):
         raise NotImplemented()

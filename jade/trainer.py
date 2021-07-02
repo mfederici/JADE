@@ -1,12 +1,64 @@
 from tqdm import tqdm
 import torch
 import torch.nn as nn
-import numpy as np
 from torch.optim import Optimizer
 from torch.utils.data import DataLoader
 import torch.optim as optimizer_module
 
 from jade.model import Model
+from jade.utils import TimeInterval
+
+
+def iteration(f):
+    pbar = None
+
+    def wrap(trainer, *args, **kwargs):
+        nonlocal pbar
+        assert isinstance(trainer, Trainer)
+
+        trainer.model.iterations += 1
+        if pbar is None:
+            pbar = tqdm(total=100)
+        pbar.update(trainer._train_timer.percentage(trainer.model) - pbar.n)
+
+        if trainer._train_timer.is_time(trainer.model):
+            trainer.model.end_training()
+            return
+
+        # Log the loss values every log_loss_every iterations
+        if trainer.loss_log_timer.is_time(trainer.model):
+            trainer.loss_log_timer.update(trainer.model)
+            for key, value in trainer.model.get_items_to_log().items():
+                trainer.writer.log(name=key, value=value, type='scalar', iteration=trainer.model.iterations)
+
+        # Evaluation
+        for name, evaluator in trainer.evaluators.items():
+
+            entry = evaluator.evaluate_if_time(trainer.model)
+            if not (entry is None):
+                trainer.writer.log(name=name, iteration=trainer.model.iterations, **entry)
+
+        # Backup
+        if trainer.backup_timer.is_time(trainer.model):
+            trainer.backup_timer.update(trainer.model)
+            trainer.writer.make_backup(trainer)
+
+        # Checkpoint
+        if trainer.checkpoint_timer.is_time(trainer.model):
+            trainer.checkpoint_timer.update(trainer.model)
+            trainer.writer.make_checkpoint(trainer)
+
+        return f(trainer, *args, **kwargs)
+
+    return wrap
+
+
+def epoch(f):
+    def wrap(trainer, *args, **kwaargs):
+        assert isinstance(trainer, Trainer)
+        trainer.model.epochs += 1
+        return f(trainer, *args, **kwaargs)
+    return wrap
 
 
 #######################
@@ -14,7 +66,11 @@ from jade.model import Model
 #######################
 
 class Trainer:
-    def __init__(self, optimizers, writer, model, verbose=False, log_loss_every=100, **params):
+    def __init__(self, optimizers, evaluators, writer, model, verbose=False,
+                 log_loss_every='100 iterations',
+                 checkpoint_every='100 epoch',
+                 backup_every='1 epoch',
+                 **params):
         super(Trainer, self).__init__()
 
         assert isinstance(model, Model)
@@ -22,16 +78,18 @@ class Trainer:
 
         self.writer = writer
         self.model = model
+        self.evaluators = evaluators
         self.verbose = verbose
 
         self.optimizer_descriptions = optimizers
         self.initialize_optimizers()
 
         self.training_done = False
+        self._train_timer = None
 
-        self.log_loss_every = log_loss_every
-        self.last_logged = -1
-        self.loss_items = {}
+        self.loss_log_timer = TimeInterval(log_loss_every)
+        self.checkpoint_timer = TimeInterval(checkpoint_every)
+        self.backup_timer = TimeInterval(backup_every)
 
         self.initialize(**params)
 
@@ -77,6 +135,13 @@ class Trainer:
         else:
             raise Exception('No attribute named `%s` specified in the trainer' % attribute)
 
+    def train(self, train_timer):
+        self._train_timer = train_timer
+        self.model.start_training()
+        while (not self.model.training_done):
+            self.train_epoch()
+
+    @epoch
     def train_epoch(self):
         raise NotImplementedError()
 
@@ -91,6 +156,9 @@ class Trainer:
         torch.save({'model': self.model.get_state_dict(),
                     'optimizers': {name: opt.state_dict() for name, opt in self.optimizers.items()},
                     'attributes': save_dict}, path)
+
+        if self.verbose or True:
+            print("Saving the model at %d iterations in %s" % (self.model.iterations, path))
 
     def load(self, path, device='cpu'):
         items_to_load = torch.load(path, map_location=device)
@@ -114,7 +182,7 @@ class Trainer:
             # Load the state dictionary for the stored example and optimizers
             if isinstance(attribute, nn.Module) or isinstance(attribute, Optimizer):
                 attribute.load_state_dict(value)
-                print('Loadind state dict for %s' % key)
+                print('Loading state dict for %s' % key)
             # Otherwise just copy the value
             else:
                 if hasattr(value, 'to'):
@@ -129,7 +197,7 @@ class DatasetTrainer(Trainer):
 
 
 class BatchTrainer(DatasetTrainer):
-    def initialize(self, train_on, batch_size, num_workers=0, shuffle=True,):
+    def initialize(self, train_on, batch_size, num_workers=0, shuffle=True):
 
         self.train_loader = DataLoader(
             self.datasets[train_on],
@@ -139,28 +207,22 @@ class BatchTrainer(DatasetTrainer):
         )
 
         self.first_iteration = True
-        self.last_logged = -1
 
         if not(hasattr(self.model, 'compute_loss')):
             raise Exception('The model "%s" must implement a compute_loss(data) method.' % self.model.__class__.__name__)
 
+    @epoch
     def train_epoch(self):
         if self.first_iteration:
             self.first_iteration = False
-            self.model.on_start()
 
         if self.model.training_done:
             return
 
         for data in tqdm(self.train_loader):
-            # Log the values in loss_items every log_loss_every iterations
-            if not self.model.iterations == self.last_logged:
-                if (self.model.iterations + 1) % self.log_loss_every == 0:
-                    self.model._log_loss()
-                    self.last_logged = self.model.iterations
 
-            # Move the data to the appropriate device
             device = self.get_device()
+            # Move the data to the appropriate device
             if hasattr(data, 'items'):
                 for name, value in data.items():
                     data[name] = value.to(device)
@@ -169,22 +231,23 @@ class BatchTrainer(DatasetTrainer):
             else:
                 data = data.to(device)
 
-            # Set all the models in training mode
-            self.model.train(True)
-
-            loss = self.model.compute_loss(data)
-
-            for opt in self.optimizers.values():
-                opt.zero_grad()
-            loss.backward()
-            for opt in self.optimizers.values():
-                opt.step()
-
-            self.model.on_iteration_end()
+            self.train_step(data)
 
             if self.model.training_done:
                 return
 
-        self.model.on_epoch_end()
+    @ iteration
+    def train_step(self, data):
+        # Set all the models in training mode
+        self.model.train()
+
+        loss = self.model.compute_loss(data)
+
+        for opt in self.optimizers.values():
+            opt.zero_grad()
+        loss.backward()
+        for opt in self.optimizers.values():
+            opt.step()
+
 
 

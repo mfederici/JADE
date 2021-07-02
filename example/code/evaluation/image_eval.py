@@ -14,9 +14,6 @@ class ReconstructionEvaluation(Evaluation):
         self.sample_images = sample_images
         self.sample_latents = sample_latents
 
-        # Check that the model has a definition of a method to reconstrut the inputs
-        if not hasattr(self.model, 'reconstruct'):
-            raise Exception('The trainer must implement a reconstruct(x) method with `x` as a picture')
 
     def sample_new_images(self):
         # sample the required number of pictures randomly
@@ -25,7 +22,13 @@ class ReconstructionEvaluation(Evaluation):
 
         return images_batch
 
-    def evaluate(self):
+    def evaluate(self, model):
+
+        # Check that the model has a definition of a method to reconstruct the inputs
+        if not hasattr(model, 'reconstruct'):
+            raise Exception('The trainer must implement a reconstruct(x) method with `x` as a picture')
+
+
         # If the images are not sampled dynamically, pick the first n_pictures from the dataset
         if not self.sample_images:
             x = torch.cat([self.dataset[id]['x'].unsqueeze(0) for id in range(self.n_pictures)])
@@ -35,10 +38,10 @@ class ReconstructionEvaluation(Evaluation):
             x = torch.cat([self.dataset[id]['x'].unsqueeze(0) for id in ids])
 
         # Move the images to the correct device
-        x = x.to(self.model.get_device())
+        x = x.to(model.get_device())
 
         # Compute the reconstructions
-        x_rec = self.model.reconstruct(x).to('cpu')
+        x_rec = model.reconstruct(x).to('cpu')
 
         # Concatenate originals and reconstructions
         x_all = torch.cat([x.to('cpu'), x_rec], 2)
@@ -47,5 +50,4 @@ class ReconstructionEvaluation(Evaluation):
         return {
             'type': 'figure',  # Type of the logged object, to be interpreted by the logger
             'value': make_grid(x_all, nrow=self.n_pictures),  # Value to log
-            'iteration': self.model.iterations  # Iteration count at the point of logging
         }

@@ -15,6 +15,8 @@ from envyaml import EnvYAML
 
 import json
 
+from jade.utils import TimeInterval
+
 BACKUP_NAME = 'last_checkpoint.pt'
 DATASET_DIR = DATASET_KEY ='datasets'
 MODELS_DIR = 'models'
@@ -23,6 +25,7 @@ ARCH_DIR = ARCH_KEY = 'architectures'
 EVAL_DIR = EVAL_KEY = 'evaluation'
 TRAINER_DIR = 'trainers'
 TRAINER_KEY = 'trainer'
+CONFIG_FILENAME = 'jade_config.yml'
 
 def module_from_file(path):
     name = path.replace('/', '.')
@@ -45,8 +48,8 @@ def load_modules(root_dir):
         return model_modules
 
 
-def resolve_variables(config,  experiments_root):
-    config_file = os.path.join(experiments_root, "config.yml")
+def resolve_variables(config, run_dir):
+    config_file = os.path.join(run_dir, CONFIG_FILENAME)
     with open(config_file, "w") as file:
         yaml.dump(config, file)
 
@@ -55,13 +58,15 @@ def resolve_variables(config,  experiments_root):
 
 
 class RunManager:
-    def __init__(self, run_id, run_name, experiments_root, config, run_dir, resume, verbose=False, code_dir='example',
+    def __init__(self, run_id, run_name, config, run_dir, resume, verbose=False, code_dir='example',
                  arch_filename=None):
+
+        if not os.path.isdir(code_dir):
+            raise Exception('The specified code directory "%s" does not exist' % code_dir)
 
         # Resolve config
         config = resolve_variables(config, run_dir)
         print(json.dumps(config, sort_keys=True, indent=4))
-
 
         self.verbose = verbose
         self.run_name = run_name
@@ -72,7 +77,6 @@ class RunManager:
             print('Run Directory: %s' % run_dir)
 
         self.resume = resume
-        self.experiments_root = experiments_root
 
         sys.path.append(code_dir)
 
@@ -126,9 +130,8 @@ class RunManager:
                                           verbose=self.verbose)
         return dataset_manager
 
-    def instantiate_model(self, resume=False, device='cpu'):
+    def instantiate_model(self, resume=False, device='cpu', checkpoint_file=None):
         model_params = self.config[MODEL_KEY]['params']
-        model_params['writer'] = self
         model_params['arch_modules'] = self.arch_modules
         model = make_instance(class_name=self.config[MODEL_KEY]['class'],
                               modules=self.model_modules,
@@ -137,16 +140,20 @@ class RunManager:
 
         # Resume the training if specified
         if resume:
-            model = self.load_last_model(model, device=device)
+            if checkpoint_file is None:
+                model = self.load_last_model(model, device=device)
+            else:
+                model = self.load_model(model, checkpoint_file=checkpoint_file)
         else:
             model.to(device)
         return model
 
-    def instantiate_trainer(self, model, datasets, resume=False, device='cpu'):
+    def instantiate_trainer(self, model, evaluators, datasets, resume=False, device='cpu'):
         trainer_params = self.config[TRAINER_KEY]['params']
         trainer_params['writer'] = self
         trainer_params['model'] = model
         trainer_params['datasets'] = datasets
+        trainer_params['evaluators'] = evaluators
         trainer = make_instance(class_name=self.config[TRAINER_KEY]['class'],
                                 modules=self.trainers_modules,
                                 verbose=self.verbose,
@@ -160,14 +167,13 @@ class RunManager:
 
         return trainer
 
-    def instantiate_evaluators(self, model, dataset_manager):
+    def instantiate_evaluators(self, dataset_manager):
         # Load the evaluators
         evaluators = {}
 
         for name, desc in self.config[EVAL_KEY].items():
             eval_params = desc['params']
             eval_params['datasets'] = dataset_manager
-            eval_params['model'] = model
             evaluators[name] = make_instance(
                 class_name=desc['class'],
                 modules=self.eval_modules,
@@ -175,11 +181,14 @@ class RunManager:
             )
         return evaluators
 
+    def checkpoint_list(self):
+        raise NotImplementedError()
+
     def make_instances(self, device='cpu'):
         dataset_manager = self.instantiate_datasets()
         model = self.instantiate_model(device=device)
-        trainer = self.instantiate_trainer(model=model, datasets=dataset_manager, resume=self.resume, device=device)
-        evaluators = self.instantiate_evaluators(model=model, dataset_manager=dataset_manager)
+        evaluators = self.instantiate_evaluators(dataset_manager=dataset_manager)
+        trainer = self.instantiate_trainer(model=model, evaluators=evaluators, datasets=dataset_manager, resume=self.resume, device=device)
 
         return trainer, evaluators
 
@@ -192,11 +201,40 @@ class RunManager:
         checkpoint_filename = os.path.join(self.run_dir, 'checkpoint_%d.pt' % trainer.model.iterations)
         trainer.save(checkpoint_filename)
 
-    def make_backup(self, trainer):
+    def make_backup(self, trainer, force_upload=True):
         if self.verbose:
             print('Updating the model backup')
         model_filename = os.path.join(self.run_dir, BACKUP_NAME)
         trainer.save(model_filename)
+
+    def run(self, device, train_amount=None):
+        trainer, evaluators = self.make_instances(device=device)
+
+        train_timer = TimeInterval(train_amount)
+        train_timer.update(trainer.model)
+
+        # Moving the models to the specified device
+        trainer.to(device)
+
+        # Model training
+        trainer.train(train_timer)
+
+        if self.verbose:
+            print('Training Completed')
+            print(trainer.model.iterations)
+
+        # Evaluate the model at the end of the training
+        for name, evaluator in evaluators.items():
+            entry = evaluator.evaluate(trainer.model)
+            if not (entry is None):
+                self.log(name=name, iteration=trainer.model.iterations, **entry)
+
+        # Save the model at the end of the run
+        self.make_backup(trainer, force_upload=True)
+
+        return trainer.model
+
+
 
 
 
