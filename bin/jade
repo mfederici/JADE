@@ -1,27 +1,29 @@
-#!/usr/bin/env python
+#!/usr/bin/python3
 
 import os
 import yaml
 from dotenv import dotenv_values
 import click
+
 from jade.run_manager.wandb import WANDBRunManager
 
+
 # TODO implement way to use different code from the one store
-# TODO implement load checkpoint
 
 @click.group(name='jade')
 def jade():
     pass
 
+
 @jade.command()
-@click.argument('config-files',
-              type=click.File('r'),
-              nargs=-1,
-             # help='List of configuration .yml files containing the description of "model", "data", "trainer" '
-             #      'and "evaluators',
-              required=True
-              )
-@click.option('--train-for',
+@click.argument('config-files', '-c',
+                type=click.File('r'),
+                nargs=-1,
+                # help='List of configuration .yml files containing the description of "model", "data", "trainer" '
+                #      'and "evaluators',
+                required=True
+                )
+@click.option('--train-for', '-t',
               type=click.STRING,
               help='Total number of training time in epochs, iterations, seconds, minutes, hours, days or custom.'
                    ' (e.g. \"10 minutes\", \"10000 iterations\")',
@@ -29,44 +31,59 @@ def jade():
               )
 @click.option('--code-dir',
               type=click.Path(file_okay=False),
+              default=None,
               help='path to the folder containing the code (it must contain the "architectures", "data", "eval"'
                    ', "models" (and "trainers") sub-directories.'
               )
-@click.option('--run_name',
+@click.option('--run-name', '-n',
               type=click.STRING,
               help='Name of the run')
-@click.option('--verbose',
+@click.option('--overwrite',
+              type=click.STRING,
+              help='Parameters to overwrite (e.g. --overwrite="model.encoder.lr=0.001").')
+@click.option('--verbose', '-v',
+              is_flag=True,
               type=click.BOOL,
               default=False,
               help='Verbose output')
-@click.option('--wandb-verbose',
+@click.option('--wandb-silent', '-ws',
+              is_flag=True,
               type=click.BOOL,
               default=False,
               help='Verbose output for wandb')
-@click.option('--device',
+@click.option('--device', '-d',
               type=click.STRING,
               default=False,
               help='Device on which the experiments are run ("cpu", "cuda", ...)'
               )
-@click.option('--env-file',
+@click.option('--env-file', '-e',
               type=click.File('r'),
-              default=open('.env','r'),
+              default=None,
               help='Root directory in which the experiments are saved/loaded')
 @click.option('--experiments_root',
               type=click.Path(file_okay=False),
               help='Root directory in which the experiments are saved/loaded')
-def train(train_for, config_files, device='cpu', verbose=False, env_file='.env', overwrite='', experiments_root=None,
-          code_dir='code', run_name=None, wandb_verbose=False):
-    code_dir = code_dir.strip('"').strip('\'')
-    env_file = env_file.name.strip('"').strip('\'')
-    if not(run_name is None):
+def train(train_for, config_files, device='cpu', verbose=False, env_file='.env', overwrite=None, experiments_root=None,
+          code_dir='code', run_name=None, wandb_silent=False):
+    if code_dir is None:
+        code_dir = 'code'
+    else:
+        code_dir = code_dir.strip('"').strip('\'')
+
+    if env_file is None:
+        env_file = '.env'
+    else:
+        env_file = env_file.name.strip('"').strip('\'')
+
+    if not (run_name is None):
         run_name = run_name.strip('"').strip('\'')
     train_for = train_for.strip('"').strip('\'')
 
     update_env(env_file)
 
     config = read_and_merge(config_files, verbose=verbose)
-    update_config(config, overwrite)
+    if not (overwrite is None):
+        update_config(config, overwrite)
 
     if 'DEVICE' in os.environ:
         device = os.environ['DEVICE']
@@ -76,42 +93,48 @@ def train(train_for, config_files, device='cpu', verbose=False, env_file='.env',
                                   wandb_dir=experiments_root,
                                   code_dir=code_dir,
                                   verbose=verbose,
-                                  wandb_verbose=wandb_verbose)
+                                  wandb_verbose=not wandb_silent)
 
     run_manager.run(train_amount=train_for, device=device)
+
 
 @jade.command()
 @click.argument('run-id',
                 type=click.STRING,
                 required=True)
-@click.option('--train-for',
+@click.option('--train-for', '-t',
               type=click.STRING,
               help='Total number of training time in epochs, iterations, seconds, minutes, hours, days or custom.'
                    ' (e.g. \"10 minutes\", \"10000 iterations\")',
               required=True
               )
-@click.option('--verbose',
+@click.option('--verbose', '-v',
+              is_flag=True,
               type=click.BOOL,
               default=False,
               help='Verbose output')
-@click.option('--wandb-verbose',
+@click.option('--wandb-silent','-ws',
+              is_flag=True,
               type=click.BOOL,
               default=False,
               help='Verbose output for wandb')
-@click.option('--device',
+@click.option('--device', '-d',
               type=click.STRING,
               default=False,
               help='Device on which the experiments are run ("cpu", "cuda", ...)'
               )
-@click.option('--env-file',
+@click.option('--env-file', '-e',
               type=click.File('r'),
-              default=open('.env','r'),
+              default=None,
               help='Root directory in which the experiments are saved/loaded')
 @click.option('--experiments_root',
               type=click.Path(file_okay=False),
               help='Root directory in which the experiments are saved/loaded')
-def resume(run_id, train_for, verbose=False, env_file='.env', experiments_root=None, device='cpu', wandb_verbose=False):
-    env_file = env_file.name.strip('"').strip('\'')
+def resume(run_id, train_for, verbose=False, env_file=None, experiments_root=None, device='cpu', wandb_silent=False):
+    if env_file is None:
+        env_file = '.env'
+    else:
+        env_file = env_file.name.strip('"').strip('\'')
     train_for = train_for.strip('"').strip('\'')
 
     update_env(env_file)
@@ -124,7 +147,7 @@ def resume(run_id, train_for, verbose=False, env_file='.env', experiments_root=N
     run_manager = WANDBRunManager(run_id=run_id,
                                   wandb_dir=experiments_root,
                                   verbose=verbose,
-                                  wandb_verbose=wandb_verbose)
+                                  wandb_verbose=not wandb_silent)
 
     run_manager.run(train_amount=train_for, device=device)
 
@@ -150,37 +173,47 @@ def read_and_merge(config_files, verbose=False):
                         raise Exception('The special character \'.\' can not be used in the definition of %s' % k)
                     if k in config:
                         print('Warning: Duplicate entry for %s, the value %s is overwritten by %s' % (
-                        k, str(config[k]), (d[k])))
+                            k, str(config[k]), (d[k])))
                     else:
                         config[k] = d[k]
     return config
 
 
 def update_config(config, overwrite, verbose=False):
-     # parse and update the configuration from the override argument
-     print('overwrite: %s' % str(overwrite))
-     for entry in overwrite:
-         key, value = entry.split('=')[0], entry.split('=')[1]
-         value = yaml.safe_load(value)
+    # parse and update the configuration from the override argument
+    if len(overwrite) == 0:
+        return config
+    for entry in overwrite.split():
+        key, value = entry.split('=')[0], entry.split('=')[1]
+        value = yaml.safe_load(value)
 
-         d = config
-         last_d = d
-         for sub_key in key.split('.'):
-             if not (sub_key in d):
-                 raise Exception(
-                     'The parameter %s in %s specified in the --overwrite flag is not defined in the configuration.\n'
-                     'The accessible keys are %s' %
-                     (sub_key, key, str(d.keys()))
-                 )
-             last_d = d
-             d = d[sub_key]
+        d = config
+        last_d = d
+        for sub_key in key.split('.'):
+            if not (sub_key in d):
+                raise Exception(
+                    'The parameter %s in %s specified in the --overwrite flag is not defined in the configuration.\n'
+                    'The accessible keys are %s' %
+                    (sub_key, key, str(d.keys()))
+                )
+            last_d = d
+            d = d[sub_key]
 
-         last_d[key.split('.')[-1]] = value
+        last_key = key.split('.')[-1]
+        old_value = last_d[last_key]
+        if isinstance(value, old_value.__class__) or \
+                (isinstance(value, (int, float)) and isinstance(old_value, (int, float))):
+            last_d[last_key] = value
+        else:
+            raise Exception('The parameter %s in %s specified in the --overwrite flag is not valid. '
+                            'The previous value "%s" and the specified one "%s" are instance of different classes '
+                            % (key.split('.')[-1], key, str(last_d[key.split('.')[-1]]), str(value)))
 
-         if verbose:
-             print('%s\n\tOriginal value: %s\n\tOverwritten value: %s' % (key, str(d), str(value)))
-     return config
+        if verbose:
+            print('%s\n\tOriginal value: %s\n\tOverwritten value: %s' % (key, str(d), str(value)))
+    return config
 
 
 if __name__ == '__main__':
+    os.chdir(os.getcwd())
     jade()

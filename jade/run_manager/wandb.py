@@ -47,6 +47,7 @@ class WANDBRunManager(RunManager):
         # If the run exists read the configuration
         if run_exists:
             config = self.read_config(run_id)
+            print('Resuming run %s' % run_id)
 
         # Initialize wandb with the flattened configuration
         flat_config = flatten_config(config)  # wandb can't process nested dictionaries
@@ -66,7 +67,7 @@ class WANDBRunManager(RunManager):
             self.download_code(self.wandb_run.dir)
             code_dir = os.path.join(self.wandb_run.dir, CODE_DIR)
 
-        super(WANDBRunManager, self).__init__(run_name=run_name, run_id=run_id, run_dir=self.wandb_run.dir,
+        super(WANDBRunManager, self).__init__(run_name=run_name, run_id=self.wandb_run.id, run_dir=self.wandb_run.dir,
                                               config=config, resume=resume, verbose=verbose,
                                               code_dir=code_dir)
 

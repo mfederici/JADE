@@ -103,6 +103,8 @@ class RunManager:
         config = resolve_variables(config, run_dir)
         self.config = config
 
+        print('run_id:  %s' % run_id)
+
         print('#####################')
         print('# Run Configuration #')
         print('#####################')

@@ -68,8 +68,8 @@ def epoch(f):
 class Trainer:
     def __init__(self, optimizers, evaluators, writer, model, verbose=False,
                  log_loss_every='100 iterations',
-                 checkpoint_every='100 epoch',
-                 backup_every='1 epoch',
+                 checkpoint_every='100 epochs',
+                 backup_every='1 epochs',
                  **params):
         super(Trainer, self).__init__()
 
